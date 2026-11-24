@@ -23,6 +23,7 @@ dependencies = [
   "django-debug-toolbar~=6.3.0",
   "django-health-check[celery,redis]~=4.4.4",
   "django-model-utils~=5.0.0",
+  "django-ninja~=1.4",
   "django-redis~=6.0.0",
   "django-select2~=8.4.8",
   "django-simple-history~=3.13.0",
