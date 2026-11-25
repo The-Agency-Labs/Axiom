@@ -199,8 +199,11 @@ class AniListShowImporter:
         if media["format"] == "MOVIE" and mapping.tmdb_movie:
             self._import_movie(entry, mapping.tmdb_movie)
             return True
-        if mapping.tmdb_tv and mapping.tmdb_season is not None:
-            self._import_show(entry, mapping)
+        if (
+            mapping.tmdb_tv
+            and mapping.tmdb_season is not None
+            and self._import_show(entry, mapping)
+        ):
             return True
         if mapping.tmdb_movie:
             self._import_movie(entry, mapping.tmdb_movie)
@@ -262,13 +265,26 @@ class AniListShowImporter:
         return slots
 
     def _import_show(self, entry, mapping):
+        """Mark the entry's episodes in its TMDB show; False if TMDB lacks the season.
+
+        The mapping sometimes names a season TMDB has since merged or
+        renumbered; such entries are better kept as plain anime than misplaced.
+        """
         media_id = str(mapping.tmdb_tv)
-        self.show_statuses[media_id].add(entry["status"])
         tv_meta = app.providers.tmdb.tv(media_id)
         seasons = {
             season["season_number"]: season.get("max_progress") or 0
             for season in tv_meta.get("related", {}).get("seasons", [])
         }
+        if mapping.tmdb_season not in seasons:
+            logger.info(
+                "TMDB %s has no season %s for %s",
+                media_id,
+                mapping.tmdb_season,
+                entry["media"]["title"]["userPreferred"],
+            )
+            return False
+        self.show_statuses[media_id].add(entry["status"])
         slots = self._episode_slots(mapping, seasons, self._watched_count(entry))
 
         tv_item, _ = Item.objects.get_or_create(
@@ -283,7 +299,7 @@ class AniListShowImporter:
             defaults={"status": Status.PLANNING.value},
         )
         if not slots:
-            return
+            return True
 
         by_season = defaultdict(list)
         for season_number, episode_number in slots:
@@ -298,6 +314,7 @@ class AniListShowImporter:
                 )
                 continue
             self._mark_episodes(entry, tv, tv_meta, season_meta, numbers)
+        return True
 
     def _mark_episodes(self, entry, tv, tv_meta, season_meta, numbers):
         season_number = season_meta["season_number"]
