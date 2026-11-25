@@ -1,4 +1,4 @@
-// Package migrate is the one-shot import of a Django (Yamtrack/Encompass)
+// Package migrate is the one-shot import of an old Django Encompass
 // SQLite database into the Go schema.
 //
 // What is copied and what is refetched:
@@ -174,7 +174,7 @@ func Run(ctx context.Context, opts Options) (*Report, error) {
 		return nil, errors.New("migrate: source and target are required")
 	}
 	if !hasTable(ctx, opts.Source, "app_item") || !hasTable(ctx, opts.Source, "users_user") {
-		return nil, errors.New("migrate: source is not a Django Encompass/Yamtrack database")
+		return nil, errors.New("migrate: source is not an old Django Encompass database")
 	}
 	var existing int
 	if err := opts.Target.QueryRowContext(ctx, `SELECT COUNT(*) FROM entries`).Scan(&existing); err != nil {

@@ -4,8 +4,7 @@ A self-hosted tracker for everything you watch and read: TV, anime, movies,
 manga, books, comics, games and board games. One small Go binary with SQLite
 and an installable, mobile-first web app (PWA).
 
-Originally a fork of [Yamtrack](https://github.com/FuzzyGrim/Yamtrack) by
-FuzzyGrim; rewritten in Go. Licensed AGPL-3.0.
+Licensed AGPL-3.0.
 
 ## Features
 
@@ -53,7 +52,7 @@ Settings come from `.env`:
 | `ANILIST_USERS` (`<anilist>:<encompass>`) | AniList polling |
 | `SESSION_DAYS` | Login lifetime |
 
-Coming from Yamtrack or the old Django Encompass:
+Coming from the old Django version of Encompass:
 `encompass migrate-django --from <old db.sqlite3> --timezone <zone>`
 (`--dry-run` first).
 
