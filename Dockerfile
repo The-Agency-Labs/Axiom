@@ -38,6 +38,8 @@ FROM python:${PYTHON_VERSION}-alpine${ALPINE_VERSION}
 
 # https://stackoverflow.com/questions/58701233/docker-logs-erroneously-appears-empty-until-container-stops
 ENV PYTHONUNBUFFERED=1
+# Fewer malloc arenas: threaded Python otherwise grows memory over time.
+ENV MALLOC_ARENA_MAX=2
 
 # Define build argument with default value
 ARG VERSION=dev
