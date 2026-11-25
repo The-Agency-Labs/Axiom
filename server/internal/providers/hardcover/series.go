@@ -11,8 +11,10 @@ import (
 
 // seriesBooksFragment lists the books of a series in reading order. Books
 // without a position (box sets, omnibuses) are left out. Hardcover lists
-// every translation and split edition as its own book; info() keeps one
-// book per position (see there).
+// every translation and split edition as its own book; info() cleans that up
+// (see series_clean.go), which is why each entry carries the signals it uses:
+// users_count, release date, is_partial_book, book_series.details and the
+// languages of the book's default editions.
 const seriesBooksFragment = `
             id
             name
@@ -22,13 +24,19 @@ const seriesBooksFragment = `
               position
               featured
               compilation
+              details
               book {
                 id
                 title
                 cached_image(path: "url")
                 release_year
+                release_date
                 canonical_id
                 users_count
+                is_partial_book
+                default_physical_edition { language { language } }
+                default_ebook_edition { language { language } }
+                default_cover_edition { language { language } }
               }
             }`
 
@@ -67,63 +75,22 @@ const searchSeriesQuery = `
         `
 
 type seriesData struct {
-	ID         int    `json:"id"`
-	Name       string `json:"name"`
-	Slug       string `json:"slug"`
-	BooksCount int    `json:"books_count"`
-	BookSeries []struct {
-		Position    *float64 `json:"position"`
-		Featured    *bool    `json:"featured"`
-		Compilation bool     `json:"compilation"`
-		Book        *struct {
-			ID          int    `json:"id"`
-			Title       string `json:"title"`
-			CachedImage string `json:"cached_image"`
-			ReleaseYear *int   `json:"release_year"`
-			CanonicalID *int   `json:"canonical_id"`
-			UsersCount  int    `json:"users_count"`
-			Compilation bool   `json:"compilation"`
-		} `json:"book"`
-	} `json:"book_series"`
+	ID         int           `json:"id"`
+	Name       string        `json:"name"`
+	Slug       string        `json:"slug"`
+	BooksCount int           `json:"books_count"`
+	BookSeries []seriesEntry `json:"book_series"`
 }
 
 func (d *seriesData) info() providers.SeriesInfo {
-	out := providers.SeriesInfo{
+	return providers.SeriesInfo{
 		ExternalID: strconv.Itoa(d.ID), Name: d.Name, Slug: d.Slug, BooksCount: d.BooksCount,
+		Books: cleanSeriesBooks(d.BookSeries, nowFunc()),
 	}
-	// Hardcover lists translations (canonical_id set), split editions ("Iron
-	// Gold - Partie 1", not featured) and compilations as books of the
-	// series. Keep the canonical, featured, single books, and of those the
-	// most-read one per position: "Red Rising Saga" is 7 books, not 31.
-	best := map[float64]int{} // position -> index in out.Books
-	users := map[float64]int{}
-	for _, bs := range d.BookSeries {
-		if bs.Book == nil || bs.Position == nil {
-			continue
-		}
-		if (bs.Featured != nil && !*bs.Featured) || bs.Compilation || bs.Book.Compilation || bs.Book.CanonicalID != nil {
-			continue
-		}
-		b := providers.SeriesBook{
-			Position: *bs.Position, ExternalID: strconv.Itoa(bs.Book.ID), Title: bs.Book.Title, Image: bs.Book.CachedImage,
-		}
-		if bs.Book.ReleaseYear != nil {
-			b.Year = *bs.Book.ReleaseYear
-		}
-		if i, ok := best[b.Position]; ok {
-			if bs.Book.UsersCount > users[b.Position] {
-				out.Books[i], users[b.Position] = b, bs.Book.UsersCount
-			}
-			continue
-		}
-		best[b.Position], users[b.Position] = len(out.Books), bs.Book.UsersCount
-		out.Books = append(out.Books, b)
-	}
-	return out
 }
 
-// BookSeries returns the series a book belongs to (first = primary), each with
-// all of its books. A book in no series gives an empty list.
+// BookSeries returns the series a book belongs to (first = primary; see
+// rankBookSeries), each with all of its books. A book in no series gives an empty list.
 func (c *Client) BookSeries(ctx context.Context, bookID string) ([]providers.BookSeries, error) {
 	id, err := strconv.Atoi(strings.TrimSpace(bookID))
 	if err != nil {
@@ -139,6 +106,7 @@ func (c *Client) BookSeries(ctx context.Context, bookID string) ([]providers.Boo
 			Book *struct {
 				BookSeries []struct {
 					Position *float64    `json:"position"`
+					Featured *bool       `json:"featured"`
 					Series   *seriesData `json:"series"`
 				} `json:"book_series"`
 			} `json:"books_by_pk"`
@@ -149,7 +117,7 @@ func (c *Client) BookSeries(ctx context.Context, bookID string) ([]providers.Boo
 		if data.Book == nil {
 			return nil, &providers.Error{Provider: label, Status: 404, Details: "No result found with ID " + bookID}
 		}
-		res := []providers.BookSeries{}
+		var ranked []rankedSeries
 		for _, bs := range data.Book.BookSeries {
 			if bs.Series == nil {
 				continue
@@ -158,9 +126,12 @@ func (c *Client) BookSeries(ctx context.Context, bookID string) ([]providers.Boo
 			if bs.Position != nil {
 				pos = *bs.Position
 			}
-			res = append(res, providers.BookSeries{Position: pos, Series: bs.Series.info()})
+			ranked = append(ranked, rankedSeries{
+				BookSeries: providers.BookSeries{Position: pos, Series: bs.Series.info()},
+				featured:   bs.Featured == nil || *bs.Featured,
+			})
 		}
-		return res, nil
+		return rankBookSeries(ranked), nil
 	})
 	return out, err
 }

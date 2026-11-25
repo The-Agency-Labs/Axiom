@@ -1,5 +1,16 @@
 package providers
 
+import "regexp"
+
+// metaSeriesRe matches reading-order and umbrella lists rather than series:
+// "Foo Universe (Chronological)", "Foo (Publication Order)", "Foo Collection".
+var metaSeriesRe = regexp.MustCompile(`(?i)(?:\b(?:universe|multiverse|reading order|publication order|release order|chronolog\w*|collection|omnibus|boxed set|box set)\b|\([^)]*\border\b[^)]*\))`)
+
+// IsMetaSeries reports a series name that is a reading-order or umbrella list.
+// Such a list may be stored as an extra series of a book but is never its
+// primary series while a regular one exists.
+func IsMetaSeries(name string) bool { return metaSeriesRe.MatchString(name) }
+
 // SeriesBook is one book of a series as a provider lists it.
 type SeriesBook struct {
 	Position   float64 `json:"position"`
