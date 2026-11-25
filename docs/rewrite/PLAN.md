@@ -110,6 +110,7 @@ their own worktrees on `rewrite/<phase>-<area>` branches off `rewrite/main`.
 - Port behaviour exactly, including edge cases in the Python tests; port the relevant tests too.
 - SQL lives in `internal/db/queries/*.sql` (sqlc). No string-built SQL.
 - No new dependencies without listing them in your report. Allowed: stdlib, `modernc.org/sqlite`, `pressly/goose/v3`, `golang.org/x/crypto`, `golang.org/x/sync`. Ask for anything else.
+- Every route that needs a logged-in user goes through `auth.Require` / `auth.RequireWrite`: that is where CSRF is enforced for cookie sessions. Never read `auth.User(ctx)` on an unwrapped route.
 - Never hard-code hostnames, IPs, domains or keys: env config only.
 - Don't touch files outside your package except `internal/db/queries/<area>.sql` and `internal/httpapi/<area>.go`.
 - Report: what you built, what you left out and why, test results, any behaviour you weren't sure of.

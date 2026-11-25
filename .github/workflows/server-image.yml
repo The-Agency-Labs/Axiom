@@ -5,8 +5,8 @@ on:
   push:
     branches:
       - "rewrite/main"
-    tags:
-      - "v*"
+    # No v* tags yet: the Python image workflow (docker-image.yml) pushes the
+    # same image on tags until the Go server replaces it at cutover.
 
 env:
   REGISTRY: ghcr.io
