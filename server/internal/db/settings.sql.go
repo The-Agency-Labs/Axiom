@@ -52,7 +52,7 @@ func (q *Queries) ListUserMediaSettings(ctx context.Context, userID int64) ([]Us
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at FROM users ORDER BY id
+SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at, calendar_token FROM users ORDER BY id
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
@@ -77,6 +77,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.WatchedPercent,
 			&i.CreatedAt,
 			&i.LastLoginAt,
+			&i.CalendarToken,
 		); err != nil {
 			return nil, err
 		}
