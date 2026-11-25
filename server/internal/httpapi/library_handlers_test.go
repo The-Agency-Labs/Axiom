@@ -546,6 +546,11 @@ func TestLibraryReclassify(t *testing.T) {
 	itemID := libraryNum(libraryMap(e["item"])["id"])
 	path := fmt.Sprintf("/api/v1/items/%d/kind", itemID)
 
+	// Items are shared, so a non-admin may not reclassify.
+	if code, _ := le.call(le.other, "POST", path, map[string]any{"kind": "anime"}); code != 403 {
+		t.Fatalf("non-admin reclassify: %d, want 403", code)
+	}
+
 	code, body = le.post(path, map[string]any{"kind": "anime"})
 	it := le.expect(code, 200, body, "reclassify")
 	if it["media_type"] != "anime" || it["is_anime"] != true || libraryNum(it["id"]) != itemID || it["media_id"] != "100" {

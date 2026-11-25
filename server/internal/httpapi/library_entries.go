@@ -274,6 +274,10 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 
 	// POST /items/{item_id}/kind: move a TMDB title between tv/anime or movie/anime_movie.
 	mux.Handle("POST /api/v1/items/{item_id}/kind", auth.RequireWrite(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
+		// Items are shared by every user, so only an admin may reclassify.
+		if u := auth.User(r.Context()); u == nil || u.IsAdmin == 0 {
+			return nil, Errorf(http.StatusForbidden, "Only an admin can reclassify titles")
+		}
 		id, err := libraryPathInt(r, "item_id")
 		if err != nil {
 			return nil, err
