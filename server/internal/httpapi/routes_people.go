@@ -1,8 +1,15 @@
 package httpapi
 
-import "net/http"
+import (
+	"net/http"
 
-// peopleRoutes registers the people, credits endpoints.
+	"github.com/the-agency-labs/encompass/server/internal/auth"
+)
+
+// peopleRoutes registers the people and credits endpoints (src/api/people.py).
 func (s *Server) peopleRoutes(mux *http.ServeMux) {
-	_ = mux
+	mux.Handle("GET /api/v1/credits/{media_type}/{source}/{media_id}", auth.Require(JSON(s.peopleTitleCredits)))
+	mux.Handle("GET /api/v1/people", auth.Require(JSON(s.peopleLibrary)))
+	mux.Handle("GET /api/v1/people/search/by-name", auth.Require(JSON(s.peopleByName)))
+	mux.Handle("GET /api/v1/people/{person_id}", auth.Require(JSON(s.peoplePerson)))
 }
