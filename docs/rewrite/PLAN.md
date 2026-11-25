@@ -114,3 +114,12 @@ their own worktrees on `rewrite/<phase>-<area>` branches off `rewrite/main`.
 - Never hard-code hostnames, IPs, domains or keys: env config only.
 - Don't touch files outside your package except `internal/db/queries/<area>.sql` and `internal/httpapi/<area>.go`.
 - Report: what you built, what you left out and why, test results, any behaviour you weren't sure of.
+
+## Integration notes from earlier phases (pick these up)
+
+- Phase 3 wiring: call `mappings.New(...).RegisterJobs(jobs)` in `main.go`; each provider has `Metadata(...)`/`Search(...)` (or `Game`/`Boardgame`/`Comic`) — phase 3 builds the dispatch by (kind, source) that `services.get_media_metadata`/`search` did.
+- Anime/Anime Movie are TMDB-structured (whole show: seasons, specials, episodes from TMDB; TVDB for gaps and Jellyfin matching). AniList/MAL only enrich (native titles, voice actors, studios) and drive mapping/imports. MAL/AniList-only "count" anime exist solely for titles with no TMDB match. The AniList/MAL clients only know `anime`/`manga`; the catalog maps `anime_movie` to TMDB movies.
+- The TMDB+AniList episode merge (`catalog/anime.py: anime_episodes`) belongs to phase 3A.
+- Phase 4 Jellyfin: the anibridge helpers in `src/integrations/webhooks/anime_mappings.py` (AniDB/TVDB/TMDB-movie/IMDb → MAL, separate `mappings.min.json` dataset) are only needed when ANIME_AS_TV=False; with anime tracked as TMDB shows they can be dropped — confirm before porting.
+- Provider timestamps: MAL `broadcast` strings depend on TZ (golden recorded in America/Toronto).
+- TVDB token and IGDB token live in memory, not in `provider_cache`.
