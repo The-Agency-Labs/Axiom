@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import requests
 from django.test import TestCase, override_settings
 
 from app.providers import tvdb
@@ -129,3 +130,21 @@ class TVDBProviderTests(TestCase):
             "tvdb_series_tmdb_id_459821",
             "283657",
         )
+
+    @patch("app.providers.tvdb.cache")
+    @patch("app.providers.tvdb.get_access_token")
+    @patch("app.providers.tvdb.services.api_request")
+    def test_episode_not_found_returns_none(
+        self,
+        mock_api_request,
+        mock_get_access_token,
+        mock_cache,
+    ):
+        """A TVDB 404 is a miss, so webhook matching can fall back to other IDs."""
+        mock_cache.get.return_value = None
+        mock_get_access_token.return_value = "test-token"
+        response = requests.Response()
+        response.status_code = 404
+        mock_api_request.side_effect = requests.exceptions.HTTPError(response=response)
+
+        self.assertIsNone(tvdb.episode(999))

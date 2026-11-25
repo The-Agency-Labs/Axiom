@@ -84,6 +84,10 @@ def episode(episode_id):
             headers=headers,
         )
     except requests.exceptions.HTTPError as error:
+        if error.response.status_code == requests.codes.not_found:
+            # Deleted or renumbered on TVDB; let callers try the other IDs.
+            logger.info("TVDB has no episode %s", episode_id)
+            return None
         error_resp = handle_error(error)
         if error_resp and error_resp.get("retry"):
             headers["Authorization"] = f"Bearer {get_access_token()}"
