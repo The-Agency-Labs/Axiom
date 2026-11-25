@@ -409,7 +409,28 @@ func (s *Service) SyncLibraryProgress(ctx context.Context, doc Document) error {
 	if pct >= CompletePercentage {
 		progress = int(total)
 	}
-	return s.Library.SetProgress(ctx, userID, item.ID, progress, SourceKOReader, s.now())
+	return s.Library.SetProgress(ctx, userID, item.ID, progress, SourceKOReader, s.lastReadAt(ctx, root))
+}
+
+// lastReadAt is when the document was last read: its newest session end or
+// KOSync position, whichever is later, never in the future. Progress (and a
+// finish date) carries that time, so linking an old document doesn't date
+// the reading to the moment it was linked.
+func (s *Service) lastReadAt(ctx context.Context, doc Document) time.Time {
+	now := s.now()
+	var last time.Time
+	if end, err := s.Q.LastDocumentSessionEnd(ctx, sql.NullInt64{Int64: doc.ID, Valid: true}); err == nil {
+		last = parseStamp(end)
+	}
+	if doc.ProgressUpdatedAt.Valid {
+		if t := parseStamp(doc.ProgressUpdatedAt.String); t.After(last) {
+			last = t
+		}
+	}
+	if last.IsZero() || last.After(now) {
+		return now
+	}
+	return last
 }
 
 // position returns how far through the book a document is (0..1, -1 when

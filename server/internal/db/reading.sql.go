@@ -285,6 +285,20 @@ func (q *Queries) InsertReadingSession(ctx context.Context, arg InsertReadingSes
 	return i, err
 }
 
+const lastDocumentSessionEnd = `-- name: LastDocumentSessionEnd :one
+SELECT ended_at FROM reading_sessions
+WHERE document_id = ?1
+   OR document_id IN (SELECT d.id FROM reading_documents d WHERE d.merged_into = ?1)
+ORDER BY ended_at DESC LIMIT 1
+`
+
+func (q *Queries) LastDocumentSessionEnd(ctx context.Context, documentID sql.NullInt64) (string, error) {
+	row := q.db.QueryRowContext(ctx, lastDocumentSessionEnd, documentID)
+	var ended_at string
+	err := row.Scan(&ended_at)
+	return ended_at, err
+}
+
 const listDocumentsMergedInto = `-- name: ListDocumentsMergedInto :many
 SELECT id, user_id, document_hash, title, authors, total_pages, item_id, merged_into, progress, percentage, device, device_id, progress_updated_at, created_at, updated_at, ignored, link_checked_at FROM reading_documents WHERE merged_into = ?
 `

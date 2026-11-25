@@ -81,6 +81,12 @@ WHERE document_id = sqlc.arg(document_id)
    OR document_id IN (SELECT d.id FROM reading_documents d WHERE d.merged_into = sqlc.arg(document_id))
 ORDER BY started_at LIMIT 1;
 
+-- name: LastDocumentSessionEnd :one
+SELECT ended_at FROM reading_sessions
+WHERE document_id = sqlc.arg(document_id)
+   OR document_id IN (SELECT d.id FROM reading_documents d WHERE d.merged_into = sqlc.arg(document_id))
+ORDER BY ended_at DESC LIMIT 1;
+
 -- name: ListReadingSessions :many
 SELECT sqlc.embed(reading_sessions), CAST(COALESCE(d.merged_into, d.id, 0) AS INTEGER) AS effective_document_id
 FROM reading_sessions

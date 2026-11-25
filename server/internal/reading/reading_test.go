@@ -458,3 +458,31 @@ func TestAutoLinkAllUsersLinksUntriedDocuments(t *testing.T) {
 		t.Fatalf("document not linked: %+v", d)
 	}
 }
+
+// Linking a document finished long ago dates the finish to the last reading
+// session, not to the moment of linking.
+func TestLinkOldFinishedDocumentKeepsReadingDates(t *testing.T) {
+	env := readingtest.NewEnv(t, t0)
+	env.HC.Add(readingtest.Book{ID: "9", Title: "Golden Son", Author: "Pierce Brown", Pages: 400})
+	start := time.Date(2025, 3, 1, 20, 0, 0, 0, time.UTC)
+	end := time.Date(2025, 3, 9, 21, 0, 0, 0, time.UTC)
+	res, err := env.Reading.IngestKOReader(ctx, env.User, reading.KOBook{MD5: "old", Title: "Golden Son", Authors: "Pierce Brown", TotalPages: ptr(int64(400)),
+		PageStats: []reading.PageStat{stat(1, start, 600), stat(400, end, 600)}}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := env.Reading.LinkToBook(ctx, res.Document, "hardcover", "9"); err != nil {
+		t.Fatal(err)
+	}
+	item, err := env.Catalog.EnsureItem(ctx, "book", "hardcover", "9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	e, err := env.Library.CurrentEntry(ctx, env.User, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.Status != library.Completed || !strings.HasPrefix(e.FinishedAt.String, "2025-03-09") || !strings.HasPrefix(e.StartedAt.String, "2025-03-01") {
+		t.Fatalf("status=%s started=%s finished=%s", e.Status, e.StartedAt.String, e.FinishedAt.String)
+	}
+}
