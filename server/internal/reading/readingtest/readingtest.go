@@ -121,6 +121,11 @@ type Env struct {
 // NewEnv builds an Env (clock at start) with one user, "owner".
 func NewEnv(t testing.TB, start time.Time) *Env {
 	t.Helper()
+	// Most fixtures model a session as a single page turn; tests of the
+	// one-page rule itself set reading.MinSessionPages back to 2.
+	old := reading.MinSessionPages
+	reading.MinSessionPages = 1
+	t.Cleanup(func() { reading.MinSessionPages = old })
 	ce := catalogtest.NewEnv(t, start)
 	e := &Env{Env: ce, HC: &Provider{Source: "hardcover"}, OL: &Provider{Source: "openlibrary"}}
 	ce.Catalog.Reg.P.Hardcover = e.HC

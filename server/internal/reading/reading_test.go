@@ -486,3 +486,29 @@ func TestLinkOldFinishedDocumentKeepsReadingDates(t *testing.T) {
 		t.Fatalf("status=%s started=%s finished=%s", e.Status, e.StartedAt.String, e.FinishedAt.String)
 	}
 }
+
+// A one-page open (an accidental tap on a book) isn't reading: it makes no
+// session, while the page event itself is kept.
+func TestOnePageOpenIsNotASession(t *testing.T) {
+	env := readingtest.NewEnv(t, t0)
+	reading.MinSessionPages = 2
+	day := time.Date(2026, 11, 20, 20, 0, 0, 0, time.UTC)
+	res, err := env.Reading.IngestKOReader(ctx, env.User, reading.KOBook{MD5: "x", Title: "Dune", Authors: "Frank Herbert", TotalPages: ptr(int64(500)),
+		PageStats: []reading.PageStat{
+			stat(40, day, 30),                                                                      // accidental open
+			stat(41, day.Add(2*time.Hour), 120), stat(42, day.Add(2*time.Hour+2*time.Minute), 120), // real reading
+		}}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	days, err := env.Reading.Journal(ctx, env.User, day, day)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(days) != 1 || days[0].Pages != 2 || days[0].Minutes != 4 {
+		t.Fatalf("journal = %+v", days)
+	}
+	if m, err := env.Q.MaxDocumentPage(ctx, res.Document.ID); err != nil || m.Page != 42 {
+		t.Fatalf("page events: %+v %v", m, err)
+	}
+}

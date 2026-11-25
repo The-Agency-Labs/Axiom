@@ -18,6 +18,11 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/library"
 )
 
+// MinSessionPages: a KOReader session must cover at least this many pages to
+// count as reading; a single page is an accidental open. The page events are
+// kept either way.
+var MinSessionPages = 2
+
 // SessionGap: a pause longer than this between page turns starts a new session.
 const SessionGap = 10 * time.Minute
 
@@ -255,7 +260,8 @@ func groupEvents(events []db.PageEvent) [][]db.PageEvent {
 	return groups
 }
 
-// rebuildSessions recreates a document's KOReader sessions from its page events.
+// rebuildSessions recreates a document's KOReader sessions from its page
+// events, leaving out one-page opens (MinSessionPages).
 func rebuildSessions(ctx context.Context, q *db.Queries, doc Document, device string) error {
 	if err := q.DeleteKOReaderSessions(ctx, sql.NullInt64{Int64: doc.ID, Valid: true}); err != nil {
 		return err
@@ -273,6 +279,9 @@ func rebuildSessions(ctx context.Context, q *db.Queries, doc Document, device st
 		for _, e := range g {
 			pages[e.Page] = true
 			seconds += e.DurationSeconds
+		}
+		if len(pages) < MinSessionPages {
+			continue
 		}
 		last := g[len(g)-1]
 		_, err := q.InsertReadingSession(ctx, db.InsertReadingSessionParams{
