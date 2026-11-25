@@ -51,7 +51,12 @@ class AnimeWebhookMixin:
         status = Status.COMPLETED.value if is_completed else Status.IN_PROGRESS.value
 
         if current_instance and current_instance.status != Status.COMPLETED.value:
-            current_instance.progress = episode_number
+            # Starting (or stopping partway through) an episode never moves
+            # progress backwards: players re-send start events after an
+            # episode ends, and rewatches shouldn't undo progress.
+            current_instance.progress = max(
+                current_instance.progress or 0, episode_number
+            )
 
             if is_completed:
                 current_instance.end_date = now

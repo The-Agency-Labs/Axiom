@@ -2,6 +2,8 @@ import json
 import logging
 from enum import StrEnum
 
+from django.conf import settings
+
 from app.models import MediaTypes
 
 from .base import BaseWebhookProcessor
@@ -37,6 +39,15 @@ def _as_bool(value):
     return bool(value)
 
 
+def _watched_enough(item):
+    """Return whether playback stopped past JELLYFIN_WATCHED_PERCENT of the runtime."""
+    position = _as_int(item.get("PlaybackPositionTicks"))
+    runtime = _as_int(item.get("RunTimeTicks"))
+    if not position or not runtime:
+        return False
+    return position * 100 >= runtime * settings.JELLYFIN_WATCHED_PERCENT
+
+
 def normalize_payload(payload):
     """Accept the official Webhook plugin's plain template as well as Yamtrack's.
 
@@ -55,6 +66,10 @@ def normalize_payload(payload):
     user_data = dict(item.get("UserData") or {})
     if "Played" in user_data:
         user_data["Played"] = _as_bool(user_data["Played"])
+    if payload["Event"] == JellyfinEvent.STOP and _watched_enough(item):
+        # Jellyfin only reports PlayedToCompletion past its max resume
+        # percentage (90% by default); count credits-skipping stops too.
+        user_data["Played"] = True
     item["UserData"] = user_data
     payload["Item"] = item
     return payload
@@ -74,6 +89,8 @@ PLUGIN_TEMPLATE = """{
       "Tvdb": "{{Provider_tvdb}}"
     },
     "UserData": {"Played": "{{PlayedToCompletion}}"},
+    "PlaybackPositionTicks": "{{PlaybackPositionTicks}}",
+    "RunTimeTicks": "{{RunTimeTicks}}",
     "SeriesName": "{{SeriesName}}",
     "ParentIndexNumber": "{{SeasonNumber}}",
     "IndexNumber": "{{EpisodeNumber}}"

@@ -719,6 +719,77 @@ class JellyfinWebhookTests(TestCase):
         self.assertEqual(anime.status, Status.IN_PROGRESS.value)
         self.assertEqual(anime.progress, 1)
 
+    @patch("app.providers.mal.anime")
+    def test_anime_play_after_finish_keeps_progress(self, mock_anime):
+        """A start event for the episode just finished doesn't undo it."""
+        mock_anime.return_value = {"title": "Show", "image": "", "max_progress": 12}
+        processor = JellyfinWebhookProcessor()
+        played = {"Event": "Stop", "Item": {"UserData": {"Played": True}}}
+        started = {"Event": "Play", "Item": {"UserData": {"Played": False}}}
+
+        processor._handle_anime("59983", 3, played, self.user)
+        processor._handle_anime("59983", 3, started, self.user)
+
+        anime = Anime.objects.get(item__media_id="59983", user=self.user)
+        self.assertEqual(anime.progress, 3)
+
+        processor._handle_anime("59983", 4, started, self.user)
+        anime.refresh_from_db()
+        self.assertEqual(anime.progress, 3)
+
+    @patch("app.providers.tmdb.tv_with_seasons")
+    def test_rewatch_keeps_completed_show_completed(self, mock_tv):
+        """Replaying an old episode doesn't reopen a finished show or season."""
+
+        def metadata(_media_id, seasons):
+            data = {"title": "Show", "image": ""}
+            for number in seasons:
+                data[f"season/{number}"] = {
+                    "image": "",
+                    "episodes": [{"episode_number": n} for n in (1, 2)],
+                }
+            return data
+
+        mock_tv.side_effect = metadata
+        tv_item = Item.objects.create(
+            media_id="999",
+            source=Sources.TMDB.value,
+            media_type=MediaTypes.TV.value,
+            title="Show",
+            image="",
+        )
+        tv = TV.objects.create(
+            item=tv_item, user=self.user, status=Status.IN_PROGRESS.value
+        )
+        season_item, _ = Item.objects.get_or_create(
+            media_id="999",
+            source=Sources.TMDB.value,
+            media_type=MediaTypes.SEASON.value,
+            season_number=1,
+            defaults={"title": "Show", "image": ""},
+        )
+        Season.objects.get_or_create(
+            item=season_item,
+            user=self.user,
+            defaults={"related_tv": tv, "status": Status.IN_PROGRESS.value},
+        )
+        # Mark both finished without the save() side effects.
+        TV.objects.filter(pk=tv.pk).update(status=Status.COMPLETED.value)
+        Season.objects.filter(item=season_item).update(status=Status.COMPLETED.value)
+        started = {"Event": "Play", "Item": {"UserData": {"Played": False}}}
+        processor = JellyfinWebhookProcessor()
+
+        processor._handle_tv_episode("999", 1, 2, started, self.user)
+        tv.refresh_from_db()
+        season = Season.objects.get(item=season_item, user=self.user)
+        self.assertEqual(tv.status, Status.COMPLETED.value)
+        self.assertEqual(season.status, Status.COMPLETED.value)
+
+        # A season never watched before (e.g. newly aired) reopens the show.
+        processor._handle_tv_episode("999", 2, 1, started, self.user)
+        tv.refresh_from_db()
+        self.assertEqual(tv.status, Status.IN_PROGRESS.value)
+
     def test_ignored_event_types(self):
         """Test webhook ignores irrelevant event types."""
         payload = {
@@ -988,6 +1059,22 @@ class JellyfinPluginTemplateTests(TestCase):
         start = normalize_payload(self._payload("PlaybackStart", ""))
         self.assertEqual(start["Event"], "Play")
         self.assertFalse(start["Item"]["UserData"]["Played"])
+
+    def test_stop_past_threshold_counts_as_watched(self):
+        """Stopping at 80% marks the episode played; 50% doesn't."""
+        from integrations.webhooks.jellyfin import normalize_payload  # noqa: PLC0415
+
+        late = self._payload("PlaybackStop", "False")
+        late["Item"] |= {"PlaybackPositionTicks": "800", "RunTimeTicks": "1000"}
+        self.assertTrue(normalize_payload(late)["Item"]["UserData"]["Played"])
+
+        early = self._payload("PlaybackStop", "False")
+        early["Item"] |= {"PlaybackPositionTicks": "500", "RunTimeTicks": "1000"}
+        self.assertFalse(normalize_payload(early)["Item"]["UserData"]["Played"])
+
+        start = self._payload("PlaybackStart", "")
+        start["Item"] |= {"PlaybackPositionTicks": "900", "RunTimeTicks": "1000"}
+        self.assertFalse(normalize_payload(start)["Item"]["UserData"]["Played"])
 
     def test_legacy_event_is_kept(self):
         """Payloads that already carry Event are left alone."""

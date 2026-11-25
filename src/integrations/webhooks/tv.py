@@ -231,14 +231,6 @@ class TVWebhookMixin:
 
         if tv_created:
             logger.info("Created new TV instance: %s", tv_metadata["title"])
-        elif tv_instance.status != Status.IN_PROGRESS.value:
-            tv_instance.status = Status.IN_PROGRESS.value
-            tv_instance.save()
-            logger.info(
-                "Updated TV instance status to %s: %s",
-                Status.IN_PROGRESS.value,
-                tv_metadata["title"],
-            )
 
         season_item, _ = app.models.Item.objects.get_or_create(
             media_id=media_id,
@@ -258,13 +250,29 @@ class TVWebhookMixin:
             defaults={"status": Status.IN_PROGRESS.value},
         )
 
+        # Rewatching (or scrubbing through) something already finished never
+        # reopens it. A show only reopens for a season not watched before.
+        finished = tv_instance.status == Status.COMPLETED.value
+        reopen = season_created if finished else not tv_created
+        if reopen and tv_instance.status != Status.IN_PROGRESS.value:
+            tv_instance.status = Status.IN_PROGRESS.value
+            tv_instance.save()
+            logger.info(
+                "Updated TV instance status to %s: %s",
+                Status.IN_PROGRESS.value,
+                tv_metadata["title"],
+            )
+
         if season_created:
             logger.info(
                 "Created new season instance: %s S%02d",
                 tv_metadata["title"],
                 season_number,
             )
-        elif season_instance.status != Status.IN_PROGRESS.value:
+        elif season_instance.status not in (
+            Status.IN_PROGRESS.value,
+            Status.COMPLETED.value,
+        ):
             season_instance.status = Status.IN_PROGRESS.value
             season_instance.save()
             logger.info(

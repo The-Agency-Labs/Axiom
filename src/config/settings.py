@@ -681,6 +681,10 @@ if SOCIALACCOUNT_ONLY:
     ACCOUNT_EMAIL_VERIFICATION = "none"
 
 REGISTRATION = config("REGISTRATION", default=True, cast=bool)
+
+# Jellyfin playback stopped at or past this share of the runtime counts as
+# watched, even if Jellyfin itself didn't mark it played.
+JELLYFIN_WATCHED_PERCENT = config("JELLYFIN_WATCHED_PERCENT", default=75, cast=int)
 if not REGISTRATION:
     ACCOUNT_ADAPTER = "users.account_adapter.NoNewUsersAccountAdapter"
 
