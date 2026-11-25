@@ -1,0 +1,25 @@
+{
+  "data": {
+    "Media": {
+      "characters": {
+        "pageInfo": {"hasNextPage": true},
+        "edges": [
+          {
+            "role": "MAIN",
+            "node": {"id": 1, "name": {"full": "Frieren", "native": "フリーレン"}, "image": {"medium": "https://img.example/frieren.png"}},
+            "voiceActors": [
+              {"id": 112215, "languageV2": "Japanese", "name": {"full": "Atsumi Tanezaki", "native": "種﨑敦美"}, "image": {"medium": "https://img.example/atsumi.jpg"}},
+              {"id": 5, "languageV2": "English", "name": {"full": "Callie Prendergast", "native": null}, "image": null},
+              {"id": 6, "languageV2": "German", "name": {"full": "Someone German", "native": null}, "image": null}
+            ]
+          },
+          {
+            "role": "SUPPORTING",
+            "node": {"id": 2, "name": {"full": "Fern", "native": "フェルン"}, "image": null},
+            "voiceActors": []
+          }
+        ]
+      }
+    }
+  }
+}

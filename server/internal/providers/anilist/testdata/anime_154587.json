@@ -1,0 +1,35 @@
+{
+  "data": {
+    "Media": {
+      "id": 154587,
+      "idMal": 52991,
+      "siteUrl": "https://anilist.co/anime/154587",
+      "title": {"userPreferred": "Sousou no Frieren"},
+      "coverImage": {"extraLarge": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx154587.jpg", "large": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx154587.jpg"},
+      "description": "The demon king has been defeated.<br><br>The <i>hero</i> party disbands. &amp; so on.<br />",
+      "format": "TV",
+      "status": "RELEASING",
+      "startDate": {"year": 2023, "month": 9, "day": 29},
+      "endDate": {"year": 2024, "month": 3, "day": null},
+      "season": "FALL",
+      "seasonYear": 2023,
+      "episodes": 28,
+      "duration": 24,
+      "chapters": null,
+      "source": "MANGA",
+      "genres": ["Adventure", "Drama"],
+      "averageScore": 91,
+      "stats": {"scoreDistribution": [{"amount": 100}, {"amount": 250}]},
+      "studios": {"nodes": [{"name": "MADHOUSE"}]},
+      "nextAiringEpisode": {"airingAt": 1700000000},
+      "relations": {"edges": [
+        {"node": {"id": 118586, "type": "MANGA", "title": {"userPreferred": "Sousou no Frieren"}, "coverImage": {"large": "https://s4.anilist.co/m.jpg"}}},
+        {"node": {"id": 182255, "type": "ANIME", "title": {"userPreferred": "Sousou no Frieren 2nd Season"}, "coverImage": {"large": "https://s4.anilist.co/a2.jpg"}}}
+      ]},
+      "recommendations": {"nodes": [
+        {"mediaRecommendation": {"id": 21827, "type": "ANIME", "title": {"userPreferred": "Violet Evergarden"}, "coverImage": {"large": "https://s4.anilist.co/v.jpg"}}},
+        {"mediaRecommendation": null}
+      ]}
+    }
+  }
+}

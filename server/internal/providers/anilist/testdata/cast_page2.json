@@ -1,0 +1,18 @@
+{
+  "data": {
+    "Media": {
+      "characters": {
+        "pageInfo": {"hasNextPage": true},
+        "edges": [
+          {
+            "role": "SUPPORTING",
+            "node": {"id": 3, "name": {"full": "Stark", "native": "シュタルク"}, "image": {"medium": "https://img.example/stark.png"}},
+            "voiceActors": [
+              {"id": 7, "languageV2": "Japanese", "name": {"full": "Chiaki Kobayashi", "native": "小林千晃"}, "image": {"medium": "https://img.example/chiaki.jpg"}}
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

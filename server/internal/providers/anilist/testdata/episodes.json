@@ -1,0 +1,16 @@
+{
+  "data": {
+    "Media": {
+      "id": 154587,
+      "idMal": 52991,
+      "episodes": 28,
+      "streamingEpisodes": [
+        {"title": "Episode 1 - The Journey's End", "thumbnail": "https://img.example/1.jpg", "site": "Crunchyroll"},
+        {"title": "Ep. 2: Next Steps", "thumbnail": "https://img.example/2.jpg", "site": "Crunchyroll"},
+        {"title": "Episode 1 - Duplicate on another site", "thumbnail": "https://img.example/dup.jpg", "site": "Other"},
+        {"title": "A special without a number", "thumbnail": null, "site": "Crunchyroll"},
+        {"title": "Episode 5", "thumbnail": null, "site": "Crunchyroll"}
+      ]
+    }
+  }
+}
