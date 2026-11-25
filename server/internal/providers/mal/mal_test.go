@@ -142,7 +142,7 @@ func TestSearch(t *testing.T) {
 		t.Fatal(err)
 	}
 	if query["q"][0] != "frieren" || query["limit"][0] != "24" || query["offset"][0] != "24" ||
-		query["nsfw"][0] != "true" || query["fields"][0] != "media_type" {
+		query["nsfw"][0] != "true" || query["fields"][0] != "media_type,alternative_titles" {
 		t.Fatalf("query %v", query)
 	}
 	got := jsonOf(t, page)
@@ -237,4 +237,20 @@ func jsonEqual(a, b any) bool {
 	x, _ := json.Marshal(a)
 	y, _ := json.Marshal(b)
 	return string(x) == string(y)
+}
+
+func TestDisplayTitlesPreferEnglish(t *testing.T) {
+	for _, tc := range []struct {
+		main, en, title, native string
+	}{
+		{"Jeonjijeok Dokja Sijeom", "Omniscient Reader", "Omniscient Reader", "Jeonjijeok Dokja Sijeom"},
+		{"Shuumatsu no Walküre", "Record of Ragnarok", "Record of Ragnarok", "Shuumatsu no Walküre"},
+		{"Blue Lock", "Blue Lock", "Blue Lock", ""}, // same name: no subtitle
+		{"Hikaru no Go", "", "Hikaru no Go", ""},    // no English title
+	} {
+		title, native := displayTitles(tc.main, &altTitles{En: tc.en})
+		if title != tc.title || native != tc.native {
+			t.Errorf("%q/%q -> %q/%q, want %q/%q", tc.main, tc.en, title, native, tc.title, tc.native)
+		}
+	}
 }

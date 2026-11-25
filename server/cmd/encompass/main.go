@@ -70,8 +70,10 @@ func main() {
 		err = migrateDjango(args, os.Stdout)
 	case "shows-to-tvdb":
 		err = showsToTVDB(args, os.Stdout)
+	case "refresh-items":
+		err = refreshItems(args, os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db> | shows-to-tvdb [--dry-run]]\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db> | shows-to-tvdb [--dry-run] | refresh-items --source <source>]\n", cmd)
 		os.Exit(2)
 	}
 	if err != nil {

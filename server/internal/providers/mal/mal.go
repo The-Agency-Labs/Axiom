@@ -30,7 +30,7 @@ const (
 	// ImgNone is the placeholder image (settings.IMG_NONE).
 	ImgNone = "https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg"
 
-	baseFields = "title,main_picture,media_type,start_date,end_date,synopsis,status,genres,mean,num_scoring_users,recommendations"
+	baseFields = "title,alternative_titles,main_picture,media_type,start_date,end_date,synopsis,status,genres,mean,num_scoring_users,recommendations"
 	cacheTTL   = 24 * time.Hour
 )
 
@@ -92,9 +92,28 @@ type picture struct {
 }
 
 type node struct {
-	ID          int      `json:"id"`
-	Title       string   `json:"title"`
-	MainPicture *picture `json:"main_picture"`
+	ID          int        `json:"id"`
+	Title       string     `json:"title"`
+	AltTitles   *altTitles `json:"alternative_titles"`
+	MainPicture *picture   `json:"main_picture"`
+}
+
+// altTitles are MAL's other names for an entry; En is the official English
+// title, empty when there is none.
+type altTitles struct {
+	En string `json:"en"`
+}
+
+// displayTitles returns the title to show and the original one to keep as
+// a subtitle: the English title when MAL has one that differs, else MAL's
+// main (usually romanized) title and no subtitle.
+func displayTitles(main string, alt *altTitles) (title, native string) {
+	if alt != nil {
+		if en := strings.TrimSpace(alt.En); en != "" && !strings.EqualFold(en, strings.TrimSpace(main)) {
+			return en, main
+		}
+	}
+	return main, ""
 }
 
 type edge struct {
@@ -113,12 +132,12 @@ func (c *Client) Search(ctx context.Context, mediaType, query string, page int, 
 	if page < 1 {
 		page = 1
 	}
-	key := fmt.Sprintf("search_%s_%s_%s_%d_%s", Source, mediaType, query, page, pyBool(showAdult))
+	key := fmt.Sprintf("search2_%s_%s_%s_%d_%s", Source, mediaType, query, page, pyBool(showAdult))
 	var out providers.SearchPage
 	err := c.base.Cached(ctx, key, cacheTTL, &out, func() (any, error) {
 		params := url.Values{
 			"q":      {query},
-			"fields": {"media_type"},
+			"fields": {"media_type,alternative_titles"},
 			"limit":  {strconv.Itoa(PerPage)},
 			"offset": {strconv.Itoa((page - 1) * PerPage)},
 		}
@@ -139,13 +158,18 @@ func (c *Client) Search(ctx context.Context, mediaType, query string, page int, 
 		}
 		results := make([]providers.Metadata, 0, len(resp.Data))
 		for _, m := range resp.Data {
-			results = append(results, providers.Metadata{
+			title, native := displayTitles(m.Node.Title, m.Node.AltTitles)
+			md := providers.Metadata{
 				"media_id":   m.Node.ID,
 				"source":     Source,
 				"media_type": mediaType,
-				"title":      m.Node.Title,
+				"title":      title,
 				"image":      imageURL(m.Node),
-			})
+			}
+			if native != "" {
+				md["native_title"] = native
+			}
+			results = append(results, md)
 		}
 		total := PerPage * 3 // MAL has no limit, we set a max of 3 pages
 		return providers.SearchPage{
@@ -163,20 +187,21 @@ type genre struct {
 }
 
 type response struct {
-	Title           string   `json:"title"`
-	MainPicture     *picture `json:"main_picture"`
-	MediaType       *string  `json:"media_type"`
-	StartDate       *string  `json:"start_date"`
-	EndDate         *string  `json:"end_date"`
-	Synopsis        *string  `json:"synopsis"`
-	Status          *string  `json:"status"`
-	Genres          []genre  `json:"genres"`
-	Mean            *float64 `json:"mean"`
-	NumScoringUsers int      `json:"num_scoring_users"`
-	NumEpisodes     *int     `json:"num_episodes"`
-	NumChapters     *int     `json:"num_chapters"`
-	AvgEpisodeDur   *float64 `json:"average_episode_duration"`
-	Studios         []genre  `json:"studios"`
+	Title           string     `json:"title"`
+	AltTitles       *altTitles `json:"alternative_titles"`
+	MainPicture     *picture   `json:"main_picture"`
+	MediaType       *string    `json:"media_type"`
+	StartDate       *string    `json:"start_date"`
+	EndDate         *string    `json:"end_date"`
+	Synopsis        *string    `json:"synopsis"`
+	Status          *string    `json:"status"`
+	Genres          []genre    `json:"genres"`
+	Mean            *float64   `json:"mean"`
+	NumScoringUsers int        `json:"num_scoring_users"`
+	NumEpisodes     *int       `json:"num_episodes"`
+	NumChapters     *int       `json:"num_chapters"`
+	AvgEpisodeDur   *float64   `json:"average_episode_duration"`
+	Studios         []genre    `json:"studios"`
 	StartSeason     *struct {
 		Year   int    `json:"year"`
 		Season string `json:"season"`
@@ -211,7 +236,7 @@ func (c *Client) Metadata(ctx context.Context, mediaType, mediaID string) (provi
 
 func (c *Client) metadata(ctx context.Context, mediaType, mediaID string) (providers.Metadata, error) {
 	var out providers.Metadata
-	err := c.base.Cached(ctx, Source+"_"+mediaType+"_"+mediaID, cacheTTL, &out, func() (any, error) {
+	err := c.base.Cached(ctx, Source+"2_"+mediaType+"_"+mediaID, cacheTTL, &out, func() (any, error) {
 		fields := baseFields + ",num_chapters,related_manga,recommendations"
 		if mediaType == "anime" {
 			fields = baseFields + ",num_episodes,average_episode_duration,studios,start_season,broadcast,source,related_anime"
@@ -226,12 +251,14 @@ func (c *Client) metadata(ctx context.Context, mediaType, mediaID string) (provi
 			return nil, &providers.Error{Provider: Label, Status: http.StatusOK, Details: "invalid JSON response", Err: err}
 		}
 		count := numberOfEpisodes(r)
+		title, native := displayTitles(r.Title, r.AltTitles)
 		data := providers.Metadata{
 			"media_id":     mediaID,
 			"source":       Source,
 			"source_url":   fmt.Sprintf("https://myanimelist.net/%s/%s", mediaType, mediaID),
 			"media_type":   mediaType,
-			"title":        r.Title,
+			"title":        title,
+			"native_title": native,
 			"max_progress": count,
 			"image":        imageURL(node{MainPicture: r.MainPicture}),
 			"synopsis":     synopsis(r),
