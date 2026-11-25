@@ -2,12 +2,12 @@
 	import { ArrowLeft, Check, LoaderCircle, Minus, Plus, Trash2 } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { del, get, post } from '#lib/api.ts';
+	import { del, get, mutate, post } from '#lib/api.ts';
 		import AnimeEpisodes from '#lib/components/AnimeEpisodes.svelte';
 	import CastSection from '#lib/components/CastSection.svelte';
 	import EpisodeBrowser from '#lib/components/EpisodeBrowser.svelte';
 	import MediaHero from '#lib/components/MediaHero.svelte';
-	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import ProgressBar from '#lib/ui/ProgressBar.svelte';
 	import { formatDate, MEDIA, progressLabel, relativeTime, STATUSES } from '#lib/media.ts';
 	import type { EntryDetail, MediaType, Status } from '#lib/types.ts';
 
@@ -84,13 +84,19 @@
 
 	async function step(direction: 'up' | 'down') {
 		if (!entry) return;
-		stepping = true;
-		try {
-			await post(`/library/${type}/${entry.id}/step`, { direction });
-			await load();
-		} finally {
-			stepping = false;
-		}
+		const current = entry;
+		const delta = direction === 'up' ? 1 : -1;
+		// Optimistic + offline-safe: queued in IndexedDB when there is no connection.
+		await mutate({
+			path: `/library/${type}/${current.id}/step`,
+			body: { direction },
+			label: `${current.item.title} ${direction === 'up' ? '+1' : '-1'}`,
+			optimistic: () => {
+				const before = current.progress;
+				current.progress = Math.max(0, before + delta);
+				return () => (current.progress = before);
+			}
+		});
 	}
 
 	async function remove() {
@@ -113,10 +119,10 @@
 	<p class="text-muted">{error}</p>
 {:else if !entry}
 	<div class="flex gap-8">
-		<div class="aspect-[2/3] w-48 animate-pulse rounded-2xl bg-white/5"></div>
+		<div class="aspect-[2/3] w-48 animate-pulse rounded-2xl bg-ink/5"></div>
 		<div class="flex-1 space-y-3">
-			<div class="h-8 w-2/3 animate-pulse rounded bg-white/5"></div>
-			<div class="h-4 w-1/3 animate-pulse rounded bg-white/5"></div>
+			<div class="h-8 w-2/3 animate-pulse rounded bg-ink/5"></div>
+			<div class="h-4 w-1/3 animate-pulse rounded bg-ink/5"></div>
 		</div>
 	</div>
 {:else}

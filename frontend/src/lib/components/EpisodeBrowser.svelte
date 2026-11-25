@@ -2,7 +2,7 @@
 	import { Check, CheckCheck, LoaderCircle, RotateCcw, Sparkles } from '@lucide/svelte';
 	import { get, post } from '#lib/api.ts';
 	import EpisodeRow from '#lib/components/EpisodeRow.svelte';
-	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import ProgressBar from '#lib/ui/ProgressBar.svelte';
 	import { minutesLabel } from '#lib/media.ts';
 	import type { SeasonDetail, Show, ShowSeason } from '#lib/types.ts';
 
@@ -137,7 +137,7 @@
 		<div class="mt-4 flex h-2 gap-0.5">
 			{#each regular as s (s.season_number)}
 				<button
-					class="h-full min-w-1.5 overflow-hidden rounded-full bg-white/8 transition hover:brightness-125"
+					class="h-full min-w-1.5 overflow-hidden rounded-full bg-ink/8 transition hover:brightness-125"
 					style="flex: {Math.max(s.episode_count, 1)}"
 					title="{s.title}: {s.watched}/{s.episode_count}"
 					aria-label="{s.title}: {s.watched} of {s.episode_count} watched"
@@ -162,7 +162,7 @@
 				onclick={() => (selected = s.season_number)}
 				class="flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition {selected ===
 				s.season_number
-					? 'border-line-strong bg-white/8 text-ink'
+					? 'border-line-strong bg-ink/8 text-ink'
 					: 'border-line text-muted hover:text-ink'}"
 			>
 				{#if s.is_special}<Sparkles class="size-3.5" />{/if}
@@ -183,7 +183,7 @@
 		{#if !season || season.season_number !== selected}
 			<div class="space-y-2">
 				{#each [0, 1, 2, 3] as i (i)}
-					<div class="h-20 animate-pulse rounded-xl bg-white/[0.03]"></div>
+					<div class="h-20 animate-pulse rounded-xl bg-ink/[0.03]"></div>
 				{/each}
 			</div>
 		{:else}

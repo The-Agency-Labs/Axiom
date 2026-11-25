@@ -2,7 +2,7 @@
 	import { BookOpen, Clock, Flame, Smartphone, Trophy } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
-	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import ProgressBar from '#lib/ui/ProgressBar.svelte';
 	import { formatDate, MEDIA, minutesLabel } from '#lib/media.ts';
 	import type { ReadingDocument, ReadingSession, ReadingStats } from '#lib/types.ts';
 
@@ -61,7 +61,7 @@
 </header>
 
 {#if !stats}
-	<div class="h-40 animate-pulse rounded-2xl bg-white/[0.03]"></div>
+	<div class="h-40 animate-pulse rounded-2xl bg-ink/[0.03]"></div>
 {:else}
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
 		{#each [
@@ -170,7 +170,7 @@
 			{#if sessions.length > 8}
 				<button
 					onclick={() => (showAll = !showAll)}
-					class="mt-2 w-full rounded-xl py-2 text-xs font-medium text-muted transition hover:bg-white/[0.03] hover:text-ink"
+					class="mt-2 w-full rounded-xl py-2 text-xs font-medium text-muted transition hover:bg-ink/[0.03] hover:text-ink"
 				>
 					{showAll ? 'Show fewer' : `Show all ${sessions.length} sessions`}
 				</button>

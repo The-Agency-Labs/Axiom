@@ -4,7 +4,7 @@
 	import { MEDIA, progressLabel, relativeTime } from '#lib/media.ts';
 	import type { NowEntry } from '#lib/types.ts';
 	import Cover from './Cover.svelte';
-	import ProgressBar from './ProgressBar.svelte';
+	import ProgressBar from '#lib/ui/ProgressBar.svelte';
 
 	let { entry, onchange }: { entry: NowEntry; onchange?: () => void } = $props();
 

@@ -25,7 +25,7 @@
 <li class="flex gap-3 p-3 sm:gap-4 {ep.aired ? '' : 'opacity-60'}">
 	<button
 		onclick={() => (open = !open)}
-		class="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-white/5 sm:w-36"
+		class="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-ink/5 sm:w-36"
 		aria-label="Show details for episode {ep.episode_number}"
 	>
 		{#if ep.image}

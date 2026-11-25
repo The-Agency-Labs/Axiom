@@ -1,16 +1,30 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" data-theme="dark">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="theme-color" content="#09090b" />
+		<meta name="color-scheme" content="dark light" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 		<link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
 		<link rel="icon" href="%sveltekit.assets%/icon.svg" type="image/svg+xml" />
 		<link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
 		<meta name="apple-mobile-web-app-title" content="Encompass" />
 		<title>Encompass</title>
+		<script>
+			// Apply the saved theme before first paint so there is no flash.
+			(function () {
+				try {
+					var pref = localStorage.getItem('theme') || 'system';
+					var dark = pref === 'dark' || (pref === 'system' && !matchMedia('(prefers-color-scheme: light)').matches);
+					document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+					var meta = document.querySelector('meta[name=theme-color]');
+					if (meta) meta.content = dark ? '#09090b' : '#f6f6f8';
+				} catch (e) {}
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

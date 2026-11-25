@@ -4,6 +4,7 @@ export type MediaType =
 	| 'episode'
 	| 'movie'
 	| 'anime'
+	| 'anime_movie'
 	| 'manga'
 	| 'game'
 	| 'book'

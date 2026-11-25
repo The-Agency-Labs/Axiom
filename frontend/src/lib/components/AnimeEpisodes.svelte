@@ -2,7 +2,7 @@
 	import { LoaderCircle } from '@lucide/svelte';
 	import { get, post } from '#lib/api.ts';
 	import EpisodeRow from '#lib/components/EpisodeRow.svelte';
-	import ProgressBar from '#lib/components/ProgressBar.svelte';
+	import ProgressBar from '#lib/ui/ProgressBar.svelte';
 	import { minutesLabel } from '#lib/media.ts';
 	import type { AnimeEpisodes } from '#lib/types.ts';
 
@@ -57,7 +57,7 @@
 	<p class="text-sm text-muted">{error}</p>
 {:else if !data}
 	<div class="space-y-2">
-		{#each [0, 1, 2, 3] as i (i)}<div class="h-20 animate-pulse rounded-xl bg-white/[0.03]"></div>{/each}
+		{#each [0, 1, 2, 3] as i (i)}<div class="h-20 animate-pulse rounded-xl bg-ink/[0.03]"></div>{/each}
 	</div>
 {:else if data.episodes.length > 1}
 	<div class="mb-3 flex flex-wrap items-end justify-between gap-2">

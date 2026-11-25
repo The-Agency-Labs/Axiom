@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { CalendarDays, ChevronRight, UsersRound } from '@lucide/svelte';
-	import { LIBRARY_TYPES, MEDIA } from '#lib/media.ts';
+	import { MEDIA } from '#lib/media.ts';
+	import { enabledTypes } from '#lib/settings.svelte.ts';
 </script>
 
 <svelte:head><title>Library · Encompass</title></svelte:head>
 
 <h1 class="mb-6 text-3xl font-semibold tracking-tight">Library</h1>
 <div class="grid gap-2 sm:grid-cols-2">
-	{#each LIBRARY_TYPES as type (type)}
+	{#each enabledTypes() as type (type)}
 		{@const meta = MEDIA[type]}
 		<a
 			href="/library/{type}"

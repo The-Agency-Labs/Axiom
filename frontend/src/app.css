@@ -1,18 +1,110 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/inter';
 
+/*
+ * Design tokens. `@theme` declares the dark (default) values; the light theme
+ * overrides the same custom properties below. Utilities such as `bg-surface`,
+ * `text-muted` or `bg-ink/8` therefore follow the active theme automatically.
+ * The theme is chosen by `data-theme="dark|light"` on <html> (see theme.svelte.ts).
+ */
 @theme {
 	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+	/* Surfaces and text */
 	--color-canvas: #09090b;
 	--color-surface: #111114;
 	--color-raised: #18181c;
 	--color-hover: #202026;
-	--color-line: rgb(255 255 255 / 0.07);
-	--color-line-strong: rgb(255 255 255 / 0.12);
+	--color-line: rgb(255 255 255 / 0.09);
+	--color-line-strong: rgb(255 255 255 / 0.16);
 	--color-ink: #f4f4f5;
 	--color-muted: #a1a1aa;
-	--color-faint: #71717a;
+	--color-faint: #8b8b95;
 	--color-brand: #8b9cff;
+	--color-on-brand: #0a0a12;
+	--color-danger: #fb7185;
+	--color-success: #34d399;
+	--color-warning: #fbbf24;
+
+	/* Media-type accents (icons, rings, chips; text on them uses ink) */
+	--color-type-tv: #38bdf8;
+	--color-type-anime: #a78bfa;
+	--color-type-movie: #fb7185;
+	--color-type-anime-movie: #e879f9;
+	--color-type-manga: #fbbf24;
+	--color-type-comic: #fb923c;
+	--color-type-book: #34d399;
+	--color-type-game: #a3e635;
+	--color-type-boardgame: #f472b6;
+
+	/* Entry statuses */
+	--color-status-progress: #38bdf8;
+	--color-status-planning: #a1a1aa;
+	--color-status-done: #34d399;
+	--color-status-paused: #fbbf24;
+	--color-status-dropped: #fb7185;
+
+	/* Type scale */
+	--text-caption: 0.6875rem;
+	--text-caption--line-height: 1rem;
+	--text-small: 0.8125rem;
+	--text-small--line-height: 1.125rem;
+
+	/* Radius scale */
+	--radius-chip: 999px;
+	--radius-card: 1rem;
+	--radius-sheet: 1.5rem;
+
+	/* Spacing helpers */
+	--spacing-tap: 2.75rem; /* 44px minimum touch target: min-h-tap / min-w-tap / size-tap */
+	--spacing-tabbar: 3.5rem;
+
+	/* Motion */
+	--ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+	--color-canvas: #f6f6f8;
+	--color-surface: #ffffff;
+	--color-raised: #f0f0f3;
+	--color-hover: #e8e8ed;
+	--color-line: rgb(0 0 0 / 0.1);
+	--color-line-strong: rgb(0 0 0 / 0.2);
+	--color-ink: #18181b;
+	--color-muted: #52525b;
+	--color-faint: #6a6a75;
+	--color-brand: #4338ca;
+	--color-on-brand: #ffffff;
+	--color-danger: #be123c;
+	--color-success: #047857;
+	--color-warning: #a16207;
+
+	--color-type-tv: #0369a1;
+	--color-type-anime: #6d28d9;
+	--color-type-movie: #be123c;
+	--color-type-anime-movie: #a21caf;
+	--color-type-manga: #a16207;
+	--color-type-comic: #c2410c;
+	--color-type-book: #047857;
+	--color-type-game: #4d7c0f;
+	--color-type-boardgame: #be185d;
+
+	--color-status-progress: #0369a1;
+	--color-status-planning: #6a6a75;
+	--color-status-done: #047857;
+	--color-status-paused: #a16207;
+	--color-status-dropped: #be123c;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+}
+
+html {
+	background: var(--color-canvas);
+	-webkit-text-size-adjust: 100%;
+	-webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -22,6 +114,25 @@ body {
 	font-family: var(--font-sans);
 	font-feature-settings: 'cv11', 'ss01';
 	-webkit-font-smoothing: antialiased;
+}
+
+body {
+	overflow-x: clip;
+	overscroll-behavior-y: none;
+}
+
+/* Inputs must be >= 16px on iOS or Safari zooms the page on focus. */
+input,
+select,
+textarea {
+	font-size: max(16px, 1em);
+}
+
+/* Visible, theme-aware keyboard focus everywhere. */
+:focus-visible {
+	outline: 2px solid var(--color-brand);
+	outline-offset: 2px;
+	border-radius: 0.375rem;
 }
 
 /* Horizontal shelves scroll with momentum and hide their scrollbar. */
@@ -39,4 +150,70 @@ body {
 
 .pb-safe {
 	padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+/* Skeleton shimmer; the static fallback keeps it quiet for reduced motion. */
+@keyframes shimmer {
+	to {
+		background-position: -200% 0;
+	}
+}
+.skeleton {
+	background: linear-gradient(90deg, var(--color-raised) 25%, var(--color-hover) 50%, var(--color-raised) 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.6s linear infinite;
+}
+
+/* Page transitions are a short fade/slide; opted out below. */
+@keyframes page-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+.page-in {
+	animation: page-in 220ms var(--ease-out-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+	.skeleton {
+		animation: none;
+	}
+}
+
+/* Form controls: 44px tall, theme aware. Use class="input" on input/select/textarea. */
+@layer components {
+	.input {
+		min-height: 2.75rem;
+		width: 100%;
+		border-radius: 0.75rem;
+		border: 1px solid var(--color-line-strong);
+		background: var(--color-canvas);
+		padding: 0.5rem 0.875rem;
+		color: var(--color-ink);
+		transition: border-color 150ms;
+	}
+	.input::placeholder {
+		color: var(--color-faint);
+	}
+	.input:focus-visible {
+		border-color: var(--color-brand);
+		outline-offset: 0;
+		border-radius: 0.75rem;
+	}
+	select.input {
+		appearance: none;
+		padding-right: 2.25rem;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b8b95' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 0.75rem center;
+	}
 }

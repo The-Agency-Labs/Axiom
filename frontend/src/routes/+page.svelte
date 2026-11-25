@@ -78,10 +78,10 @@
 	<div class="space-y-10">
 		{#each [0, 1, 2] as i (i)}
 			<div>
-				<div class="mb-3 h-6 w-32 animate-pulse rounded bg-white/5"></div>
+				<div class="mb-3 h-6 w-32 animate-pulse rounded bg-ink/5"></div>
 				<div class="flex gap-4 overflow-hidden">
 					{#each [0, 1, 2] as j (j)}
-						<div class="h-40 w-[22rem] shrink-0 animate-pulse rounded-2xl bg-white/[0.03]"></div>
+						<div class="h-40 w-[22rem] shrink-0 animate-pulse rounded-2xl bg-ink/[0.03]"></div>
 					{/each}
 				</div>
 			</div>
