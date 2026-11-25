@@ -63,10 +63,12 @@ type readingItemCache struct {
 	cat   *catalog.Catalog
 	mu    sync.Mutex
 	items map[int64]any
+	// series is the stored primary series of each linked book (nil: none).
+	series map[int64]*catalog.ItemSeries
 }
 
 func newReadingItemCache(cat *catalog.Catalog) *readingItemCache {
-	return &readingItemCache{cat: cat, items: map[int64]any{}}
+	return &readingItemCache{cat: cat, items: map[int64]any{}, series: map[int64]*catalog.ItemSeries{}}
 }
 
 // dict returns the item_dict of src/api/serializers.py, or nil.
@@ -81,6 +83,7 @@ func (c *readingItemCache) dict(ctx context.Context, id sql.NullInt64) any {
 	}
 	var out any
 	if it, err := c.cat.GetItem(ctx, id.Int64); err == nil {
+		c.series[id.Int64] = catalog.ItemSeriesFromMeta(it.Meta)
 		out = map[string]any{
 			"id": it.ID, "media_id": it.ExternalID, "source": it.Source, "media_type": it.Kind,
 			"title": it.Title, "image": it.Image, "season_number": nil, "episode_number": nil,
@@ -107,6 +110,19 @@ func (c *readingItemCache) documentDict(ctx context.Context, d reading.Document)
 	// from the Kindle title (author and edition noise dropped).
 	disp := reading.DisplayName(d.Title, d.Authors)
 	item := c.dict(ctx, d.ItemID)
+	// A linked book prefers the series stored with it over the Kindle title's.
+	if d.ItemID.Valid {
+		c.mu.Lock()
+		stored := c.series[d.ItemID.Int64]
+		c.mu.Unlock()
+		if stored != nil {
+			sameSeries := catalog.SeriesKey(disp.Series) == catalog.SeriesKey(stored.Name)
+			if stored.Position > 0 || !sameSeries {
+				disp.SeriesNumber = stored.Position
+			}
+			disp.Series = stored.Name
+		}
+	}
 	display := disp.String()
 	if m, ok := item.(map[string]any); ok {
 		if t, ok := m["title"].(string); ok && t != "" {

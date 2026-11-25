@@ -33,6 +33,7 @@ func (c *Catalog) RegisterJobs(m *jobs.Manager) {
 		slog.InfoContext(ctx, "releases refresh", "items", n)
 		return err
 	})
+	c.registerSeriesJobs(m)
 	for kind, run := range map[string]func(context.Context, Item) error{
 		JobCredits:  func(ctx context.Context, it Item) error { return c.FetchCredits(ctx, it, false) },
 		JobReleases: c.RefreshReleases,

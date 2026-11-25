@@ -1,6 +1,7 @@
 package reading
 
 import (
+	"github.com/the-agency-labs/encompass/server/internal/catalog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -31,19 +32,12 @@ var (
 	seriesGroupRe = regexp.MustCompile(`(?i)[(\[]\s*([^()\[\]]*?\S)\s*(?:,|:)?\s*(?:#|book\s+|vol\.?\s*|volume\s+|no\.?\s*)(\d{1,3}(?:\.\d)?)\s*[)\]]`)
 	// "Dune 01", "Red Rising 04", "Mistborn #2", "Expanse Book 3"
 	seriesSegRe = regexp.MustCompile(`(?i)^(.*?\S)\s+(?:#|book\s+|vol\.?\s*|volume\s+)?(\d{1,3}(?:\.\d)?)$`)
-	// "The Red Rising Trilogy" → "Red Rising"; "The Wheel of Time" is kept.
-	seriesKindRe = regexp.MustCompile(`(?i)^(?:the\s+)?(.*?\S)\s+(?:trilogy|series|saga|duology|quartet|quintet|cycle|sequence|chronicles|books|novels)$`)
 )
 
 // seriesName drops packaging words, so every book of a series shows the
 // same name: "The Red Rising Trilogy" and "Red Rising" are both "Red Rising".
-func seriesName(s string) string {
-	s = strings.TrimSpace(s)
-	if m := seriesKindRe.FindStringSubmatch(s); m != nil {
-		return m[1]
-	}
-	return s
-}
+// The rule lives in catalog, shared with stored series.
+func seriesName(s string) string { return catalog.NormalizeSeriesName(s) }
 
 // DisplayName reads the series and title out of a KOReader document title
 // such as "Herbert, Frank - Dune 02 - Dune Messiah" (→ Dune 2: Dune
