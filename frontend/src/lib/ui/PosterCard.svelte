@@ -53,12 +53,14 @@
 				</span>
 			{/if}
 			{#if progress != null}
-				<ProgressBar
-					percent={progress}
-					accent={MEDIA[type].accent}
-					label="{title} progress"
-					class="absolute inset-x-2 bottom-2 h-1 bg-black/50"
-				/>
+				<div class="absolute inset-x-2 bottom-2">
+					<ProgressBar
+						percent={progress}
+						accent={MEDIA[type].accent}
+						label="{title} progress"
+						class="h-1 bg-black/50"
+					/>
+				</div>
 			{/if}
 		</div>
 		<p class="mt-2 line-clamp-2 text-[13px] leading-snug font-medium" aria-hidden="true">{title}</p>

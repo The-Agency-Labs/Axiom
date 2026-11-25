@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -272,6 +273,51 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		return libraryEntryJSON(entry, item), nil
 	})))
 
+	// POST /library/{media_type}/{id}/watches: log a play of a movie or anime
+	// movie (a rewatch of a completed one starts a new run). Body optional:
+	// {"watched_at": RFC 3339 or YYYY-MM-DD}, default now.
+	mux.Handle("POST /api/v1/library/{media_type}/{id}/watches", auth.RequireWrite(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
+		kind, err := libraryPathKind(r)
+		if err != nil {
+			return nil, err
+		}
+		id, err := libraryPathInt(r, "id")
+		if err != nil {
+			return nil, err
+		}
+		var in struct {
+			WatchedAt string `json:"watched_at"`
+		}
+		if err := libraryDecodeOptional(r, &in); err != nil {
+			return nil, err
+		}
+		at := s.Library.Now().UTC()
+		if in.WatchedAt != "" {
+			t, err := time.Parse(time.RFC3339, in.WatchedAt)
+			if err != nil {
+				d, derr := time.ParseInLocation(time.DateOnly, in.WatchedAt, s.Library.Loc)
+				if derr != nil {
+					return nil, Errorf(http.StatusUnprocessableEntity, "watched_at must be RFC 3339 or YYYY-MM-DD")
+				}
+				t = d.Add(12 * time.Hour)
+			}
+			at = t.UTC()
+		}
+		userID := auth.User(r.Context()).ID
+		_, item, err := s.libraryEntryOf(r.Context(), userID, kind, id)
+		if err != nil {
+			return nil, err
+		}
+		if !catalog.IsMovie(item.Kind) {
+			return nil, Errorf(http.StatusBadRequest, "Only movies are watched as a whole")
+		}
+		res, err := s.Library.WatchMovie(r.Context(), userID, item.ID, at, library.SourceManual, library.WatchOptions{})
+		if err != nil {
+			return nil, libraryError(err, item.Source)
+		}
+		return libraryEntryJSON(res.Entry, item), nil
+	})))
+
 	// POST /items/{item_id}/kind: move a TMDB title between tv/anime or movie/anime_movie.
 	mux.Handle("POST /api/v1/items/{item_id}/kind", auth.RequireWrite(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
 		// Items are shared by every user, so only an admin may reclassify.
@@ -338,17 +384,38 @@ func libraryDetailSeasons(d library.EntryDetail) []map[string]any {
 }
 
 type librarySaveIn struct {
-	MediaType    string   `json:"media_type"`
-	Source       string   `json:"source"`
-	MediaID      string   `json:"media_id"`
-	SeasonNumber *int     `json:"season_number"`
-	InstanceID   *int64   `json:"instance_id"`
-	Status       *string  `json:"status"`
-	Progress     *int     `json:"progress"`
-	Score        *float64 `json:"score"`
-	StartDate    *string  `json:"start_date"`
-	EndDate      *string  `json:"end_date"`
-	Notes        *string  `json:"notes"`
+	MediaType    string          `json:"media_type"`
+	Source       string          `json:"source"`
+	MediaID      string          `json:"media_id"`
+	SeasonNumber *int            `json:"season_number"`
+	InstanceID   *int64          `json:"instance_id"`
+	Status       *string         `json:"status"`
+	Progress     *int            `json:"progress"`
+	Score        libraryOptScore `json:"score"`
+	StartDate    *string         `json:"start_date"`
+	EndDate      *string         `json:"end_date"`
+	Notes        *string         `json:"notes"`
+}
+
+// libraryOptScore tells an omitted score (leave it) from "score": null
+// (clear it) and a number (set it).
+type libraryOptScore struct {
+	Set   bool
+	Value *float64
+}
+
+func (o *libraryOptScore) UnmarshalJSON(b []byte) error {
+	o.Set = true
+	if string(b) == "null" {
+		o.Value = nil
+		return nil
+	}
+	var v float64
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	o.Value = &v
+	return nil
 }
 
 func libraryOptionalTime(v *string) (library.Optional[time.Time], error) {
@@ -386,7 +453,7 @@ func (s *Server) librarySave(w http.ResponseWriter, r *http.Request) (any, error
 			return nil, Errorf(http.StatusUnprocessableEntity, "Unknown status "+strconv.Quote(status))
 		}
 	}
-	if in.Score != nil && (*in.Score < 0 || *in.Score > 10) {
+	if in.Score.Value != nil && (*in.Score.Value < 0 || *in.Score.Value > 10) {
 		return nil, Errorf(http.StatusUnprocessableEntity, "score must be between 0 and 10")
 	}
 	if in.Progress != nil && *in.Progress < 0 {
@@ -435,8 +502,8 @@ func (s *Server) librarySave(w http.ResponseWriter, r *http.Request) (any, error
 		} else if !existing {
 			_, err = s.Library.Track(ctx, userID, item.ID, library.Planning, manual, time.Time{})
 		}
-		if err == nil && in.Score != nil {
-			err = s.Library.SetSeasonScore(ctx, userID, item.ID, n, in.Score)
+		if err == nil && in.Score.Set {
+			err = s.Library.SetSeasonScore(ctx, userID, item.ID, n, in.Score.Value)
 		}
 		if err == nil && in.Notes != nil {
 			err = s.Library.SetSeasonNotes(ctx, userID, item.ID, n, *in.Notes)
@@ -451,8 +518,8 @@ func (s *Server) librarySave(w http.ResponseWriter, r *http.Request) (any, error
 		if err == nil && in.Progress != nil && !catalog.HasEpisodes(item) && !catalog.IsMovie(item.Kind) {
 			err = s.Library.SetProgress(ctx, userID, item.ID, *in.Progress, manual, time.Time{})
 		}
-		if err == nil && in.Score != nil {
-			err = s.Library.SetScore(ctx, userID, item.ID, in.Score, manual)
+		if err == nil && in.Score.Set {
+			err = s.Library.SetScore(ctx, userID, item.ID, in.Score.Value, manual)
 		}
 		if err == nil && in.Notes != nil {
 			err = s.Library.SetNotes(ctx, userID, item.ID, *in.Notes)

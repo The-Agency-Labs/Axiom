@@ -765,3 +765,33 @@ func TestLibrarySearchAndMetadata(t *testing.T) {
 	code, body = le.get("/api/v1/metadata/anime_movie/tmdb/301")
 	le.expect(code, 200, body, "metadata anime_movie")
 }
+
+// "score": null clears a score; an omitted score leaves it alone. A movie
+// can be watched again (a rewatch starts a new run).
+func TestLibraryScoreClearAndMovieRewatch(t *testing.T) {
+	le := newLibraryEnv(t)
+	le.addShows()
+	code, body := le.post("/api/v1/library", map[string]any{"media_type": "movie", "source": "tmdb", "media_id": "300", "status": "Completed", "score": 7})
+	e := le.expect(code, 200, body, "track")
+	mid := libraryNum(e["id"])
+	if e["score"] != 7.0 {
+		t.Fatalf("score = %v", e["score"])
+	}
+	code, body = le.post("/api/v1/library", map[string]any{"media_type": "movie", "instance_id": mid, "notes": "kept"})
+	if e = le.expect(code, 200, body, "omit score"); e["score"] != 7.0 {
+		t.Fatalf("omitted score changed it: %v", e["score"])
+	}
+	code, body = le.post("/api/v1/library", map[string]any{"media_type": "movie", "instance_id": mid, "score": nil})
+	if e = le.expect(code, 200, body, "clear score"); e["score"] != nil {
+		t.Fatalf("score not cleared: %v", e["score"])
+	}
+
+	code, body = le.post(fmt.Sprintf("/api/v1/library/movie/%d/watches", mid), map[string]any{"watched_at": "2026-01-02"})
+	re := le.expect(code, 200, body, "rewatch")
+	if libraryNum(re["id"]) == mid || re["status"] != "Completed" {
+		t.Fatalf("rewatch should start a new completed run: %v", re)
+	}
+	if code, _ := le.post(fmt.Sprintf("/api/v1/library/movie/%d/watches", mid), map[string]any{"watched_at": "yesterday"}); code != 422 {
+		t.Errorf("bad date: %d", code)
+	}
+}
