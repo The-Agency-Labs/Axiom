@@ -35,6 +35,7 @@ export interface Entry {
 	end_date: string | null;
 	notes: string;
 	created_at: string;
+	max_progress?: number;
 }
 
 export interface Episode {
@@ -155,4 +156,103 @@ export interface ActivityEntry {
 	media_type: MediaType;
 	item: Item & { display_title?: string };
 	changes: { description: string; field?: string }[];
+}
+
+export interface ShowSeason {
+	season_number: number;
+	title: string;
+	is_special: boolean;
+	image: string | null;
+	air_date: string | null;
+	episode_count: number;
+	watched: number;
+	percent: number | null;
+	entry: { id: number; status: Status; score: number | null } | null;
+}
+
+export interface Show {
+	source: string;
+	media_id: string;
+	title: string;
+	image: string;
+	entry: Entry | null;
+	status: string | null;
+	completion: {
+		watched: number;
+		total: number;
+		percent: number | null;
+		seasons_completed: number;
+		seasons: number;
+		specials_watched: number;
+	};
+	seasons: ShowSeason[];
+}
+
+export interface ShowEpisode {
+	episode_number: number;
+	title: string;
+	overview: string;
+	air_date: string | null;
+	aired: boolean;
+	runtime: number | null;
+	image: string | null;
+	kind: string;
+	score: number | null;
+	watched: boolean;
+	watch_count: number;
+	watched_at: string | null;
+}
+
+export interface SeasonDetail {
+	source: string;
+	media_id: string;
+	season_number: number;
+	title: string;
+	image: string | null;
+	synopsis: string | null;
+	entry: Entry | null;
+	watched: number;
+	total: number;
+	runtime_minutes: number;
+	episodes: ShowEpisode[];
+}
+
+export interface YearTop {
+	id: number;
+	media_type: MediaType;
+	item: Item;
+	count: number;
+}
+
+export interface YearSection {
+	units: number;
+	minutes?: number;
+	titles: number;
+	finished: number;
+	started: number;
+	by_month: number[];
+	top: YearTop[];
+}
+
+export interface YearSnapshot {
+	year: number;
+	generated_at: string;
+	totals: { finished: number; titles: number; watch_minutes: number };
+	sections: Partial<Record<MediaType, YearSection>>;
+	reading: {
+		pages: number;
+		chapters: number;
+		minutes: number;
+		sessions: number;
+		days_read: number;
+		days_in_range: number;
+		longest_streak: number;
+		best_day: ReadingDay | null;
+		pages_by_month: number[];
+		minutes_by_month: number[];
+		days: ReadingDay[];
+	} | null;
+	finished: Finished[];
+	top_rated: Finished[];
+	genres: { name: string; count: number }[];
 }

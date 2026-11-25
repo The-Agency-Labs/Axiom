@@ -10,6 +10,7 @@ from ninja.errors import HttpError
 
 from api.auth import require_write
 from api.serializers import episode_dict, jsonable, media_dict
+from api.years import entry_years
 from app.forms import get_form_class
 from app.models import Item, MediaTypes, Sources
 from app.providers import services
@@ -94,18 +95,35 @@ def metadata(
     return jsonable(_metadata(media_type, source, media_id, season_number))
 
 
+def _tv_total(item):
+    """Regular (non-special) episode count of a show, from cached metadata."""
+    try:
+        meta = services.get_media_metadata(item.media_type, item.media_id, item.source)
+    except services.ProviderAPIError:
+        return None
+    seasons = meta.get("related", {}).get("seasons", [])
+    total = sum(s.get("max_progress") or 0 for s in seasons if s["season_number"])
+    return total or meta.get("max_progress")
+
+
 @router.get("/library")
-def list_library(
+def list_library(  # noqa: PLR0917
     request,
     media_type: MediaType | None = None,
     status: str | None = None,
     search: str | None = None,
+    year: int | None = None,
     limit: int = 200,
     offset: int = 0,
 ):
-    """List the user's tracked entries, newest activity first."""
+    """List the user's tracked entries, newest activity first.
+
+    ``year`` keeps entries with any activity in that year; the response lists
+    every year with activity so a client can offer a year picker.
+    """
     types = [media_type] if media_type else TRACKABLE
     results = []
+    years_seen = set()
     for kind in types:
         if kind == MediaTypes.EPISODE.value:
             continue
@@ -120,13 +138,24 @@ def list_library(
             queryset = queryset.filter(status=status)
         if search:
             queryset = queryset.filter(item__title__icontains=search)
-        results.extend(media_dict(entry, kind) for entry in queryset)
+        for entry in queryset:
+            active = entry_years(entry)
+            years_seen.update(active)
+            if year is None or year in active:
+                data = media_dict(entry, kind)
+                if kind == MediaTypes.TV.value:
+                    data["max_progress"] = _tv_total(entry.item)
+                results.append(data)
 
     results.sort(
         key=lambda e: e["progressed_at"] or e["created_at"] or "",
         reverse=True,
     )
-    return {"count": len(results), "results": results[offset : offset + limit]}
+    return {
+        "count": len(results),
+        "years": sorted(years_seen, reverse=True),
+        "results": results[offset : offset + limit],
+    }
 
 
 @router.get("/library/{media_type}/{instance_id}")

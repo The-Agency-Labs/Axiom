@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { LoaderCircle } from '@lucide/svelte';
+	import { CalendarDays, LoaderCircle } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import { MEDIA } from '#lib/media.ts';
@@ -57,9 +57,17 @@
 
 <svelte:head><title>Activity · Encompass</title></svelte:head>
 
-<header class="mb-8">
-	<h1 class="text-3xl font-semibold tracking-tight">Activity</h1>
-	<p class="mt-1 text-sm text-muted">Everything you've tracked, newest first.</p>
+<header class="mb-8 flex flex-wrap items-end justify-between gap-4">
+	<div>
+		<h1 class="text-3xl font-semibold tracking-tight">Activity</h1>
+		<p class="mt-1 text-sm text-muted">Everything you've tracked, newest first.</p>
+	</div>
+	<a
+		href="/year"
+		class="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:border-line-strong hover:bg-raised"
+	>
+		<CalendarDays class="size-4 text-brand" /> {new Date().getFullYear()} in review
+	</a>
 </header>
 
 <div class="max-w-3xl space-y-8">

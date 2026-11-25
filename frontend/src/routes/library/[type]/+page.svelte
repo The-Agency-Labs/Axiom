@@ -12,13 +12,24 @@
 	let entries = $state<Entry[] | null>(null);
 	let tab = $state<Status | 'All'>('In progress');
 	let filter = $state('');
+	let year = $state<number | null>(null);
+	let years = $state<number[]>([]);
+
+	$effect(() => {
+		void type;
+		year = null;
+	});
 
 	$effect(() => {
 		const current = type;
+		const currentYear = year;
 		entries = null;
-		get<{ results: Entry[] }>('/library' + qs({ media_type: current, limit: 1000 })).then((data) => {
-			if (current !== type) return;
+		get<{ results: Entry[]; years: number[] }>(
+			'/library' + qs({ media_type: current, year: currentYear, limit: 1000 })
+		).then((data) => {
+			if (current !== type || currentYear !== year) return;
 			entries = data.results;
+			years = data.years;
 			// Open on the first non-empty tab.
 			if (!data.results.some((e) => e.status === tab)) {
 				tab = STATUSES.find((s) => data.results.some((e) => e.status === s)) ?? 'All';
@@ -53,9 +64,20 @@
 		</span>
 		<div>
 			<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{meta.plural}</h1>
-			<p class="text-sm text-faint">{counts.All} tracked</p>
+			<p class="text-sm text-faint">{counts.All} {year ? `active in ${year}` : 'tracked'}</p>
 		</div>
 	</div>
+	<div class="flex w-full items-center gap-2 sm:w-auto">
+	{#if years.length}
+		<select
+			bind:value={year}
+			aria-label="Filter by year"
+			class="shrink-0 rounded-xl border border-line bg-surface px-3 py-2 text-sm outline-none transition focus:border-line-strong"
+		>
+			<option value={null}>All years</option>
+			{#each years as y (y)}<option value={y}>{y}</option>{/each}
+		</select>
+	{/if}
 	<label class="relative w-full sm:w-64">
 		<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
 		<input
@@ -64,6 +86,7 @@
 			class="w-full rounded-xl border border-line bg-surface py-2 pr-3 pl-9 text-sm outline-none transition focus:border-line-strong"
 		/>
 	</label>
+	</div>
 </header>
 
 <div class="shelf -mx-4 mb-6 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -115,7 +138,9 @@
 				<p class="mt-2 line-clamp-2 text-[13px] leading-snug font-medium">{entry.item.title}</p>
 				<p class="mt-0.5 flex items-center gap-1.5 text-[11px] text-faint">
 					<span class="size-1.5 rounded-full" style="background: {STATUS_COLOR[entry.status]}"></span>
-					{#if entry.status === 'In progress' && type !== 'movie'}
+					{#if type === 'tv' && entry.max_progress}
+						{Math.round((entry.progress / entry.max_progress) * 100)}% · {entry.progress}/{entry.max_progress} ep
+					{:else if entry.status === 'In progress' && type !== 'movie'}
 						{progressLabel(type, entry.progress, null)}
 					{:else}
 						{entry.status}

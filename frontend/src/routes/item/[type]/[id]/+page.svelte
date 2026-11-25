@@ -4,8 +4,9 @@
 	import { page } from '$app/state';
 	import { del, get, post } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
+	import EpisodeBrowser from '#lib/components/EpisodeBrowser.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
-	import { formatDate, MEDIA, progressLabel, relativeTime, STATUS_COLOR, STATUSES } from '#lib/media.ts';
+	import { formatDate, MEDIA, progressLabel, relativeTime, STATUSES } from '#lib/media.ts';
 	import type { EntryDetail, MediaType, Status } from '#lib/types.ts';
 
 	const type = $derived(page.params.type as MediaType);
@@ -34,6 +35,16 @@
 		}
 	}
 
+	/** Re-read the entry after episodes change, keeping unsaved edits. */
+	async function refresh() {
+		try {
+			const next = await get<EntryDetail>(`/library/${type}/${id}?include_metadata=false`);
+			entry = { ...next, metadata: entry?.metadata ?? null };
+		} catch {
+			/* keep what we have */
+		}
+	}
+
 	$effect(() => {
 		void type;
 		void id;
@@ -52,7 +63,6 @@
 			([, v]) => v !== null && v !== '' && (typeof v === 'string' || typeof v === 'number')
 		) as [string, string | number][]
 	);
-	const watched = $derived(new Set((entry?.episodes ?? []).map((e) => e.episode_number)));
 
 	async function save() {
 		if (!entry) return;
@@ -205,55 +215,19 @@
 		</div>
 	</div>
 
-	<div class="mt-10 grid gap-6 lg:grid-cols-[1fr_20rem]">
-		<div class="space-y-6">
-			<!-- Seasons of a show -->
-			{#if entry.seasons?.length}
-				<section>
-					<h2 class="mb-3 text-[15px] font-semibold">Seasons</h2>
-					<div class="grid gap-2 sm:grid-cols-2">
-						{#each entry.seasons as season (season.id)}
-							<a
-								href="/item/season/{season.id}"
-								class="flex items-center gap-3 rounded-xl border border-line bg-surface p-3 transition hover:border-line-strong"
-							>
-								<Cover src={season.item.image} title={season.item.title} type="season" class="aspect-[2/3] w-12" />
-								<div class="min-w-0 flex-1">
-									<p class="font-medium">Season {season.item.season_number}</p>
-									<p class="text-xs text-faint">{season.episodes.length} watched · {season.status}</p>
-								</div>
-								<span class="size-2 rounded-full" style="background: {STATUS_COLOR[season.status]}"></span>
-							</a>
-						{/each}
-					</div>
-				</section>
-			{/if}
-
-			<!-- Episodes of a season -->
-			{#if type === 'season' && md.episodes?.length}
+	<div class="mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+		<div class="min-w-0 space-y-6">
+			<!-- Seasons, episodes and specials -->
+			{#if (type === 'tv' || type === 'season') && entry.item.source !== 'manual'}
 				<section>
 					<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
-					<ol class="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-						{#each md.episodes as ep (ep.episode_number)}
-							<li class="flex items-center gap-3 px-4 py-3">
-								<span
-									class="grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums {watched.has(
-										ep.episode_number
-									)
-										? 'text-[#09090b]'
-										: 'bg-white/5 text-muted'}"
-									style={watched.has(ep.episode_number) ? `background: ${meta.accent}` : ''}
-								>
-									{#if watched.has(ep.episode_number)}<Check class="size-3.5" />{:else}{ep.episode_number}{/if}
-								</span>
-								<div class="min-w-0 flex-1">
-									<p class="truncate text-sm font-medium">{ep.name ?? `Episode ${ep.episode_number}`}</p>
-									{#if ep.air_date}<p class="text-xs text-faint">{formatDate(ep.air_date, { year: 'numeric' })}</p>{/if}
-								</div>
-								{#if ep.runtime}<span class="text-xs text-faint">{ep.runtime}m</span>{/if}
-							</li>
-						{/each}
-					</ol>
+					<EpisodeBrowser
+						source={entry.item.source}
+						mediaId={entry.item.media_id}
+						initialSeason={type === 'season' ? entry.item.season_number : null}
+						accent={meta.accent}
+						onchange={refresh}
+					/>
 				</section>
 			{/if}
 
