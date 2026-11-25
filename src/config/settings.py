@@ -617,6 +617,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "Refresh anime mappings",
         "schedule": 60 * 60 * 24,  # checks daily, downloads weekly
     },
+    "sync_jellyfin_history": {
+        "task": "Sync Jellyfin history",
+        # Catches plays the webhook missed (e.g. Encompass was down).
+        # Additive only; does nothing unless JELLYFIN_URL is set.
+        "schedule": 60 * 60 * 6,
+    },
 }
 
 IS_PROD = not any(cmd in sys.argv for cmd in ("runserver", "test"))
@@ -685,6 +691,14 @@ REGISTRATION = config("REGISTRATION", default=True, cast=bool)
 # Jellyfin playback stopped at or past this share of the runtime counts as
 # watched, even if Jellyfin itself didn't mark it played.
 JELLYFIN_WATCHED_PERCENT = config("JELLYFIN_WATCHED_PERCENT", default=75, cast=int)
+
+# Jellyfin history import/sync (read-only API key from the Jellyfin dashboard).
+JELLYFIN_URL = config("JELLYFIN_URL", default="")
+JELLYFIN_API_KEY = config(
+    "JELLYFIN_API_KEY", default=secret("JELLYFIN_API_KEY_FILE", default="")
+)
+# "jellyfin user:encompass user" pairs, comma separated; one name if both match.
+JELLYFIN_USERS = config("JELLYFIN_USERS", default="", cast=Csv())
 if not REGISTRATION:
     ACCOUNT_ADAPTER = "users.account_adapter.NoNewUsersAccountAdapter"
 

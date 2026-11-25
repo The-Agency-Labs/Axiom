@@ -1,7 +1,5 @@
 import logging
 
-from django.utils import timezone
-
 import app
 from app.models import MediaTypes, Sources, Status
 from app.providers import tvdb as tvdb_provider
@@ -285,7 +283,7 @@ class TVWebhookMixin:
         episode_item = season_instance.get_episode_item(episode_number, season_metadata)
 
         if self._is_played(payload):
-            now = timezone.now().replace(second=0, microsecond=0)
+            now = self._now()
             latest_episode = (
                 app.models.Episode.objects.filter(
                     item=episode_item,
@@ -295,7 +293,7 @@ class TVWebhookMixin:
                 .first()
             )
 
-            should_create = True
+            should_create = not (self.import_mode and latest_episode)
             # check for duplicate episode records,
             # sometimes webhooks are triggered multiple times #689
             if latest_episode and latest_episode.end_date:

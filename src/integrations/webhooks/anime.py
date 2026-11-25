@@ -1,7 +1,5 @@
 import logging
 
-from django.utils import timezone
-
 import app
 from app.models import MediaTypes, Sources, Status
 
@@ -46,7 +44,7 @@ class AnimeWebhookMixin:
             user,
         )
 
-        now = timezone.now().replace(second=0, microsecond=0)
+        now = self._now()
         is_completed = episode_number == anime_metadata["max_progress"]
         status = Status.COMPLETED.value if is_completed else Status.IN_PROGRESS.value
 

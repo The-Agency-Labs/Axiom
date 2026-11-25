@@ -1,5 +1,7 @@
 import logging
 
+from django.utils import timezone
+
 from app.models import MediaTypes
 from app.providers import tvdb as tvdb_provider  # noqa: F401
 
@@ -17,6 +19,22 @@ class BaseWebhookProcessor(TVWebhookMixin, MovieWebhookMixin, AnimeWebhookMixin)
         "Episode": MediaTypes.TV.value,
         "Movie": MediaTypes.MOVIE.value,
     }
+
+    def __init__(self, watched_at=None, *, import_mode=False):
+        """Process live events, or backfill history.
+
+        Args:
+            watched_at: when the media was watched; defaults to now.
+            import_mode: backfilling (e.g. a Jellyfin import), so anything
+                already recorded as watched is left alone instead of being
+                logged again as a rewatch.
+        """
+        self.watched_at = watched_at
+        self.import_mode = import_mode
+
+    def _now(self):
+        moment = self.watched_at or timezone.now()
+        return moment.replace(second=0, microsecond=0)
 
     def process_payload(self, payload, user):
         """Process webhook payload."""

@@ -1,7 +1,9 @@
 import logging
 
 from celery import shared_task
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.utils import translation
 from django.utils.translation import gettext as _
 
@@ -15,6 +17,7 @@ from integrations.imports import (
     helpers,
     hltb,
     imdb,
+    jellyfin,
     kitsu,
     mal,
     simkl,
@@ -164,3 +167,45 @@ def import_imdb(file, user_id, mode):
 def import_goodreads(file, user_id, mode):
     """Celery task for importing media data from GoodReads."""
     return import_media(goodreads.importer, file, user_id, mode)
+
+
+def _jellyfin_pairs():
+    """(jellyfin username, encompass username) pairs from JELLYFIN_USERS."""
+    for entry in settings.JELLYFIN_USERS:
+        jellyfin_user, _, encompass_user = entry.strip().partition(":")
+        if jellyfin_user:
+            yield jellyfin_user, encompass_user or jellyfin_user
+
+
+def run_jellyfin_import(user, jellyfin_user, *, full=False):
+    """Import (or catch up on) one user's Jellyfin history. Additive only."""
+    since_key = f"jellyfin_sync:{user.id}:{jellyfin_user.lower()}"
+    since = None if full else cache.get(since_key)
+    client = jellyfin.JellyfinClient(settings.JELLYFIN_URL, settings.JELLYFIN_API_KEY)
+    with translation.override(user.language), disable_fetch_releases():
+        counts, failures, latest = jellyfin.import_history(
+            user, client, jellyfin_user, since=since
+        )
+    if latest:
+        cache.set(since_key, max(latest, since) if since else latest, None)
+    if counts:
+        events.tasks.reload_calendar.delay()
+    return counts, failures
+
+
+@shared_task(name="Sync Jellyfin history")
+def sync_jellyfin_history():
+    """Pick up plays since the last sync for every configured user."""
+    if not (settings.JELLYFIN_URL and settings.JELLYFIN_API_KEY):
+        return "Jellyfin sync not configured"
+    results = []
+    for jellyfin_user, username in _jellyfin_pairs():
+        user = get_user_model().objects.filter(username=username).first()
+        if user is None:
+            logger.warning("Jellyfin sync: no Encompass user %s", username)
+            continue
+        counts, failures = run_jellyfin_import(user, jellyfin_user)
+        results.append(
+            f"{username}: {sum(counts.values())} plays, {len(failures)} failed"
+        )
+    return "; ".join(results) or "No JELLYFIN_USERS configured"

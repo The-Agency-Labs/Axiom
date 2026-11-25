@@ -1,7 +1,5 @@
 import logging
 
-from django.utils import timezone
-
 import app
 from app.models import MediaTypes, Sources, Status
 
@@ -93,9 +91,18 @@ class MovieWebhookMixin:
             user,
         )
         movie_played = self._is_played(payload)
+        if (
+            current_instance
+            and current_instance.status == Status.COMPLETED.value
+            and (not movie_played or self.import_mode)
+        ):
+            # Skimming a finished movie isn't a rewatch, and an import
+            # never logs one: only finishing it again creates a new entry.
+            logger.debug("Movie already completed: %s", current_instance.item)
+            return
 
         progress = 1 if movie_played else 0
-        now = timezone.now().replace(second=0, microsecond=0)
+        now = self._now()
 
         if current_instance and current_instance.status != Status.COMPLETED.value:
             current_instance.progress = progress
