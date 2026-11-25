@@ -6,6 +6,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+import app.models
 from app.models import (
     TV,
     Anime,
@@ -1120,3 +1121,44 @@ class AnimeRoutingTests(TestCase):
         self.assertFalse(JellyfinWebhookProcessor._route_anime_to_mal(user))
         with self.settings(ANIME_AS_TV=False):
             self.assertTrue(JellyfinWebhookProcessor._route_anime_to_mal(user))
+
+
+class LaterSeasonFirstTests(TestCase):
+    """Starting a show at a later season doesn't invent earlier seasons."""
+
+    @patch("app.providers.tmdb.tv_with_seasons")
+    @patch("app.models.TV._start_next_available_season")
+    def test_new_show_does_not_auto_start_first_season(self, start_next, tv_meta):
+        """An S2 play creates only S2, and the model's season auto-start is skipped."""
+        tv_meta.return_value = {
+            "title": "Show",
+            "image": "",
+            "season/2": {"image": "", "episodes": []},
+        }
+        user = get_user_model().objects.create_user(username="s2viewer")
+        processor = JellyfinWebhookProcessor()
+        with patch.object(
+            app.models.Season,
+            "get_episode_item",
+            return_value=app.models.Item.objects.create(
+                media_id="1",
+                source="tmdb",
+                media_type="episode",
+                title="Show",
+                season_number=2,
+                episode_number=1,
+            ),
+        ):
+            processor._handle_tv_episode(
+                "1",
+                2,
+                1,
+                {"Event": "Stop", "Item": {"UserData": {"Played": True}}},
+                user,
+            )
+        start_next.assert_not_called()
+        tv = app.models.TV.objects.get(user=user)
+        self.assertEqual(tv.status, Status.IN_PROGRESS.value)
+        self.assertEqual(
+            list(tv.seasons.values_list("item__season_number", flat=True)), [2]
+        )

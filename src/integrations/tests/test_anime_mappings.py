@@ -2,7 +2,7 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from integrations.webhooks import anime_mappings
@@ -69,6 +69,7 @@ class AnimeMappingsWebhookPayloadTests(TestCase):
         }
         self.user = get_user_model().objects.create_superuser(**self.credentials)
 
+    @override_settings(ANIME_AS_TV=False)
     @patch("integrations.webhooks.base.BaseWebhookProcessor._handle_anime")
     @patch("integrations.webhooks.base.tvdb_provider.episode")
     def test_jellyfin_bleach_payload_uses_tvdb_mapping(
@@ -108,6 +109,7 @@ class AnimeMappingsWebhookPayloadTests(TestCase):
         mock_tvdb_episode.assert_called_once_with(999)
         mock_handle_anime.assert_called_once_with(53998, 1, payload, self.user)
 
+    @override_settings(ANIME_AS_TV=False)
     @patch("integrations.webhooks.base.BaseWebhookProcessor._handle_anime")
     def test_plex_anidb_guid_payload_uses_anidb_mapping(self, mock_handle_anime):
         """Test Plex Hama AniDB GUID maps through anime_mappings."""

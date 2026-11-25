@@ -195,6 +195,44 @@ class TVWebhookMixin:
                 )
         return None, None, None
 
+    @staticmethod
+    def _update_watch_statuses(
+        tv_instance, tv_created, season_instance, season_created, title
+    ):
+        """Mark the show and season In progress without undoing a completion."""
+        # Rewatching (or scrubbing through) something already finished never
+        # reopens it. A show only reopens for a season not watched before.
+        finished = tv_instance.status == Status.COMPLETED.value
+        reopen = season_created if finished else True
+        if reopen and tv_instance.status != Status.IN_PROGRESS.value:
+            tv_instance.status = Status.IN_PROGRESS.value
+            tv_instance.save()
+            if not tv_created:
+                logger.info(
+                    "Updated TV instance status to %s: %s",
+                    Status.IN_PROGRESS.value,
+                    title,
+                )
+
+        if season_created:
+            logger.info(
+                "Created new season instance: %s S%02d",
+                title,
+                season_instance.item.season_number,
+            )
+        elif season_instance.status not in (
+            Status.IN_PROGRESS.value,
+            Status.COMPLETED.value,
+        ):
+            season_instance.status = Status.IN_PROGRESS.value
+            season_instance.save()
+            logger.info(
+                "Updated season instance status to %s: %s S%02d",
+                Status.IN_PROGRESS.value,
+                title,
+                season_instance.item.season_number,
+            )
+
     def _handle_tv_episode(
         self,
         media_id,
@@ -221,10 +259,13 @@ class TVWebhookMixin:
             },
         )
 
+        # A new show starts as Planning and becomes In progress once the season
+        # being watched exists; starting it In progress straight away would make
+        # the model open its first season too (an empty S1 for an S2 viewer).
         tv_instance, tv_created = app.models.TV.objects.get_or_create(
             item=tv_item,
             user=user,
-            defaults={"status": Status.IN_PROGRESS.value},
+            defaults={"status": Status.PLANNING.value},
         )
 
         if tv_created:
@@ -248,37 +289,13 @@ class TVWebhookMixin:
             defaults={"status": Status.IN_PROGRESS.value},
         )
 
-        # Rewatching (or scrubbing through) something already finished never
-        # reopens it. A show only reopens for a season not watched before.
-        finished = tv_instance.status == Status.COMPLETED.value
-        reopen = season_created if finished else not tv_created
-        if reopen and tv_instance.status != Status.IN_PROGRESS.value:
-            tv_instance.status = Status.IN_PROGRESS.value
-            tv_instance.save()
-            logger.info(
-                "Updated TV instance status to %s: %s",
-                Status.IN_PROGRESS.value,
-                tv_metadata["title"],
-            )
-
-        if season_created:
-            logger.info(
-                "Created new season instance: %s S%02d",
-                tv_metadata["title"],
-                season_number,
-            )
-        elif season_instance.status not in (
-            Status.IN_PROGRESS.value,
-            Status.COMPLETED.value,
-        ):
-            season_instance.status = Status.IN_PROGRESS.value
-            season_instance.save()
-            logger.info(
-                "Updated season instance status to %s: %s S%02d",
-                Status.IN_PROGRESS.value,
-                tv_metadata["title"],
-                season_number,
-            )
+        self._update_watch_statuses(
+            tv_instance,
+            tv_created,
+            season_instance,
+            season_created,
+            tv_metadata["title"],
+        )
 
         episode_item = season_instance.get_episode_item(episode_number, season_metadata)
 
