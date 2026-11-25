@@ -266,7 +266,7 @@
 		const current = entry;
 		if (!current) return;
 		const before = current.score;
-		save({ score: value ?? 0 }, value ? `${title}: score ${value}` : `${title}: score cleared`, () => {
+		save({ score: value ?? null }, value ? `${title}: score ${value}` : `${title}: score cleared`, () => {
 			current.score = value;
 			return () => (current.score = before);
 		});
@@ -286,6 +286,22 @@
 
 	function markWatched() {
 		setStatus('Completed');
+	}
+
+	// A rewatch of a completed film starts a new run; show that run.
+	function watchAgain() {
+		const current = entry;
+		if (!current) return;
+		mutate<Entry>({
+			path: `${base}/watches`,
+			body: {},
+			label: `${title}: watched again`,
+			onSuccess: async (next) => {
+				if (!next) return;
+				const detail = await fetchEntry(next.id).catch(() => null);
+				if (detail) entry = detail;
+			}
+		});
 	}
 
 	function step(direction: 1 | -1) {
@@ -453,7 +469,12 @@
 						{:else}
 							<p class="text-[15px] text-muted">Not watched yet. Use the Watched button below to log it for today.</p>
 						{/if}
-						<Button class="mt-3" size="sm" icon={CalendarRange} onclick={() => (sheet = 'dates')}>Edit dates</Button>
+						<div class="mt-3 flex flex-wrap gap-2">
+							{#if entry.status === 'Completed'}
+								<Button size="sm" icon={Repeat} onclick={watchAgain}>Watched again</Button>
+							{/if}
+							<Button size="sm" icon={CalendarRange} onclick={() => (sheet = 'dates')}>Edit dates</Button>
+						</div>
 					</Card>
 				{/if}
 
