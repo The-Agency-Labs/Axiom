@@ -36,7 +36,7 @@ export const MEDIA: Record<MediaType, MediaMeta> = {
 };
 
 /** Sections in the navigation, in order. */
-export const LIBRARY_TYPES: MediaType[] = ['tv', 'movie', 'anime', 'manga', 'book', 'comic', 'game'];
+export const LIBRARY_TYPES: MediaType[] = ['tv', 'movie', 'anime', 'manga', 'book', 'game'];
 
 export const STATUSES: Status[] = ['In progress', 'Planning', 'Completed', 'Paused', 'Dropped'];
 

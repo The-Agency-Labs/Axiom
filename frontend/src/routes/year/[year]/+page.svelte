@@ -33,7 +33,7 @@
 	const newer = $derived([...years].reverse().find((y) => y > year) ?? (year < thisYear ? year + 1 : null));
 
 	// Sections in the same order as the library, units spelled out.
-	const ORDER: MediaType[] = ['tv', 'movie', 'anime', 'manga', 'book', 'comic', 'game', 'boardgame'];
+	const ORDER: MediaType[] = ['tv', 'movie', 'anime', 'manga', 'book', 'game', 'boardgame'];
 	const UNIT_WORDS: Partial<Record<MediaType, [string, string]>> = {
 		tv: ['episode', 'episodes'],
 		movie: ['movie', 'movies'],
