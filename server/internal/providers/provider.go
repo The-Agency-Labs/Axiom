@@ -76,6 +76,7 @@ func NewClient(c *cache.Cache) *Client {
 		HTTP:  &http.Client{Timeout: 30 * time.Second},
 		Cache: c,
 		limiters: map[string]*limiter{
+			"api4.thetvdb.com":       newLimiter(10, time.Second),
 			"api.myanimelist.net":    newLimiter(30, time.Minute),
 			"graphql.anilist.co":     newLimiter(28, time.Minute),
 			"api.igdb.com":           newLimiter(3, time.Second),

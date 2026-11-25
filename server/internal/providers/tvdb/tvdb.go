@@ -22,13 +22,14 @@ import (
 const Label = "Tvdb"
 
 const (
-	accessTokenTTL        = 29 * 24 * time.Hour // tokens are valid for 1 month
+	accessTokenTTL        = 28 * 24 * time.Hour // tokens are valid for 1 month
 	cacheTTL              = 24 * time.Hour      // Django's default CACHE_TIMEOUT
 	tmdbRemoteIDType      = 12
 	tmdbRemoteIDSource    = "TheMovieDB.com"
 	defaultBaseURL        = "https://api4.thetvdb.com/v4"
 	episodeCachePrefix    = "tvdb_episode_"
 	seriesTMDBCachePrefix = "tvdb_series_tmdb_id_"
+	tokenCacheKey         = "tvdb_access_token"
 )
 
 // Client talks to TVDB through the shared provider client.
@@ -57,6 +58,7 @@ func (c *Client) handleError(ctx context.Context, err error) (retry bool, out er
 		c.mu.Lock()
 		c.token, c.expires = "", time.Time{}
 		c.mu.Unlock()
+		c.cacheSetTTL(ctx, tokenCacheKey, "", time.Second) // forget the cached token too
 		return true, nil
 	}
 	if errors.As(err, &pe) && pe.Status != 0 {
@@ -79,6 +81,14 @@ func (c *Client) AccessToken(ctx context.Context) (string, error) {
 		return t, nil
 	}
 	c.mu.Unlock()
+	// A token cached by an earlier process (the CLI, a restart) saves a login.
+	var stored string
+	if c.cacheGet(ctx, tokenCacheKey, &stored) && stored != "" {
+		c.mu.Lock()
+		c.token, c.expires = stored, time.Now().Add(time.Hour)
+		c.mu.Unlock()
+		return stored, nil
+	}
 
 	var resp struct {
 		Data struct {
@@ -104,6 +114,7 @@ func (c *Client) AccessToken(ctx context.Context) (string, error) {
 	c.mu.Lock()
 	c.token, c.expires = resp.Data.Token, time.Now().Add(accessTokenTTL)
 	c.mu.Unlock()
+	c.cacheSetTTL(ctx, tokenCacheKey, resp.Data.Token, accessTokenTTL)
 	return resp.Data.Token, nil
 }
 
@@ -154,10 +165,14 @@ func (c *Client) cacheGet(ctx context.Context, key string, dst any) bool {
 }
 
 func (c *Client) cacheSet(ctx context.Context, key string, v any) {
+	c.cacheSetTTL(ctx, key, v, cacheTTL)
+}
+
+func (c *Client) cacheSetTTL(ctx context.Context, key string, v any, ttl time.Duration) {
 	if c.base.Cache == nil {
 		return
 	}
-	if err := c.base.Cache.Set(ctx, key, v, cacheTTL); err != nil {
+	if err := c.base.Cache.Set(ctx, key, v, ttl); err != nil {
 		slog.WarnContext(ctx, "tvdb cache write failed", "key", key, "err", err)
 	}
 }

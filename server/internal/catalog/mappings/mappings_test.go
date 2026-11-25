@@ -57,6 +57,22 @@ func TestLoadAndLookups(t *testing.T) {
 		m.TmdbOffset != 28 || m.TvdbID.Int64 != 424536 || m.Kind != "TV" || m.TmdbMovie.Valid {
 		t.Fatalf("bad row %+v", m)
 	}
+	// The TVDB season and offset of the cour: what AniList entries are placed by.
+	if !m.TvdbSeason.Valid || m.TvdbSeason.Int64 != 2 || m.TvdbOffset != 12 {
+		t.Fatalf("tvdb placement %+v", m)
+	}
+	first, _ := s.ByMAL(ctx, 52991)
+	if first == nil || !first.TvdbSeason.Valid || first.TvdbSeason.Int64 != 1 || first.TvdbOffset != 0 {
+		t.Fatalf("first cour %+v", first)
+	}
+	// A row with a TVDB id but no TVDB season (the dataset omits it): season unknown, not 0.
+	if m, _ := s.ByMAL(ctx, 300); m == nil || m.TvdbSeason.Valid {
+		t.Fatalf("missing tvdb season read as %+v", m)
+	}
+	// ...and the other cour of the series claims season 2, found by TVDB id.
+	if others, _ := s.OtherTVDB(ctx, 424536, first.ID); len(others) != 1 || others[0].TvdbSeason.Int64 != 2 {
+		t.Fatalf("other cours %+v", others)
+	}
 	// list-valued mal_id takes the first element; movie rows have no season
 	m, _ = s.ByAniList(ctx, 431)
 	if m == nil || m.MalID.Int64 != 431 || m.TmdbMovie.Int64 != 4935 || m.TmdbTv.Valid || m.TmdbSeason.Valid {
@@ -114,6 +130,12 @@ func TestLoadAndLookups(t *testing.T) {
 	}
 	if _, ok := ids.Films["4935"]; !ok {
 		t.Fatal("missing film 4935")
+	}
+	// Anime shows are told apart by TVDB id too.
+	for _, id := range []string{"72025", "424536", "70973"} {
+		if _, ok := ids.TVDBShows[id]; !ok {
+			t.Fatalf("missing anime tvdb series %s in %v", id, ids.TVDBShows)
+		}
 	}
 }
 

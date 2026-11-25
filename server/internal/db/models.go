@@ -18,6 +18,8 @@ type AnimeMapping struct {
 	TmdbSeason sql.NullInt64 `json:"tmdb_season"`
 	TmdbOffset int64         `json:"tmdb_offset"`
 	TvdbID     sql.NullInt64 `json:"tvdb_id"`
+	TvdbSeason sql.NullInt64 `json:"tvdb_season"`
+	TvdbOffset int64         `json:"tvdb_offset"`
 }
 
 type ApiToken struct {
@@ -126,6 +128,7 @@ type ItemEpisode struct {
 	Overview string          `json:"overview"`
 	Kind     string          `json:"kind"`
 	Score    sql.NullFloat64 `json:"score"`
+	ExtID    string          `json:"ext_id"`
 }
 
 type ItemID struct {

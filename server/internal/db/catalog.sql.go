@@ -261,12 +261,12 @@ func (q *Queries) InsertItem(ctx context.Context, arg InsertItemParams) (Item, e
 }
 
 const insertItemEpisode = `-- name: InsertItemEpisode :exec
-INSERT INTO item_episodes (item_id, season, number, position, title, air_date, runtime, image, overview, kind, score)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO item_episodes (item_id, season, number, position, title, air_date, runtime, image, overview, kind, score, ext_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT (item_id, season, number) DO UPDATE SET
     position = excluded.position, title = excluded.title, air_date = excluded.air_date,
     runtime = excluded.runtime, image = excluded.image, overview = excluded.overview,
-    kind = excluded.kind, score = excluded.score
+    kind = excluded.kind, score = excluded.score, ext_id = excluded.ext_id
 `
 
 type InsertItemEpisodeParams struct {
@@ -281,6 +281,7 @@ type InsertItemEpisodeParams struct {
 	Overview string          `json:"overview"`
 	Kind     string          `json:"kind"`
 	Score    sql.NullFloat64 `json:"score"`
+	ExtID    string          `json:"ext_id"`
 }
 
 func (q *Queries) InsertItemEpisode(ctx context.Context, arg InsertItemEpisodeParams) error {
@@ -296,6 +297,7 @@ func (q *Queries) InsertItemEpisode(ctx context.Context, arg InsertItemEpisodePa
 		arg.Overview,
 		arg.Kind,
 		arg.Score,
+		arg.ExtID,
 	)
 	return err
 }
@@ -418,7 +420,7 @@ func (q *Queries) ListItemCredits(ctx context.Context, itemID int64) ([]ListItem
 }
 
 const listItemEpisodes = `-- name: ListItemEpisodes :many
-SELECT item_id, season, number, position, title, air_date, runtime, image, overview, kind, score FROM item_episodes WHERE item_id = ? ORDER BY season, position
+SELECT item_id, season, number, position, title, air_date, runtime, image, overview, kind, score, ext_id FROM item_episodes WHERE item_id = ? ORDER BY season, position
 `
 
 func (q *Queries) ListItemEpisodes(ctx context.Context, itemID int64) ([]ItemEpisode, error) {
@@ -442,6 +444,7 @@ func (q *Queries) ListItemEpisodes(ctx context.Context, itemID int64) ([]ItemEpi
 			&i.Overview,
 			&i.Kind,
 			&i.Score,
+			&i.ExtID,
 		); err != nil {
 			return nil, err
 		}
@@ -678,7 +681,7 @@ func (q *Queries) ListReleasesForUser(ctx context.Context, arg ListReleasesForUs
 }
 
 const listSeasonEpisodes = `-- name: ListSeasonEpisodes :many
-SELECT item_id, season, number, position, title, air_date, runtime, image, overview, kind, score FROM item_episodes WHERE item_id = ? AND season = ? ORDER BY position
+SELECT item_id, season, number, position, title, air_date, runtime, image, overview, kind, score, ext_id FROM item_episodes WHERE item_id = ? AND season = ? ORDER BY position
 `
 
 type ListSeasonEpisodesParams struct {
@@ -707,6 +710,7 @@ func (q *Queries) ListSeasonEpisodes(ctx context.Context, arg ListSeasonEpisodes
 			&i.Overview,
 			&i.Kind,
 			&i.Score,
+			&i.ExtID,
 		); err != nil {
 			return nil, err
 		}
