@@ -1,0 +1,342 @@
+{
+ "adult": false,
+ "backdrop_path": "/kH9iK6krt0VBwAv5xbsYyhn8AW5.jpg",
+ "created_by": [],
+ "episode_run_time": [
+  24
+ ],
+ "first_air_date": "2010-01-08",
+ "genres": [
+  {
+   "id": 10759,
+   "name": "Action & Adventure"
+  },
+  {
+   "id": 16,
+   "name": "Animation"
+  },
+  {
+   "id": 18,
+   "name": "Drama"
+  },
+  {
+   "id": 9648,
+   "name": "Mystery"
+  },
+  {
+   "id": 80,
+   "name": "Crime"
+  }
+ ],
+ "homepage": "https://www.durarara.com",
+ "id": 42410,
+ "in_production": false,
+ "languages": [
+  "ja"
+ ],
+ "last_air_date": "2016-03-26",
+ "last_episode_to_air": {
+  "id": 1163916,
+  "name": "Those Who Meet Must Part",
+  "overview": "A boy who yearned for the extraordinary, and the twisted love story that swallowed up too many people, finally draws to the end of their performance!",
+  "vote_average": 6.0,
+  "vote_count": 1,
+  "air_date": "2016-03-26",
+  "episode_number": 36,
+  "episode_type": "finale",
+  "production_code": "",
+  "runtime": 24,
+  "season_number": 2,
+  "show_id": 42410,
+  "still_path": "/4nwgWT0QgwjWHMqn3xZAWOLQe3R.jpg"
+ },
+ "name": "Durarara!!",
+ "next_episode_to_air": null,
+ "networks": [
+  {
+   "id": 94,
+   "logo_path": "/7RNXnyiMbjgqtPAjja13wchcrGI.png",
+   "name": "MBS",
+   "origin_country": "JP"
+  },
+  {
+   "id": 343,
+   "logo_path": "/9rNqtDYAnD6yTOutvHI3synSEs2.png",
+   "name": "Gunma TV",
+   "origin_country": "JP"
+  },
+  {
+   "id": 614,
+   "logo_path": "/hSdroyVthq3CynxTIIY7lnS8w1.png",
+   "name": "TOKYO MX",
+   "origin_country": "JP"
+  },
+  {
+   "id": 861,
+   "logo_path": "/JQ5bx6n7Qmdmyqz6sqjo5Fz2iR.png",
+   "name": "BS11",
+   "origin_country": "JP"
+  },
+  {
+   "id": 2478,
+   "logo_path": "/2v82HpzoKRveJEJcGHkeTcktMRM.png",
+   "name": "Tochigi TV",
+   "origin_country": "JP"
+  }
+ ],
+ "number_of_episodes": 60,
+ "number_of_seasons": 2,
+ "origin_country": [
+  "JP"
+ ],
+ "original_language": "ja",
+ "original_name": "デュラララ!!",
+ "overview": "Mikado Ryugamine moves to Ikebukuro at his friend’s invitation and quickly becomes entangled in the city’s dangerous underworld. After witnessing the legendary Headless Rider, he finds himself caught up in escalating violence and gang conflict that begin to throw Ikebukuro into chaos.",
+ "popularity": 32.3381,
+ "poster_path": "/rOVSpNPFr62tFKeFuHgPdOXQx3E.jpg",
+ "production_companies": [
+  {
+   "id": 22602,
+   "logo_path": "/8IYhcuLMK8cdzlh3sugyOrWYGKJ.png",
+   "name": "Brain's Base",
+   "origin_country": "JP"
+  },
+  {
+   "id": 79044,
+   "logo_path": "/vzFrzxqDuMmPvNgrFRxxazRHwRZ.png",
+   "name": "Shuka",
+   "origin_country": "JP"
+  },
+  {
+   "id": 2883,
+   "logo_path": "/rDYExnBV61jGQnkhVVrPN4Yl7O1.png",
+   "name": "Aniplex",
+   "origin_country": "JP"
+  },
+  {
+   "id": 32957,
+   "logo_path": "/fsKExPZ443yF5oMRmbK96AjcZBT.png",
+   "name": "ASCII Media Works",
+   "origin_country": "JP"
+  }
+ ],
+ "production_countries": [
+  {
+   "iso_3166_1": "JP",
+   "name": "Japan"
+  }
+ ],
+ "seasons": [
+  {
+   "air_date": "2010-08-25",
+   "episode_count": 5,
+   "id": 52157,
+   "name": "Specials",
+   "overview": "",
+   "poster_path": "/k1xhDPy1K9Sz3CYtY7Zpj03X3jP.jpg",
+   "season_number": 0,
+   "vote_average": 0.0
+  },
+  {
+   "air_date": "2010-01-08",
+   "episode_count": 24,
+   "id": 52158,
+   "name": "Season 1",
+   "overview": "Mikado Ryugamine moves to Ikebukuro at his friend’s invitation and quickly becomes entangled in the city’s dangerous underworld. After witnessing the legendary Headless Rider, he finds himself caught up in escalating violence and gang conflict that begin to throw Ikebukuro into chaos.",
+   "poster_path": "/w1NCXcXpXGQAIb2cobWMfKHpPAk.jpg",
+   "season_number": 1,
+   "vote_average": 7.0
+  }
+ ],
+ "softcore": false,
+ "spoken_languages": [
+  {
+   "english_name": "Japanese",
+   "iso_639_1": "ja",
+   "name": "日本語"
+  }
+ ],
+ "status": "Ended",
+ "tagline": "",
+ "type": "Scripted",
+ "vote_average": 7.655,
+ "vote_count": 236,
+ "recommendations": {
+  "page": 1,
+  "results": [
+   {
+    "adult": false,
+    "backdrop_path": "/kzxoIVHMSwOq7Pry11vSq4ujLwz.jpg",
+    "genre_ids": [
+     16,
+     18,
+     10759,
+     9648,
+     80
+    ],
+    "id": 80564,
+    "origin_country": [
+     "JP"
+    ],
+    "original_language": "ja",
+    "original_name": "BANANA FISH",
+    "overview": "A teenaged gang leader in New York City faces his abuser and rival gangs alongside a photojournalist from Japan as they investigate a deadly new drug.",
+    "popularity": 17.719,
+    "poster_path": "/d2TW5Rtd0uCasHlQygsDfWCROl2.jpg",
+    "first_air_date": "2018-07-06",
+    "softcore": false,
+    "name": "Banana Fish",
+    "vote_average": 8.549,
+    "vote_count": 942,
+    "media_type": "tv"
+   },
+   {
+    "adult": false,
+    "backdrop_path": "/nFK1szk19NxWRnP9gV9wYNutvhy.jpg",
+    "genre_ids": [
+     16,
+     10759,
+     80
+    ],
+    "id": 65214,
+    "origin_country": [
+     "JP"
+    ],
+    "original_language": "ja",
+    "original_name": "アクティヴレイド -機動強襲室第八係-",
+    "overview": "Set in a part of Tokyo that has descended into a quagmire, the story follows Unit 8 of the 5th Special Public Security Section's 3rd Mobile Assault Division — popularly called \"The Eighth\" — who don powered armor \"Willware\" exoskeletons to counter the rise in crime. Assistant inspector Asami Kazari is assigned to The Eighth with the task of assessing the unit's status and reporting it to her superiors. But her true goal is to rehabilitate this sloppy, haphazard, justice-less group.",
+    "popularity": 12.0216,
+    "poster_path": "/q5fpBFuTMtwLhPECXJ38c7XG07W.jpg",
+    "first_air_date": "2016-01-07",
+    "softcore": false,
+    "name": "Active Raid",
+    "vote_average": 6.1,
+    "vote_count": 22,
+    "media_type": "tv"
+   }
+  ],
+  "total_pages": 40,
+  "total_results": 790
+ },
+ "external_ids": {
+  "imdb_id": "tt1584000",
+  "freebase_mid": "",
+  "freebase_id": "/en/durarara",
+  "tvdb_id": 133341,
+  "tvrage_id": null,
+  "wikidata_id": "Q131587684",
+  "facebook_id": "DurararaUSA",
+  "instagram_id": null,
+  "twitter_id": "drrr_anime"
+ },
+ "watch/providers": {
+  "results": {
+   "AE": {
+    "link": "https://www.themoviedb.org/tv/42410-deyurarara/watch?locale=AE",
+    "ads": [
+     {
+      "logo_path": "/vmBE15FtFOa5RDcH5LEy5TftBLI.png",
+      "provider_id": 1715,
+      "provider_name": "Shahid VIP",
+      "display_priority": 14
+     }
+    ],
+    "flatrate": [
+     {
+      "logo_path": "/vmBE15FtFOa5RDcH5LEy5TftBLI.png",
+      "provider_id": 1715,
+      "provider_name": "Shahid VIP",
+      "display_priority": 14
+     }
+    ]
+   }
+  }
+ },
+ "season/1": {
+  "_id": "52596185760ee34661969630",
+  "air_date": "2010-01-08",
+  "episodes": [
+   {
+    "air_date": "2010-01-08",
+    "episode_number": 1,
+    "episode_type": "standard",
+    "id": 879919,
+    "name": "Exit 1, First Words",
+    "overview": "Mikado, a young man longing for something unusual in his life, moves to Ikebukuro at the invitation of his childhood friend Masaomi. Arriving in Tokyo, he begins his new life as a high school student, awed and mesmerized by the new world around him.",
+    "production_code": "",
+    "runtime": 24,
+    "season_number": 1,
+    "show_id": 42410,
+    "still_path": "/nrRpmcSrCNWurdXQv7lMmNzDpYn.jpg",
+    "vote_average": 6.8,
+    "vote_count": 8
+   },
+   {
+    "air_date": "2010-01-15",
+    "episode_number": 2,
+    "episode_type": "standard",
+    "id": 879934,
+    "name": "Highly Unpredictable",
+    "overview": "It is the Entrance Ceremony at Raira Academy, and the auditorium swells with a varied mix of emotions emitted from the students. Amidst all this is Rio Kamichika: a girl with a notably dark vibe following her.",
+    "production_code": "",
+    "runtime": 24,
+    "season_number": 1,
+    "show_id": 42410,
+    "still_path": "/PgufIzFHgBuIs9EI1TzWch3GdQ.jpg",
+    "vote_average": 6.9,
+    "vote_count": 9
+   },
+   {
+    "air_date": null,
+    "episode_number": 3,
+    "episode_type": "standard",
+    "id": 879935,
+    "name": "Rampant Evil",
+    "overview": "Masaomi Kida is out about town, fervently trying to pick up girls, while Mikado tags along, feeling a bit confused and bewildered. Various people intermingle throughout Ikebukuro as rumors of the “Dollars” spread.",
+    "production_code": "",
+    "runtime": null,
+    "season_number": 1,
+    "show_id": 42410,
+    "still_path": "/t0amH7hycNULBAURpEJ9qqlxaPT.jpg",
+    "vote_average": 6.6,
+    "vote_count": 7
+   }
+  ],
+  "name": "Season 1",
+  "networks": [
+   {
+    "id": 94,
+    "logo_path": "/7RNXnyiMbjgqtPAjja13wchcrGI.png",
+    "name": "MBS",
+    "origin_country": "JP"
+   }
+  ],
+  "overview": "Mikado Ryugamine moves to Ikebukuro at his friend’s invitation and quickly becomes entangled in the city’s dangerous underworld. After witnessing the legendary Headless Rider, he finds himself caught up in escalating violence and gang conflict that begin to throw Ikebukuro into chaos.",
+  "poster_path": "/w1NCXcXpXGQAIb2cobWMfKHpPAk.jpg",
+  "season_number": 1,
+  "vote_average": 7.0
+ },
+ "season/1/watch/providers": {
+  "results": {
+   "AE": {
+    "link": "https://www.themoviedb.org/tv/42410-deyurarara/watch?locale=AE",
+    "ads": [
+     {
+      "logo_path": "/vmBE15FtFOa5RDcH5LEy5TftBLI.png",
+      "provider_id": 1715,
+      "provider_name": "Shahid VIP",
+      "display_priority": 14
+     }
+    ],
+    "flatrate": [
+     {
+      "logo_path": "/vmBE15FtFOa5RDcH5LEy5TftBLI.png",
+      "provider_id": 1715,
+      "provider_name": "Shahid VIP",
+      "display_priority": 14
+     }
+    ]
+   }
+  }
+ }
+}

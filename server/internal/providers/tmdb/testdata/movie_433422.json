@@ -1,0 +1,239 @@
+{
+ "adult": false,
+ "backdrop_path": "/7IMcSsxWfHkO0mdYMU2NcwLmgD1.jpg",
+ "belongs_to_collection": {
+  "id": 524143,
+  "name": "Fairy Tail Collection",
+  "poster_path": "/juMyQvFabj5TqtaCNLLp639hmZW.jpg",
+  "backdrop_path": "/sfABxE7C6YhBTqjR6v5o3M4aRG6.jpg"
+ },
+ "budget": 0,
+ "genres": [
+  {
+   "id": 16,
+   "name": "Animation"
+  },
+  {
+   "id": 28,
+   "name": "Action"
+  },
+  {
+   "id": 12,
+   "name": "Adventure"
+  },
+  {
+   "id": 35,
+   "name": "Comedy"
+  },
+  {
+   "id": 14,
+   "name": "Fantasy"
+  }
+ ],
+ "homepage": "https://gaga.ne.jp/FT.DC",
+ "id": 433422,
+ "imdb_id": "tt6548966",
+ "origin_country": [
+  "JP"
+ ],
+ "original_language": "ja",
+ "original_title": "劇場版 FAIRY TAIL -DRAGON CRY-",
+ "overview": "Dragon Cry is a magical artifact of deadly power, formed into a staff by the fury and despair of dragons long gone. Now, this power has been stolen from the hands of the Fiore kingdom by the nefarious traitor Zash Caine, who flees with it to the small island nation of Stella. Frightened that the power has fallen into the wrong hands, the King of Fiore hastily sends Fairy Tail to retrieve the staff. But this task proves frightening as a shadowy secret lies in the heart of the kingdom of Stella. Dragon Cry follows their story as they muster up all their strength to recover the stolen staff and save both kingdoms.",
+ "popularity": 3.1692,
+ "poster_path": "/9SJFMVWiuJV55yLbPpWhHZ9MgHn.jpg",
+ "production_companies": [
+  {
+   "id": 13113,
+   "logo_path": "/xV5tPYKZhP2Ko9dOh5A3FahuKsx.png",
+   "name": "A-1 Pictures",
+   "origin_country": "JP"
+  },
+  {
+   "id": 59118,
+   "logo_path": "/9nTCEBgGaaI5swkv8gy2vny0Mb5.png",
+   "name": "Kodansha",
+   "origin_country": "JP"
+  },
+  {
+   "id": 84048,
+   "logo_path": "/mkxZQuPpZ0cBDfjr4PAxltGSsoH.png",
+   "name": "GAGA Corporation",
+   "origin_country": "JP"
+  },
+  {
+   "id": 254789,
+   "logo_path": "/dH9BNCvL4H7wenVvS2dv0vl1SdJ.png",
+   "name": "Access Bright",
+   "origin_country": "JP"
+  }
+ ],
+ "production_countries": [
+  {
+   "iso_3166_1": "JP",
+   "name": "Japan"
+  }
+ ],
+ "release_date": "2017-05-06",
+ "revenue": 1420035,
+ "runtime": 85,
+ "softcore": false,
+ "spoken_languages": [
+  {
+   "english_name": "Japanese",
+   "iso_639_1": "ja",
+   "name": "日本語"
+  }
+ ],
+ "status": "Released",
+ "tagline": "",
+ "title": "Fairy Tail: Dragon Cry",
+ "video": false,
+ "vote_average": 6.647,
+ "vote_count": 432,
+ "recommendations": {
+  "page": 1,
+  "results": [
+   {
+    "adult": false,
+    "backdrop_path": "/xGJBLsiY0quc2pOcCH1MdnF5P8.jpg",
+    "genre_ids": [
+     28,
+     16,
+     35,
+     12,
+     14
+    ],
+    "id": 44729,
+    "title": "One Piece: Baron Omatsuri and the Secret Island",
+    "original_language": "ja",
+    "original_title": "ワンピース the movie オマツリ男爵と秘密の島",
+    "overview": "The Straw Hats visit a recreational island, run by Baron Omatsuri, who asks them to complete a series of ordeals if they wish to stay on the island. Luffy accepts and the Straw Hats work together to complete them, but as the island's mysteries unfold, their lives and friendships are put to the test. It's up to Luffy to stop the Baron's plot and keep his crew together.",
+    "popularity": 3.7464,
+    "poster_path": "/ueIR4LM4k8eKhSB8gGT9NMhCwGW.jpg",
+    "release_date": "2005-03-05",
+    "softcore": false,
+    "video": false,
+    "vote_average": 7.2,
+    "vote_count": 267,
+    "media_type": "movie"
+   },
+   {
+    "adult": false,
+    "backdrop_path": "/vEiDUw5a1wDZVR3PjZaq8AXhF3r.jpg",
+    "genre_ids": [
+     12,
+     28,
+     16,
+     35,
+     14
+    ],
+    "id": 347201,
+    "title": "Boruto: Naruto the Movie",
+    "original_language": "ja",
+    "original_title": "BORUTO -NARUTO THE MOVIE-",
+    "overview": "The spirited Boruto Uzumaki, son of Seventh Hokage Naruto, is a skilled ninja who possesses the same brashness and passion his father once had. However, the constant absence of his father, who is busy with his Hokage duties, puts a damper on Boruto's fire. He ends up meeting his father's friend Sasuke, and requests to become... his apprentice!? The curtain on the story of the new generation rises!",
+    "popularity": 4.8221,
+    "poster_path": "/1k6iwC4KaPvTBt1JuaqXy3noZRY.jpg",
+    "release_date": "2015-08-07",
+    "softcore": false,
+    "video": false,
+    "vote_average": 7.458,
+    "vote_count": 1683,
+    "media_type": "movie"
+   },
+   {
+    "adult": false,
+    "backdrop_path": "/n65ypE18pRsYjrYbCwEtiSgNEpx.jpg",
+    "genre_ids": [
+     16,
+     35,
+     12,
+     14
+    ],
+    "id": 128871,
+    "title": "Crayon Shinchan the Movie: The Great Adventure in Henderland",
+    "original_language": "ja",
+    "original_title": "クレヨンしんちゃん ヘンダーランドの大冒険",
+    "overview": "The Futaba Kindergarten kids are so excited for their trip to the Henderland amusement park, but Shin-chan soon learns there are evil forces at play!",
+    "popularity": 2.9735,
+    "poster_path": "/3NjKuVRkzHcW1enHw2RGJPT6Ej9.jpg",
+    "release_date": "1996-04-13",
+    "softcore": false,
+    "video": false,
+    "vote_average": 7.2,
+    "vote_count": 59,
+    "media_type": "movie"
+   }
+  ],
+  "total_pages": 28,
+  "total_results": 555
+ },
+ "external_ids": {
+  "imdb_id": "tt6548966",
+  "wikidata_id": "Q28859714",
+  "facebook_id": null,
+  "instagram_id": null,
+  "twitter_id": "FAIRYTAIL_DC"
+ },
+ "credits": {
+  "cast": [
+   {
+    "adult": false,
+    "gender": 2,
+    "id": 90134,
+    "known_for_department": "Acting",
+    "name": "Tetsuya Kakihara",
+    "original_name": "柿原徹也",
+    "popularity": 2.0404,
+    "profile_path": "/80DeAD6DYh030wsyUygFqDpNkSj.jpg",
+    "cast_id": 23,
+    "character": "Natsu Dragneel (voice)",
+    "credit_id": "59a99da092514157ee02e7b8",
+    "order": 0
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 144650,
+    "known_for_department": "Acting",
+    "name": "Aya Hirano",
+    "original_name": "平野綾",
+    "popularity": 1.8401,
+    "profile_path": "/AvbCkdSXoKgrQAyG08b4WdGKoX5.jpg",
+    "cast_id": 10,
+    "character": "Lucy Heartfilia (voice)",
+    "credit_id": "599236629251417c11000b4d",
+    "order": 1
+   },
+   {
+    "adult": false,
+    "gender": 1,
+    "id": 83928,
+    "known_for_department": "Acting",
+    "name": "Rie Kugimiya",
+    "original_name": "釘宮理恵",
+    "popularity": 3.7822,
+    "profile_path": "/xHonhNFpTpz9zCVXLAF7D4OuHLv.jpg",
+    "cast_id": 13,
+    "character": "Happy (voice)",
+    "credit_id": "599236799251417be3000be7",
+    "order": 2
+   }
+  ]
+ },
+ "watch/providers": {
+  "results": {
+   "AT": {
+    "link": "https://www.themoviedb.org/movie/433422-fairy-tail-dragon-cry/watch?locale=AT",
+    "flatrate": [
+     {
+      "logo_path": "/uFL3c4Cq8M6WoLymlC5Y8bmGytV.png",
+      "provider_id": 283,
+      "provider_name": "Crunchyroll",
+      "display_priority": 53
+     }
+    ]
+   }
+  }
+ }
+}

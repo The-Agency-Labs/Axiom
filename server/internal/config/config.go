@@ -21,6 +21,7 @@ type Config struct {
 
 	TMDBKey      string
 	TMDBLang     string
+	TMDBNSFW     bool // include adult titles in TMDB search
 	TVDBKey      string
 	MALKey       string
 	IGDBID       string
@@ -50,6 +51,7 @@ func Load() (Config, error) {
 		Registration:           boolean("REGISTRATION", false),
 		TMDBKey:                secret("TMDB_API"),
 		TMDBLang:               env("TMDB_LANG", "en"),
+		TMDBNSFW:               boolean("TMDB_NSFW", false),
 		TVDBKey:                secret("TVDB_API"),
 		MALKey:                 secret("MAL_API"),
 		IGDBID:                 secret("IGDB_ID"),

@@ -1,0 +1,59 @@
+{
+ "id": 524143,
+ "name": "Fairy Tail Collection",
+ "original_language": "pt",
+ "original_name": "フェアリーテイル",
+ "overview": "A Collection of movies based on the Fairy Tail anime series.",
+ "poster_path": "/juMyQvFabj5TqtaCNLLp639hmZW.jpg",
+ "backdrop_path": "/sfABxE7C6YhBTqjR6v5o3M4aRG6.jpg",
+ "parts": [
+  {
+   "adult": false,
+   "backdrop_path": "/7IMcSsxWfHkO0mdYMU2NcwLmgD1.jpg",
+   "genre_ids": [
+    16,
+    28,
+    12,
+    35,
+    14
+   ],
+   "id": 433422,
+   "title": "Fairy Tail: Dragon Cry",
+   "original_language": "ja",
+   "original_title": "劇場版 FAIRY TAIL -DRAGON CRY-",
+   "overview": "Dragon Cry is a magical artifact of deadly power, formed into a staff by the fury and despair of dragons long gone. Now, this power has been stolen from the hands of the Fiore kingdom by the nefarious traitor Zash Caine, who flees with it to the small island nation of Stella. Frightened that the power has fallen into the wrong hands, the King of Fiore hastily sends Fairy Tail to retrieve the staff. But this task proves frightening as a shadowy secret lies in the heart of the kingdom of Stella. Dragon Cry follows their story as they muster up all their strength to recover the stolen staff and save both kingdoms.",
+   "popularity": 3.1692,
+   "poster_path": "/9SJFMVWiuJV55yLbPpWhHZ9MgHn.jpg",
+   "release_date": "2017-05-06",
+   "softcore": false,
+   "video": false,
+   "vote_average": 6.647,
+   "vote_count": 432,
+   "media_type": "movie"
+  },
+  {
+   "adult": false,
+   "backdrop_path": "/qOqpRqFulhrOox5GTuh29MtQ3pU.jpg",
+   "genre_ids": [
+    16,
+    28,
+    12,
+    35,
+    14
+   ],
+   "id": 135531,
+   "title": "Fairy Tail: Phoenix Priestess",
+   "original_language": "ja",
+   "original_title": "劇場版 FAIRY TAIL 鳳凰の巫女",
+   "overview": "The film revolves around a mysterious girl named Éclair who appears before Fairy Tail, the world's most notorious wizard's guild. She lost all of her memories, except for the imperative that she must deliver two Phoenix Stones somewhere. The stones may spell the collapse of the magical world, and Natsu, Lucy, and the rest of the Fairy Tail guild are caught up in the intrigue.",
+   "popularity": 2.306,
+   "poster_path": "/aDuie7u8AL3J6ZH2LS5ySnPkX1W.jpg",
+   "release_date": "2012-08-18",
+   "softcore": false,
+   "video": false,
+   "vote_average": 7.3,
+   "vote_count": 244,
+   "media_type": "movie"
+  }
+ ]
+}
