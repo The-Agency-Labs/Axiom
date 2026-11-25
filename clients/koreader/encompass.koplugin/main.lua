@@ -15,6 +15,7 @@ Position sync is separate: use KOReader's built-in "Progress sync" pointed at
 --]]--
 
 local DataStorage = require("datastorage")
+local lfs = require("libs/libkoreader-lfs")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local UIManager = require("ui/uimanager")
@@ -37,9 +38,21 @@ local Encompass = WidgetContainer:extend{
     is_doc_only = false,
 }
 
+-- Optional Tailscale helper (see clients/koreader/kindle/ts.sh). When it's
+-- installed, Tailscale runs only while KOReader is open, which saves battery.
+local TAILSCALE = "/mnt/us/tailscale/ts.sh"
+
+local function tailscale(action, wait)
+    if lfs.attributes(TAILSCALE, "mode") ~= "file" then return end
+    os.execute(TAILSCALE .. " " .. action .. " >/dev/null 2>&1" .. (wait and "" or " &"))
+end
+
 function Encompass:init()
     self.settings = G_reader_settings:readSetting(SETTINGS_KEY) or {}
     self.ui.menu:registerToMainMenu(self)
+    if self.settings.tailscale ~= false then
+        tailscale("start")  -- no-op if it's already running
+    end
 end
 
 function Encompass:save()
@@ -205,7 +218,12 @@ end
 
 function Encompass:onSuspend() self:sync("suspend") end
 function Encompass:onCloseDocument() self:sync("close") end
-function Encompass:onExit() self:sync("exit") end
+function Encompass:onExit()
+    self:sync("exit")
+    if self.settings.tailscale ~= false then
+        tailscale("stop", true)
+    end
+end
 function Encompass:onResume()
     -- Wi-Fi usually needs a few seconds after wake.
     UIManager:scheduleIn(15, function() self:sync("resume") end)
@@ -273,6 +291,18 @@ function Encompass:addToMainMenu(menu_items)
                     return T(_("Last sync: %1"), self.settings.last_sync or _("never"))
                 end,
                 enabled_func = function() return false end,
+            },
+            {
+                text = _("Run Tailscale while KOReader is open"),
+                enabled_func = function()
+                    return lfs.attributes(TAILSCALE, "mode") == "file"
+                end,
+                checked_func = function() return self.settings.tailscale ~= false end,
+                callback = function()
+                    self.settings.tailscale = self.settings.tailscale == false
+                    self:save()
+                    tailscale(self.settings.tailscale and "start" or "stop")
+                end,
             },
             {
                 text = _("Resend all history"),
