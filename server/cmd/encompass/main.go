@@ -1,31 +1,62 @@
 // Command encompass runs the Encompass server.
+//
+// Usage:
+//
+//	encompass                          serve (default)
+//	encompass serve
+//	encompass createuser <name> [--admin]   password is read from stdin
+//	encompass healthcheck              GET /health on the local server, exit 0/1
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/the-agency-labs/encompass/server/internal/auth"
+	"github.com/the-agency-labs/encompass/server/internal/cache"
 	"github.com/the-agency-labs/encompass/server/internal/config"
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/httpapi"
+	"github.com/the-agency-labs/encompass/server/internal/jobs"
 	"github.com/the-agency-labs/encompass/server/web"
 )
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stderr, nil)))
-	if err := run(); err != nil {
+	cmd, args := "serve", []string(nil)
+	if len(os.Args) > 1 {
+		cmd, args = os.Args[1], os.Args[2:]
+	}
+	var err error
+	switch cmd {
+	case "serve":
+		err = serve()
+	case "createuser":
+		err = createUser(args, os.Stdin)
+	case "healthcheck":
+		err = healthcheck()
+	default:
+		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck]\n", cmd)
+		os.Exit(2)
+	}
+	if err != nil {
 		slog.Error("fatal", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func serve() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -33,31 +64,136 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	loc, err := time.LoadLocation(cfg.TimeZone)
+	if err != nil {
+		return fmt.Errorf("TZ %q: %w", cfg.TimeZone, err)
+	}
 	conn, err := db.Open(ctx, cfg.DatabasePath)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
+	queries := db.New(conn)
 
-	server := &httpapi.Server{Config: cfg, DB: conn, Queries: db.New(conn), Web: web.Files()}
+	authSvc := auth.NewService(queries, cfg.SessionDays)
+	jobMgr := jobs.New(conn, queries, loc)
+	providerCache := cache.New(queries, cache.DefaultEntries)
+	providerCache.RegisterJobs(jobMgr)
+	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
+		_, err := authSvc.CleanupSessions(ctx)
+		return err
+	})
+
+	server := &httpapi.Server{
+		Config: cfg, DB: conn, Queries: queries, Web: web.Files(),
+		Auth: authSvc, Jobs: jobMgr, Cache: providerCache,
+	}
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           server.Routes(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
+
+	jobsDone := make(chan struct{})
+	go func() {
+		defer close(jobsDone)
+		if err := jobMgr.Run(ctx); err != nil {
+			slog.Error("jobs stopped", "err", err)
+		}
+	}()
+
 	errs := make(chan error, 1)
 	go func() {
 		slog.Info("listening", "addr", cfg.Addr)
 		errs <- httpServer.ListenAndServe()
 	}()
+	var serveErr error
 	select {
 	case err := <-errs:
 		if !errors.Is(err, http.ErrServerClosed) {
-			return err
+			serveErr = err
 		}
 	case <-ctx.Done():
 	}
+	stop() // also stops the jobs if the listener failed
 	shutdown, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	return httpServer.Shutdown(shutdown)
+	if err := httpServer.Shutdown(shutdown); err != nil && serveErr == nil {
+		serveErr = err
+	}
+	select {
+	case <-jobsDone:
+	case <-shutdown.Done():
+		slog.Warn("jobs did not stop in time")
+	}
+	return serveErr
+}
+
+// createUser implements `encompass createuser <username> [--admin]`.
+func createUser(args []string, stdin io.Reader) error {
+	var username string
+	var admin bool
+	for _, a := range args {
+		switch {
+		case a == "--admin":
+			admin = true
+		case strings.HasPrefix(a, "-"):
+			return fmt.Errorf("unknown flag %q", a)
+		case username == "":
+			username = a
+		default:
+			return fmt.Errorf("unexpected argument %q", a)
+		}
+	}
+	if username == "" {
+		return errors.New("usage: encompass createuser <username> [--admin] (password on stdin)")
+	}
+	password, err := bufio.NewReader(stdin).ReadString('\n')
+	if err != nil && !(errors.Is(err, io.EOF) && password != "") {
+		return fmt.Errorf("read password from stdin: %w", err)
+	}
+	password = strings.TrimRight(password, "\r\n")
+	if len(password) < 8 {
+		return errors.New("password must be at least 8 characters")
+	}
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	conn, err := db.Open(ctx, cfg.DatabasePath)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	user, err := auth.NewService(db.New(conn), cfg.SessionDays).CreateUser(ctx, username, password, admin)
+	if err != nil {
+		return fmt.Errorf("create user: %w", err)
+	}
+	slog.Info("user created", "id", user.ID, "username", user.Username, "admin", admin)
+	return nil
+}
+
+// healthcheck probes the local server; used by the Docker HEALTHCHECK, since
+// the distroless image has no shell or wget.
+func healthcheck() error {
+	addr := os.Getenv("ADDR")
+	if addr == "" {
+		addr = ":8000"
+	}
+	_, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return fmt.Errorf("ADDR %q: %w", addr, err)
+	}
+	client := http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get("http://127.0.0.1:" + port + "/health")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("health returned %s", resp.Status)
+	}
+	return nil
 }

@@ -5,8 +5,11 @@ import (
 	"io/fs"
 	"net/http"
 
+	"github.com/the-agency-labs/encompass/server/internal/auth"
+	"github.com/the-agency-labs/encompass/server/internal/cache"
 	"github.com/the-agency-labs/encompass/server/internal/config"
 	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/encompass/server/internal/jobs"
 )
 
 // Server holds what handlers need.
@@ -15,6 +18,9 @@ type Server struct {
 	DB      *sql.DB
 	Queries *db.Queries
 	Web     fs.FS
+	Auth    *auth.Service
+	Jobs    *jobs.Manager
+	Cache   *cache.Cache
 }
 
 // Routes builds the top-level handler. Areas register their routes on mux
@@ -27,9 +33,10 @@ func (s *Server) Routes() http.Handler {
 		}
 		return map[string]string{"status": "ok"}, nil
 	}))
+	s.authRoutes(mux)
 	mux.Handle("/api/", JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
 		return nil, Errorf(http.StatusNotFound, "Not Found")
 	}))
 	mux.Handle("/", SPA(s.Web))
-	return SecurityHeaders(mux)
+	return SecurityHeaders(s.Auth.Middleware(mux))
 }
