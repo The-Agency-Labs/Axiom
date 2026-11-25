@@ -617,6 +617,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "Refresh anime mappings",
         "schedule": 60 * 60 * 24,  # checks daily, downloads weekly
     },
+    "sync_anilist_lists": {
+        "task": "Sync AniList lists",
+        # AniList has no webhooks; one small GraphQL query per user, additive.
+        # Does nothing unless ANILIST_USERS is set.
+        "schedule": 60 * 30,
+    },
     "sync_jellyfin_history": {
         "task": "Sync Jellyfin history",
         # Catches plays the webhook missed (e.g. Encompass was down).
@@ -703,6 +709,8 @@ JELLYFIN_API_KEY = config(
 )
 # "jellyfin user:encompass user" pairs, comma separated; one name if both match.
 JELLYFIN_USERS = config("JELLYFIN_USERS", default="", cast=Csv())
+# "anilist user:encompass user" pairs, comma separated; polled every 30 minutes.
+ANILIST_USERS = config("ANILIST_USERS", default="", cast=Csv())
 if not REGISTRATION:
     ACCOUNT_ADAPTER = "users.account_adapter.NoNewUsersAccountAdapter"
 

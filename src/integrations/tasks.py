@@ -13,6 +13,7 @@ from app.models import MediaTypes
 from app.templatetags import app_tags
 from integrations.imports import (
     anilist,
+    anilist_shows,
     goodreads,
     helpers,
     hltb,
@@ -191,6 +192,44 @@ def run_jellyfin_import(user, jellyfin_user, *, full=False):
     if counts:
         events.tasks.reload_calendar.delay()
     return counts, failures
+
+
+def _anilist_pairs():
+    """(AniList username, encompass username) pairs from ANILIST_USERS."""
+    for entry in settings.ANILIST_USERS:
+        anilist_user, _, encompass_user = entry.strip().partition(":")
+        if anilist_user:
+            yield anilist_user, encompass_user or anilist_user
+
+
+def run_anilist_import(user, anilist_user, *, full=False, dry_run=False):
+    """Import (or catch up on) one AniList list. Additive only."""
+    since_key = f"anilist_sync:{user.id}:{anilist_user.lower()}"
+    since = None if full else cache.get(since_key)
+    importer = anilist_shows.AniListShowImporter(user, anilist_user, since=since)
+    with translation.override(user.language), disable_fetch_releases():
+        counts, warnings, latest = importer.run()
+    if dry_run:
+        return counts, warnings
+    if latest:
+        cache.set(since_key, max(latest, since) if since else latest, None)
+    if counts:
+        events.tasks.reload_calendar.delay()
+    return counts, warnings
+
+
+@shared_task(name="Sync AniList lists")
+def sync_anilist_lists():
+    """Pick up AniList edits (from Paperback, say) for every configured user."""
+    results = []
+    for anilist_user, username in _anilist_pairs():
+        user = get_user_model().objects.filter(username=username).first()
+        if user is None:
+            logger.warning("AniList sync: no Encompass user %s", username)
+            continue
+        counts, warnings = run_anilist_import(user, anilist_user)
+        results.append(f"{username}: {dict(counts)}, {len(warnings)} warnings")
+    return "; ".join(results) or "No ANILIST_USERS configured"
 
 
 @shared_task(name="Sync Jellyfin history")
