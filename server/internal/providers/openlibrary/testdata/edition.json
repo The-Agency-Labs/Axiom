@@ -1,0 +1,2 @@
+{"key":"/books/OL1M","title":"Test Book","works":[{"key":"/works/OL9W"}],"number_of_pages":216,"covers":[555],"physical_format":"mass market paperback","publish_date":"cop. March 18, 2001","publishers":["A","B","C","D","E","F"],"isbn_13":["978"],"isbn_10":["123"],
+"table_of_contents":[{"level":0,"label":"","title":"Part One","pagenum":""},{"level":1,"title":"Chapter 1","type":{"key":"/type/toc_item"}},{"level":1,"label":"2","title":""},{"level":0,"title":"  "},"Epilogue"]}

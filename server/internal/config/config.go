@@ -33,6 +33,7 @@ type Config struct {
 	ComicVineKey string
 	MALNSFW      bool // include adult titles in MyAnimeList search
 	AniListNSFW  bool // include adult titles in AniList search
+	MUNSFW       bool // MangaUpdates: include adult titles in search
 
 	JellyfinURL            string
 	JellyfinKey            string
@@ -66,6 +67,7 @@ func Load() (Config, error) {
 		ComicVineKey:           secret("COMICVINE_API"),
 		MALNSFW:                boolean("MAL_NSFW", false),
 		AniListNSFW:            boolean("ANILIST_NSFW", false),
+		MUNSFW:                 boolean("MU_NSFW", false),
 		JellyfinURL:            strings.TrimRight(env("JELLYFIN_URL", ""), "/"),
 		JellyfinKey:            secret("JELLYFIN_API_KEY"),
 		JellyfinUsers:          list("JELLYFIN_USERS"),
