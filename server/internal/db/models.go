@@ -98,31 +98,34 @@ type EntrySeason struct {
 }
 
 type Item struct {
-	ID           int64          `json:"id"`
-	Kind         string         `json:"kind"`
-	Source       string         `json:"source"`
-	ExternalID   string         `json:"external_id"`
-	Title        string         `json:"title"`
-	NativeTitle  string         `json:"native_title"`
-	Image        string         `json:"image"`
-	Year         sql.NullInt64  `json:"year"`
-	Synopsis     string         `json:"synopsis"`
-	Total        sql.NullInt64  `json:"total"`
-	KindOverride int64          `json:"kind_override"`
-	Meta         string         `json:"meta"`
-	RefreshedAt  sql.NullString `json:"refreshed_at"`
+	ID              int64          `json:"id"`
+	Kind            string         `json:"kind"`
+	Source          string         `json:"source"`
+	ExternalID      string         `json:"external_id"`
+	Title           string         `json:"title"`
+	NativeTitle     string         `json:"native_title"`
+	Image           string         `json:"image"`
+	Year            sql.NullInt64  `json:"year"`
+	Synopsis        string         `json:"synopsis"`
+	Total           sql.NullInt64  `json:"total"`
+	KindOverride    int64          `json:"kind_override"`
+	Meta            string         `json:"meta"`
+	RefreshedAt     sql.NullString `json:"refreshed_at"`
+	SeasonsSyncedAt sql.NullString `json:"seasons_synced_at"`
 }
 
 type ItemEpisode struct {
-	ItemID   int64          `json:"item_id"`
-	Season   int64          `json:"season"`
-	Number   int64          `json:"number"`
-	Position int64          `json:"position"`
-	Title    string         `json:"title"`
-	AirDate  sql.NullString `json:"air_date"`
-	Runtime  sql.NullInt64  `json:"runtime"`
-	Image    string         `json:"image"`
-	Overview string         `json:"overview"`
+	ItemID   int64           `json:"item_id"`
+	Season   int64           `json:"season"`
+	Number   int64           `json:"number"`
+	Position int64           `json:"position"`
+	Title    string          `json:"title"`
+	AirDate  sql.NullString  `json:"air_date"`
+	Runtime  sql.NullInt64   `json:"runtime"`
+	Image    string          `json:"image"`
+	Overview string          `json:"overview"`
+	Kind     string          `json:"kind"`
+	Score    sql.NullFloat64 `json:"score"`
 }
 
 type ItemID struct {
@@ -283,4 +286,5 @@ type Watch struct {
 	Episode   sql.NullInt64 `json:"episode"`
 	WatchedAt string        `json:"watched_at"`
 	Source    string        `json:"source"`
+	Notes     string        `json:"notes"`
 }
