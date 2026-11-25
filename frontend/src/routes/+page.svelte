@@ -1,38 +1,52 @@
 <script lang="ts">
-	import { CheckCheck, Plus } from '@lucide/svelte';
+	import { CheckCheck, Plus, Sparkles } from '@lucide/svelte';
 	import { get } from '#lib/api.ts';
 	import { auth } from '#lib/auth.svelte.ts';
-	import Cover from '#lib/components/Cover.svelte';
-	import NowCard from '#lib/components/NowCard.svelte';
+	import NowItem from '#lib/components/library/NowItem.svelte';
+	import SectionHead from '#lib/components/library/SectionHead.svelte';
 	import ReadingStrip from '#lib/components/ReadingStrip.svelte';
-	import SectionHeader from '#lib/components/SectionHeader.svelte';
-	import { MEDIA, relativeTime } from '#lib/media.ts';
+	import { LIBRARY_TYPES, MEDIA, relativeTime, titleHref } from '#lib/media.ts';
+	import { onSynced } from '#lib/offline.svelte.ts';
 	import type { Finished, NowGroup, ReadingStats } from '#lib/types.ts';
+	import { Button, EmptyState, PosterCard, PullToRefresh, Skeleton } from '#lib/ui/index.ts';
 
 	let groups = $state<NowGroup[] | null>(null);
 	let finished = $state<Finished[]>([]);
 	let reading = $state<ReadingStats | null>(null);
-	let error = $state('');
+	let error = $state(false);
 
-	async function load() {
-		try {
-			const [now, done, stats] = await Promise.all([
-				get<{ groups: NowGroup[] }>('/now'),
-				get<Finished[]>('/now/finished?limit=14'),
-				get<ReadingStats>('/reading/stats?' + new URLSearchParams({ start: daysAgo(6) }))
-			]);
-			groups = now.groups;
-			finished = done;
-			reading = stats;
-		} catch (e) {
-			error = 'Could not load your media.';
-		}
-	}
-
-	function daysAgo(n: number) {
+	const daysAgo = (n: number) => {
 		const d = new Date();
 		d.setDate(d.getDate() - n);
 		return d.toLocaleDateString('en-CA');
+	};
+
+	const order = (list: NowGroup[]) =>
+		[...list].sort((a, b) => LIBRARY_TYPES.indexOf(a.media_type) - LIBRARY_TYPES.indexOf(b.media_type));
+
+	async function load() {
+		error = false;
+		try {
+			const [now, done, stats] = await Promise.all([
+				get<{ groups: NowGroup[] }>('/now', (d) => (groups = order(d.groups))),
+				get<Finished[]>('/now/finished?limit=14', (d) => (finished = d)),
+				get<ReadingStats>('/reading/stats?start=' + daysAgo(6), (d) => (reading = d)).catch(() => null)
+			]);
+			groups = order(now.groups);
+			finished = done;
+			reading = stats;
+		} catch {
+			if (!groups) error = true;
+		}
+	}
+
+	/** Refetch quietly after a tap (no skeleton): the optimistic state is already on screen. */
+	async function quiet() {
+		try {
+			groups = order((await get<{ groups: NowGroup[] }>('/now')).groups);
+		} catch {
+			/* keep what is shown */
+		}
 	}
 
 	const greeting = $derived.by(() => {
@@ -42,110 +56,103 @@
 		if (hour < 18) return 'Good afternoon';
 		return 'Good evening';
 	});
-	const totalInProgress = $derived(groups?.reduce((n, g) => n + g.entries.length, 0) ?? 0);
-	const today = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+	const total = $derived(groups?.reduce((n, g) => n + g.entries.length, 0) ?? 0);
 
 	$effect(() => {
 		load();
+		return onSynced(quiet);
 	});
 </script>
 
 <svelte:head><title>Now · Encompass</title></svelte:head>
 
-<header class="mb-8 flex flex-wrap items-end justify-between gap-4">
-	<div>
-		<p class="text-sm text-muted">{today}</p>
-		<h1 class="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
-			{greeting}, <span class="text-muted capitalize">{auth.username}</span>
-		</h1>
-		{#if groups}
-			<p class="mt-2 text-sm text-faint">
-				{totalInProgress} in progress across {groups.length} {groups.length === 1 ? 'section' : 'sections'}
+<PullToRefresh onrefresh={load}>
+	<header class="mb-5 flex items-end justify-between gap-3">
+		<div class="min-w-0">
+			<p class="text-sm text-muted">{greeting}</p>
+			<h1 class="truncate text-2xl font-semibold tracking-tight capitalize sm:text-3xl">{auth.username}</h1>
+			<p class="mt-1 h-5 text-[13px] text-faint">
+				{#if groups}{total} in progress{/if}
 			</p>
-		{/if}
-	</div>
-	<a
-		href="/search"
-		class="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:border-line-strong hover:bg-raised"
-	>
-		<Plus class="size-4" /> Track something
-	</a>
-</header>
-
-{#if error}
-	<p class="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">{error}</p>
-{:else if !groups}
-	<div class="space-y-10">
-		{#each [0, 1, 2] as i (i)}
-			<div>
-				<div class="mb-3 h-6 w-32 animate-pulse rounded bg-ink/5"></div>
-				<div class="flex gap-4 overflow-hidden">
-					{#each [0, 1, 2] as j (j)}
-						<div class="h-40 w-[22rem] shrink-0 animate-pulse rounded-2xl bg-ink/[0.03]"></div>
-					{/each}
-				</div>
-			</div>
-		{/each}
-	</div>
-{:else}
-	{#if reading}
-		<section class="mb-10">
-			<SectionHeader title="Reading" icon={MEDIA.book.icon} accent={MEDIA.book.accent} href="/reading" />
-			<ReadingStrip stats={reading} />
-		</section>
-	{/if}
-
-	<div class="mb-4 flex items-center gap-3">
-		<h2 class="text-xs font-semibold tracking-wider text-faint uppercase">Media Now</h2>
-		<div class="h-px flex-1 bg-line"></div>
-	</div>
-
-	{#if groups.length === 0}
-		<div class="rounded-2xl border border-dashed border-line-strong p-10 text-center">
-			<p class="font-medium">Nothing in progress</p>
-			<p class="mt-1 text-sm text-muted">Start a show, a book or some manga and it will show up here.</p>
 		</div>
-	{/if}
+		<Button href="/search" variant="secondary" icon={Plus} class="shrink-0">Track</Button>
+	</header>
 
-	<div class="space-y-10">
-		{#each groups as group (group.media_type)}
-			{@const meta = MEDIA[group.media_type]}
-			<section>
-				<SectionHeader
-					title={meta.plural}
-					icon={meta.icon}
-					accent={meta.accent}
-					count={group.entries.length}
-					href="/library/{group.media_type}"
-				/>
-				<div class="shelf -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-					{#each group.entries as entry (entry.media_type + entry.id)}
-						<NowCard {entry} />
+	{#if error}
+		<EmptyState
+			title="Could not load your media"
+			description="Check your connection and pull down to try again."
+		>
+			{#snippet actions()}<Button variant="primary" onclick={load}>Retry</Button>{/snippet}
+		</EmptyState>
+	{:else if !groups}
+		<div class="space-y-8" aria-busy="true">
+			{#each [0, 1] as i (i)}
+				<div>
+					<Skeleton class="mb-3 h-7 w-40" />
+					<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+						<Skeleton class="h-[10.5rem]" />
+						<Skeleton class="hidden h-[10.5rem] sm:block" />
+					</div>
+				</div>
+			{/each}
+		</div>
+	{:else}
+		{#if reading}
+			<section class="mb-8">
+				<SectionHead title="Reading" icon={MEDIA.book.icon} accent={MEDIA.book.accent} href="/reading" />
+				<ReadingStrip stats={reading} />
+			</section>
+		{/if}
+
+		{#if groups.length === 0}
+			<EmptyState
+				icon={Sparkles}
+				title="Nothing in progress"
+				description="Start a show, a book or some manga and it will show up here."
+			>
+				{#snippet actions()}<Button variant="primary" href="/search" icon={Plus}>Find something</Button>{/snippet}
+			</EmptyState>
+		{/if}
+
+		<div class="space-y-8">
+			{#each groups as group (group.media_type)}
+				{@const meta = MEDIA[group.media_type]}
+				<section>
+					<SectionHead
+						title={meta.plural}
+						icon={meta.icon}
+						accent={meta.accent}
+						count={group.entries.length}
+						href="/library/{group.media_type}"
+					/>
+					<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+						{#each group.entries as entry (entry.media_type + entry.id + ':' + (entry.season_number ?? ''))}
+							<NowItem {entry} kind={group.media_type} onchange={quiet} />
+						{/each}
+					</div>
+				</section>
+			{/each}
+		</div>
+
+		{#if finished.length}
+			<section class="mt-10">
+				<SectionHead title="Recently finished" icon={CheckCheck} accent="var(--color-success)" />
+				<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+					{#each finished as entry (entry.media_type + entry.id)}
+						<div class="w-28 shrink-0">
+							<PosterCard
+								href={titleHref(entry.item, entry.media_type, entry.id)}
+								src={entry.item.image}
+								title={entry.item.title}
+								type={entry.media_type}
+								score={entry.score}
+								subtitle={relativeTime(entry.end_date)}
+							/>
+						</div>
 					{/each}
 				</div>
 			</section>
-		{/each}
-	</div>
-
-	{#if finished.length}
-		<section class="mt-12">
-			<SectionHeader title="Recently finished" icon={CheckCheck} accent="#34d399" />
-			<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-				{#each finished as entry (entry.media_type + entry.id)}
-					<a href="/item/{entry.media_type}/{entry.id}" class="group w-28 shrink-0">
-						<Cover
-							src={entry.item.image}
-							title={entry.item.title}
-							type={entry.media_type}
-							class="aspect-[2/3] w-full transition group-hover:ring-line-strong"
-						/>
-						<p class="mt-2 line-clamp-1 text-xs font-medium">{entry.item.title}</p>
-						<p class="text-[11px] text-faint">
-							{relativeTime(entry.end_date)}{entry.score ? ` · ★ ${entry.score}` : ''}
-						</p>
-					</a>
-				{/each}
-			</div>
-		</section>
+		{/if}
 	{/if}
-{/if}
+</PullToRefresh>

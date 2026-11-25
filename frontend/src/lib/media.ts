@@ -113,3 +113,40 @@ export const SOURCE_NAMES: Record<string, string> = {
 	bgg: 'BoardGameGeek',
 	manual: 'Manual'
 };
+
+/** Shows and anime tracked through TMDB have seasons and per-episode watches. */
+export const hasEpisodes = (kind: string, source: string) => (kind === 'tv' || kind === 'anime') && source === 'tmdb';
+/** Anime without a TMDB match: just an episode counter (MyAnimeList / AniList). */
+export const isCountAnime = (kind: string, source: string) => kind === 'anime' && source !== 'tmdb';
+export const isFilmKind = (kind: string) => kind === 'movie' || kind === 'anime_movie';
+
+/**
+ * The one title route. `entryId` is only a hint that saves a lookup; the page verifies it.
+ * `kind` overrides item.media_type (the Now feed reports "season" for TV seasons; pass the group's kind).
+ */
+export function titleHref(
+	item: { media_type?: string; source: string; media_id: string | number },
+	kind?: MediaType | string,
+	entryId?: number | null
+) {
+	// A season/episode event doesn't say whether its show is tv or anime: "show" resolves it on the title page.
+	const raw = kind ?? item.media_type;
+	const k = raw === 'season' || raw === 'episode' ? 'show' : raw;
+	const hint = entryId ? `?e=${entryId}` : '';
+	return `/title/${k}/${item.source}/${encodeURIComponent(String(item.media_id))}${hint}`;
+}
+
+/** Local calendar day as YYYY-MM-DD. */
+export const todayISO = () => new Date().toLocaleDateString('en-CA');
+
+export const pluralize = (n: number, one: string, many = one + 's') => `${n} ${n === 1 ? one : many}`;
+
+/** Library sort orders; ids match the `sort` default in user settings. */
+export const SORTS: [string, string][] = [
+	['activity', 'Recent activity'],
+	['title', 'Title'],
+	['score', 'Score'],
+	['progress', 'Progress'],
+	['start_date', 'Started'],
+	['end_date', 'Finished']
+];

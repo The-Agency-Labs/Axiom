@@ -152,6 +152,7 @@ export interface SearchResult {
 	media_type: MediaType;
 	title: string;
 	image: string;
+	release_year?: number | string | null;
 }
 
 export interface ActivityEntry {
@@ -319,4 +320,33 @@ export interface LibraryPerson {
 	person: Person;
 	titles: number;
 	appearances: Appearance[];
+}
+
+/** Provider metadata for a title (GET /metadata/...); every key is optional. */
+export interface TitleMetadata {
+	title?: string;
+	native_title?: string;
+	image?: string;
+	backdrop?: string;
+	synopsis?: string;
+	score?: number | null;
+	genres?: (string | { name: string })[];
+	details?: Record<string, unknown>;
+	max_progress?: number | null;
+	season_title?: string;
+	[key: string]: unknown;
+}
+
+export interface LibraryResponse {
+	count: number;
+	years: number[];
+	results: Entry[];
+}
+
+export interface ListSummary {
+	id: number;
+	name: string;
+	items_count: number;
+	has_item: boolean;
+	image?: string | null;
 }
