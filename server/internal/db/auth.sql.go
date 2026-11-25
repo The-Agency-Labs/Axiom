@@ -98,7 +98,7 @@ func (q *Queries) DeleteSession(ctx context.Context, idHash string) error {
 }
 
 const getAPITokenByHash = `-- name: GetAPITokenByHash :one
-SELECT api_tokens.id, api_tokens.user_id, api_tokens.name, api_tokens.scope, api_tokens.prefix, api_tokens.key_hash, api_tokens.key_md5, api_tokens.created_at, api_tokens.last_used_at, api_tokens.revoked_at, users.id, users.username, users.password_hash, users.is_admin, users.is_active, users.timezone, users.language, users.webhook_token, users.jellyfin_users, users.watched_percent, users.created_at, users.last_login_at
+SELECT api_tokens.id, api_tokens.user_id, api_tokens.name, api_tokens.scope, api_tokens.prefix, api_tokens.key_hash, api_tokens.key_md5, api_tokens.created_at, api_tokens.last_used_at, api_tokens.revoked_at, users.id, users.username, users.password_hash, users.is_admin, users.is_active, users.timezone, users.language, users.webhook_token, users.jellyfin_users, users.watched_percent, users.created_at, users.last_login_at, users.calendar_token
 FROM api_tokens JOIN users ON users.id = api_tokens.user_id
 WHERE api_tokens.key_hash = ? AND api_tokens.revoked_at IS NULL
 `
@@ -134,12 +134,13 @@ func (q *Queries) GetAPITokenByHash(ctx context.Context, keyHash string) (GetAPI
 		&i.User.WatchedPercent,
 		&i.User.CreatedAt,
 		&i.User.LastLoginAt,
+		&i.User.CalendarToken,
 	)
 	return i, err
 }
 
 const getAPITokenByMD5 = `-- name: GetAPITokenByMD5 :one
-SELECT api_tokens.id, api_tokens.user_id, api_tokens.name, api_tokens.scope, api_tokens.prefix, api_tokens.key_hash, api_tokens.key_md5, api_tokens.created_at, api_tokens.last_used_at, api_tokens.revoked_at, users.id, users.username, users.password_hash, users.is_admin, users.is_active, users.timezone, users.language, users.webhook_token, users.jellyfin_users, users.watched_percent, users.created_at, users.last_login_at
+SELECT api_tokens.id, api_tokens.user_id, api_tokens.name, api_tokens.scope, api_tokens.prefix, api_tokens.key_hash, api_tokens.key_md5, api_tokens.created_at, api_tokens.last_used_at, api_tokens.revoked_at, users.id, users.username, users.password_hash, users.is_admin, users.is_active, users.timezone, users.language, users.webhook_token, users.jellyfin_users, users.watched_percent, users.created_at, users.last_login_at, users.calendar_token
 FROM api_tokens JOIN users ON users.id = api_tokens.user_id
 WHERE users.username = ? AND api_tokens.key_md5 = ? AND api_tokens.revoked_at IS NULL
 `
@@ -180,12 +181,13 @@ func (q *Queries) GetAPITokenByMD5(ctx context.Context, arg GetAPITokenByMD5Para
 		&i.User.WatchedPercent,
 		&i.User.CreatedAt,
 		&i.User.LastLoginAt,
+		&i.User.CalendarToken,
 	)
 	return i, err
 }
 
 const getSessionUser = `-- name: GetSessionUser :one
-SELECT users.id, users.username, users.password_hash, users.is_admin, users.is_active, users.timezone, users.language, users.webhook_token, users.jellyfin_users, users.watched_percent, users.created_at, users.last_login_at, sessions.expires_at AS session_expires_at
+SELECT users.id, users.username, users.password_hash, users.is_admin, users.is_active, users.timezone, users.language, users.webhook_token, users.jellyfin_users, users.watched_percent, users.created_at, users.last_login_at, users.calendar_token, sessions.expires_at AS session_expires_at
 FROM sessions JOIN users ON users.id = sessions.user_id
 WHERE sessions.id_hash = ? AND sessions.expires_at > ?
 `
@@ -216,6 +218,7 @@ func (q *Queries) GetSessionUser(ctx context.Context, arg GetSessionUserParams) 
 		&i.User.WatchedPercent,
 		&i.User.CreatedAt,
 		&i.User.LastLoginAt,
+		&i.User.CalendarToken,
 		&i.SessionExpiresAt,
 	)
 	return i, err
