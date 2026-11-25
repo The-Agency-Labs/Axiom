@@ -32,6 +32,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/httpapi"
 	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/encompass/server/internal/library"
 	"github.com/the-agency-labs/encompass/server/internal/providers"
 	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
 	"github.com/the-agency-labs/encompass/server/internal/providers/bgg"
@@ -92,7 +93,8 @@ func serve() error {
 	jobMgr := jobs.New(conn, queries, loc)
 	providerCache := cache.New(queries, cache.DefaultEntries)
 	providerCache.RegisterJobs(jobMgr)
-	newCatalog(cfg, conn, queries, providerCache, jobMgr)
+	cat := newCatalog(cfg, conn, queries, providerCache, jobMgr)
+	lib := library.New(conn, queries, cat)
 	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
 		_, err := authSvc.CleanupSessions(ctx)
 		return err
@@ -101,6 +103,7 @@ func serve() error {
 	server := &httpapi.Server{
 		Config: cfg, DB: conn, Queries: queries, Web: web.Files(),
 		Auth: authSvc, Jobs: jobMgr, Cache: providerCache,
+		Catalog: cat, Library: lib,
 	}
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,
