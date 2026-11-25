@@ -945,3 +945,77 @@ class JellyfinWebhookTests(TestCase):
         result = JellyfinWebhookProcessor()._get_episode_number(payload)
 
         self.assertEqual(result, 7)
+
+
+class JellyfinPluginTemplateTests(TestCase):
+    """The plain template for the official plugin (no `if_equals` helpers)."""
+
+    def setUp(self):
+        """Create a user with a webhook token."""
+        self.client = Client()
+        self.user = get_user_model().objects.create_superuser(
+            username="plain",
+            token="plain-token",  # noqa: S106
+        )
+        self.url = reverse("jellyfin_webhook", kwargs={"token": "plain-token"})
+
+    def _payload(self, notification, played):
+        return {
+            "NotificationType": notification,
+            "Item": {
+                "Type": "Episode",
+                "Name": "One Single Magic Spell",
+                "ProductionYear": "",
+                "ProviderIds": {"Tmdb": "", "Imdb": "tt41907106", "Tvdb": "11703643"},
+                "UserData": {"Played": played},
+                "SeriesName": "Wistoria: Wand and Sword",
+                "ParentIndexNumber": "2",
+                "IndexNumber": "3",
+            },
+        }
+
+    def test_normalize_maps_notification_and_types(self):
+        """NotificationType becomes Event; numbers and Played get real types."""
+        from integrations.webhooks.jellyfin import normalize_payload  # noqa: PLC0415
+
+        payload = normalize_payload(self._payload("PlaybackStop", "True"))
+        self.assertEqual(payload["Event"], "Stop")
+        self.assertEqual(payload["Item"]["ParentIndexNumber"], 2)
+        self.assertEqual(payload["Item"]["IndexNumber"], 3)
+        self.assertIsNone(payload["Item"]["ProductionYear"])
+        self.assertTrue(payload["Item"]["UserData"]["Played"])
+
+        start = normalize_payload(self._payload("PlaybackStart", ""))
+        self.assertEqual(start["Event"], "Play")
+        self.assertFalse(start["Item"]["UserData"]["Played"])
+
+    def test_legacy_event_is_kept(self):
+        """Payloads that already carry Event are left alone."""
+        from integrations.webhooks.jellyfin import normalize_payload  # noqa: PLC0415
+
+        payload = normalize_payload({"Event": "MarkPlayed", "Item": {"UserData": {}}})
+        self.assertEqual(payload["Event"], "MarkPlayed")
+
+    @patch("integrations.webhooks.jellyfin.JellyfinWebhookProcessor._process_media")
+    def test_plain_template_stop_is_processed(self, mock_process):
+        """A plain-template stop reaches processing with a played episode."""
+        response = self.client.post(
+            self.url,
+            data=json.dumps(self._payload("PlaybackStop", "True")),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_process.assert_called_once()
+        payload = mock_process.call_args.args[0]
+        self.assertTrue(JellyfinWebhookProcessor()._is_played(payload))
+        self.assertEqual(payload["Item"]["IndexNumber"], 3)
+
+    @patch("integrations.webhooks.jellyfin.JellyfinWebhookProcessor._process_media")
+    def test_other_notifications_are_ignored(self, mock_process):
+        """Item added and other notifications are not playback."""
+        self.client.post(
+            self.url,
+            data=json.dumps(self._payload("ItemAdded", "")),
+            content_type="application/json",
+        )
+        mock_process.assert_not_called()

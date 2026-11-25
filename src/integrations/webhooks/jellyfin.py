@@ -18,6 +18,69 @@ class JellyfinEvent(StrEnum):
     MARK_UNPLAYED = "MarkUnplayed"
 
 
+NOTIFICATION_EVENTS = {
+    "PlaybackStart": JellyfinEvent.PLAY,
+    "PlaybackStop": JellyfinEvent.STOP,
+}
+
+
+def _as_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_bool(value):
+    if isinstance(value, str):
+        return value.strip().lower() == "true"
+    return bool(value)
+
+
+def normalize_payload(payload):
+    """Accept the official Webhook plugin's plain template as well as Yamtrack's.
+
+    Newer plugin releases no longer evaluate the `if_equals` helpers in the
+    old template, so the plain template sends Jellyfin's own names instead:
+    ``NotificationType``, and season/episode numbers and ``Played`` as strings.
+    """
+    payload = dict(payload)
+    item = dict(payload.get("Item") or {})
+    if not payload.get("Event"):
+        notification = payload.get("NotificationType")
+        payload["Event"] = NOTIFICATION_EVENTS.get(notification, notification or "")
+    for key in ("ParentIndexNumber", "IndexNumber", "ProductionYear"):
+        if key in item:
+            item[key] = _as_int(item[key])
+    user_data = dict(item.get("UserData") or {})
+    if "Played" in user_data:
+        user_data["Played"] = _as_bool(user_data["Played"])
+    item["UserData"] = user_data
+    payload["Item"] = item
+    return payload
+
+
+# Template for the official Jellyfin Webhook plugin (Generic destination).
+# Only plain placeholders, so it works on plugin versions without helpers.
+PLUGIN_TEMPLATE = """{
+  "NotificationType": "{{NotificationType}}",
+  "Item": {
+    "Type": "{{ItemType}}",
+    "Name": "{{Name}}",
+    "ProductionYear": "{{Year}}",
+    "ProviderIds": {
+      "Tmdb": "{{Provider_tmdb}}",
+      "Imdb": "{{Provider_imdb}}",
+      "Tvdb": "{{Provider_tvdb}}"
+    },
+    "UserData": {"Played": "{{PlayedToCompletion}}"},
+    "SeriesName": "{{SeriesName}}",
+    "ParentIndexNumber": "{{SeasonNumber}}",
+    "IndexNumber": "{{EpisodeNumber}}"
+  }
+}"""
+
+
 class JellyfinWebhookProcessor(BaseWebhookProcessor):
     """Processor for Jellyfin webhook events."""
 
@@ -28,6 +91,7 @@ class JellyfinWebhookProcessor(BaseWebhookProcessor):
             json.dumps(payload, indent=2),
         )
 
+        payload = normalize_payload(payload)
         event_type = payload.get("Event")
         if not self._is_supported_event(event_type, user):
             logger.debug("Ignoring Jellyfin webhook event type: %s", event_type)

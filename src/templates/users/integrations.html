@@ -198,27 +198,26 @@
                     </div>
                   </li>
                     {# djlint:on #}
-                    <li>{% trans "Notification Type: Playback Start and Playback Stop" %}</li>
+                    <li>{% trans "Notification Type: Playback Start and Playback Stop. Item Type: Movies and Episodes." %}</li>
                     <li>{% trans "User Filter: Your Jellyfin User" %}</li>
                     <li>{% trans 'Finally, under the "Template" section, paste the following code.' %}</li>
                     <div class="relative mt-2">
                       <textarea readonly id="jellyfin-json-template" class="w-full bg-[#39404b] rounded-md text-gray-300 text-sm border-0 focus:ring-0 outline-none font-mono p-3 resize-none overflow-auto max-h-72" rows="14">
 {% verbatim %}{
-  "Event": "{{#if_equals NotificationType 'PlaybackStart'}}Play{{/if_equals}}{{#if_equals NotificationType 'PlaybackStop'}}Stop{{/if_equals}}",
+  "NotificationType": "{{NotificationType}}",
   "Item": {
     "Type": "{{ItemType}}",
+    "Name": "{{Name}}",
+    "ProductionYear": "{{Year}}",
     "ProviderIds": {
       "Tmdb": "{{Provider_tmdb}}",
       "Imdb": "{{Provider_imdb}}",
       "Tvdb": "{{Provider_tvdb}}"
     },
-    "UserData": {
-      "Played": {{#if_equals PlayedToCompletion 'True'}}true{{else}}false{{/if_equals}}
-    }{{#if_equals ItemType 'Episode'}},
+    "UserData": {"Played": "{{PlayedToCompletion}}"},
     "SeriesName": "{{SeriesName}}",
-    "ParentIndexNumber": {{SeasonNumber}},
-    "IndexNumber": {{EpisodeNumber}}
-    {{/if_equals}}
+    "ParentIndexNumber": "{{SeasonNumber}}",
+    "IndexNumber": "{{EpisodeNumber}}"
   }
 }{% endverbatim %}</textarea>
                       <span class="absolute top-3 right-3 flex items-center cursor-pointer group"
