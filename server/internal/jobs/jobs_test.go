@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"path/filepath"
 	"sync/atomic"
@@ -22,6 +23,7 @@ func newManager(t *testing.T) (*Manager, *db.Queries, *sql.DB) {
 	q := db.New(conn)
 	m := New(conn, q, time.UTC)
 	m.backoff = func(int) time.Duration { return 0 }
+	m.startupDelay, m.startupStagger = 0, 0
 	return m, q, conn
 }
 
@@ -190,5 +192,37 @@ func TestDailyNext(t *testing.T) {
 	// Across the spring-forward change (2026-03-29) it stays at 04:30 local.
 	if got := next(at("2026-03-28 05:00")); !got.Equal(at("2026-03-29 04:30")) {
 		t.Fatalf("dst: %v", got)
+	}
+}
+
+func TestFirstRunKeepsScheduleAcrossRestart(t *testing.T) {
+	m, q, _ := newManager(t)
+	m.startupDelay, m.startupStagger = 2*time.Minute, 30*time.Second
+	now := time.Date(2026, 11, 25, 20, 0, 0, 0, time.UTC)
+	m.now = func() time.Time { return now }
+	m.Every("recent", 6*time.Hour, func(context.Context) error { return nil })
+	m.Every("stale", 6*time.Hour, func(context.Context) error { return nil })
+	m.Every("never", 30*time.Minute, func(context.Context) error { return nil })
+	ctx := context.Background()
+	set := func(name string, at time.Time) {
+		b, _ := json.Marshal(lastRun{At: at.Format(time.RFC3339), OK: true})
+		if err := q.SetKV(ctx, db.SetKVParams{Key: "job:" + name + ":last", Value: string(b), UpdatedAt: at.Format(time.RFC3339)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	set("recent", now.Add(-time.Hour))
+	set("stale", now.Add(-7*time.Hour))
+
+	at, caught := m.firstRun(ctx, m.periodic[0], 0)
+	if caught || !at.Equal(now.Add(5*time.Hour)) {
+		t.Fatalf("recent: %v %v, want schedule kept (5h)", at, caught)
+	}
+	at, caught = m.firstRun(ctx, m.periodic[1], 0)
+	if !caught || !at.Equal(now.Add(2*time.Minute)) {
+		t.Fatalf("stale: %v %v, want catch-up after 2m", at, caught)
+	}
+	at, caught = m.firstRun(ctx, m.periodic[2], 1)
+	if !caught || !at.Equal(now.Add(2*time.Minute+30*time.Second)) {
+		t.Fatalf("never: %v %v, want staggered catch-up", at, caught)
 	}
 }

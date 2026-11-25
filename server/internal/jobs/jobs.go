@@ -23,6 +23,12 @@ const (
 	DefaultWorkers = 2
 
 	pollInterval = 5 * time.Second
+
+	// StartupDelay is how long after start a periodic job that is due (or has
+	// never run) waits before its catch-up run, so the server is up first.
+	StartupDelay = 2 * time.Minute
+	// StartupStagger spaces those catch-up runs so they don't all start at once.
+	StartupStagger = 30 * time.Second
 )
 
 // Job is a claimed one-off job handed to a handler.
@@ -57,6 +63,8 @@ type Manager struct {
 	handlers map[string]Handler
 	wake     chan struct{}
 	started  bool
+
+	startupDelay, startupStagger time.Duration
 }
 
 // New creates a Manager. loc is the zone Daily jobs use (nil = UTC).
@@ -70,6 +78,8 @@ func New(conn *sql.DB, q *db.Queries, loc *time.Location) *Manager {
 		backoff:  func(attempt int) time.Duration { return time.Duration(attempt*attempt) * time.Minute },
 		handlers: map[string]Handler{},
 		wake:     make(chan struct{}, 1),
+
+		startupDelay: StartupDelay, startupStagger: StartupStagger,
 	}
 }
 
@@ -80,7 +90,9 @@ func (m *Manager) SetWorkers(n int) {
 	}
 }
 
-// Every registers a job that runs each interval (first run one interval after start).
+// Every registers a job that runs each interval. After a restart it keeps its
+// schedule from the last recorded run; one that is overdue or has never run
+// catches up shortly after start (see firstRun).
 func (m *Manager) Every(name string, interval time.Duration, fn func(ctx context.Context) error) {
 	m.addPeriodic(periodic{name: name, fn: fn, next: func(now time.Time) time.Time { return now.Add(interval) }})
 }
@@ -165,11 +177,16 @@ func (m *Manager) Run(ctx context.Context) error {
 	}
 
 	var wg sync.WaitGroup
+	overdue := 0
 	for _, p := range m.periodic {
+		first, caughtUp := m.firstRun(ctx, p, overdue)
+		if caughtUp {
+			overdue++
+		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			m.runPeriodic(ctx, p)
+			m.runPeriodic(ctx, p, first)
 		}()
 	}
 	for i := 0; i < m.workers; i++ {
@@ -183,10 +200,28 @@ func (m *Manager) Run(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) runPeriodic(ctx context.Context, p periodic) {
-	for {
-		wait := p.next(m.now()).Sub(m.now())
-		timer := time.NewTimer(wait)
+// firstRun picks when a periodic job first runs after start: on its normal
+// schedule counted from the last recorded run, or, when that time has passed
+// or the job has never run, after the startup delay (the n-th overdue job
+// staggered by n steps). caughtUp reports the second case.
+func (m *Manager) firstRun(ctx context.Context, p periodic, n int) (at time.Time, caughtUp bool) {
+	now := m.now()
+	if v, err := m.q.GetKV(ctx, "job:"+p.name+":last"); err == nil {
+		var last lastRun
+		if json.Unmarshal([]byte(v), &last) == nil {
+			if t, err := time.Parse(time.RFC3339, last.At); err == nil {
+				if due := p.next(t); due.After(now) {
+					return due, false
+				}
+			}
+		}
+	}
+	return now.Add(m.startupDelay + time.Duration(n)*m.startupStagger), true
+}
+
+func (m *Manager) runPeriodic(ctx context.Context, p periodic, first time.Time) {
+	for at := first; ; at = p.next(m.now()) {
+		timer := time.NewTimer(at.Sub(m.now()))
 		select {
 		case <-ctx.Done():
 			timer.Stop()
