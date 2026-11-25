@@ -23,6 +23,9 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from cache instead of symlinking (cache is discarded with the builder)
 ENV UV_LINK_MODE=copy
 
+# uv verifies the lockfile's git sources (docs group), so the builder needs git
+RUN apk add --no-cache git
+
 WORKDIR /encompass
 
 COPY ./pyproject.toml ./pyproject.toml
