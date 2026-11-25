@@ -7,6 +7,7 @@
 	import { Card, Toggle } from '#lib/ui/index.ts';
 
 	const SORTS: [string, string][] = [
+		['year', 'Year finished'],
 		['activity', 'Activity'],
 		['score', 'Score'],
 		['title', 'Title'],
@@ -61,7 +62,7 @@
 								{#each SORTS as [value, label] (value)}<option {value}>{label}</option>{/each}
 							</select>
 						</label>
-						<label class="block">
+						{#if row.kind !== 'game'}<label class="block">
 							<span class="mb-1 block text-xs text-muted">Default status</span>
 							<select
 								class="input"
@@ -70,7 +71,7 @@
 							>
 								{#each STATUSES as value (value)}<option {value}>{value}</option>{/each}
 							</select>
-						</label>
+						</label>{/if}
 					</div>
 				{/if}
 			</li>

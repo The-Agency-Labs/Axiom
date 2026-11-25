@@ -27,12 +27,14 @@
 	const type = $derived(page.params.type as MediaType);
 	const valid = $derived(isMediaType(type));
 	const meta = $derived(valid ? MEDIA[type] : MEDIA.tv);
+	// Games are just a list: no status, and "the year" is the year added.
+	const isGame = $derived(type === 'game');
 
 	let entries = $state<Entry[] | null>(null);
 	let years = $state<number[]>([]);
 	let failed = $state(false);
-	let status = $state<Status | 'All'>('In progress');
-	let sort = $state('activity');
+	let status = $state<Status | 'All'>('Completed');
+	let sort = $state('year');
 	let query = $state('');
 	let year = $state<string>('');
 	let view = $state<'grid' | 'list'>('grid');
@@ -81,8 +83,8 @@
 		void settings.loaded;
 		if (touched || !valid) return;
 		const d = typeDefaults(type);
-		sort = d?.sort ?? 'activity';
-		status = (d?.status as Status | 'All') ?? 'In progress';
+		sort = d?.sort ?? 'year';
+		status = (d?.status as Status | 'All') ?? 'Completed';
 	});
 
 	async function load(initial = false) {
@@ -97,7 +99,7 @@
 			if (kind !== type || y !== year) return;
 			entries = data.results;
 			years = mergeYears(data.years);
-			if (initial && !touched && !data.results.some((e) => status === 'All' || e.status === status)) {
+			if (initial && !touched && kind !== 'game' && !data.results.some((e) => status === 'All' || e.status === status)) {
 				// The default status is empty: open on the first one that has titles.
 				status = STATUSES.find((s) => data.results.some((e) => e.status === s)) ?? 'All';
 			}
@@ -139,19 +141,35 @@
 	const pct = (e: Entry) => (e.max_progress ? e.progress / e.max_progress : e.progress ? 0.0001 : 0);
 	const when = (iso: string | null) => (iso ? Date.parse(iso) : -Infinity);
 	const sorted = $derived.by(() => {
-		const list = searched.filter((e) => status === 'All' || e.status === status);
+		const list = searched.filter((e) => isGame || status === 'All' || e.status === status);
 		const by: Record<string, (a: Entry, b: Entry) => number> = {
 			title: (a, b) => a.item.title.localeCompare(b.item.title, undefined, { sensitivity: 'base', numeric: true }),
 			score: (a, b) => (b.score ?? -1) - (a.score ?? -1),
 			progress: (a, b) => pct(b) - pct(a) || b.progress - a.progress,
 			start_date: (a, b) => when(b.start_date) - when(a.start_date),
 			end_date: (a, b) => when(b.end_date) - when(a.end_date),
+			year: (a, b) => when(yearDate(b)) - when(yearDate(a)) || b.id - a.id,
 			activity: (a, b) =>
 				when(b.progressed_at ?? b.created_at) - when(a.progressed_at ?? a.created_at) || b.id - a.id
 		};
 		return list.sort(by[sort] ?? by.activity);
 	});
 	const visible = $derived(sorted.slice(0, shown));
+
+	/** The date that files an entry under a year: finished, or added for games. */
+	const yearDate = (e: Entry) => (isGame ? e.created_at : e.end_date);
+	/** With the "year" sort the list is split under year headings (newest first). */
+	const groups = $derived.by(() => {
+		if (sort !== 'year') return [{ label: '', entries: visible }];
+		const out: { label: string; entries: Entry[] }[] = [];
+		for (const e of visible) {
+			const d = yearDate(e);
+			const label = d ? d.slice(0, 4) : 'No finish date';
+			if (out.at(-1)?.label !== label) out.push({ label, entries: [] });
+			out.at(-1)!.entries.push(e);
+		}
+		return out;
+	});
 
 	function more(node: HTMLElement) {
 		const observer = new IntersectionObserver((hits) => hits[0].isIntersecting && (shown += PAGE), {
@@ -164,6 +182,7 @@
 	// Shows keep their progress per season (the list endpoint has no total of watched episodes), so only
 	// count-based kinds get a progress line here.
 	function subtitle(e: Entry) {
+		if (isGame) return '';
 		if (hasEpisodes(e.media_type, e.item.source)) return e.status;
 		if (e.status === 'In progress' && e.media_type !== 'movie' && e.media_type !== 'anime_movie') {
 			if (e.max_progress) return `${Math.round((e.progress / e.max_progress) * 100)}% · ${progressLabel(e.media_type, e.progress, e.max_progress)}`;
@@ -236,7 +255,7 @@
 			{/if}
 		</div>
 
-		<ChipRow label="Status">
+		{#if !isGame}<ChipRow label="Status">
 			{#each CHIPS as s (s)}
 				<Chip
 					selected={status === s}
@@ -248,7 +267,7 @@
 					}}>{s}</Chip
 				>
 			{/each}
-		</ChipRow>
+		</ChipRow>{/if}
 
 		<div class="mt-3">
 			{#if failed}
@@ -282,7 +301,7 @@
 				{:else}
 					<EmptyState
 						icon={Search}
-						title={status === 'All' || hasFilters ? 'No matches' : `Nothing ${status.toLowerCase()}`}
+						title={isGame || status === 'All' || hasFilters ? 'No matches' : `Nothing ${status.toLowerCase()}`}
 						description={hasFilters ? 'Try a different search or year.' : 'Pick another status above.'}
 					>
 						{#snippet actions()}
@@ -291,50 +310,59 @@
 						{/snippet}
 					</EmptyState>
 				{/if}
-			{:else if view === 'grid'}
-				<PosterGrid>
-					{#each visible as entry (entry.id)}
-						<PosterCard
-							href={titleHref(entry.item, entry.media_type, entry.id)}
-							src={entry.item.image}
-							title={entry.item.title}
-							type={entry.media_type}
-							status={entry.status}
-							subtitle={subtitle(entry)}
-							score={entry.score}
-						/>
-					{/each}
-				</PosterGrid>
 			{:else}
-				<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-					{#each visible as entry (entry.id)}
-						<li>
-							<ListRow
-								href={titleHref(entry.item, entry.media_type, entry.id)}
-								title={entry.item.title}
-								subtitle={subtitle(entry)}
-							>
-								{#snippet leading()}
-									<Cover
-										src={entry.item.image}
+				{#each groups as g (g.label)}
+					{#if g.label}
+						<h2 class="mt-5 mb-2 flex items-baseline gap-2 text-lg font-semibold tracking-tight first:mt-1">
+							{g.label}<span class="text-[13px] font-normal text-faint">{g.entries.length}</span>
+						</h2>
+					{/if}
+					{#if view === 'grid'}
+						<PosterGrid>
+							{#each g.entries as entry (entry.id)}
+								<PosterCard
+									href={titleHref(entry.item, entry.media_type, entry.id)}
+									src={entry.item.image}
+									title={entry.item.title}
+									type={entry.media_type}
+									status={isGame ? undefined : entry.status}
+									subtitle={subtitle(entry)}
+									score={entry.score}
+								/>
+							{/each}
+						</PosterGrid>
+					{:else}
+						<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+							{#each g.entries as entry (entry.id)}
+								<li>
+									<ListRow
+										href={titleHref(entry.item, entry.media_type, entry.id)}
 										title={entry.item.title}
-										type={entry.media_type}
-										class="aspect-[2/3] w-10 shrink-0 rounded-md"
-									/>
-								{/snippet}
-								{#snippet trailing()}
-									<span class="flex shrink-0 items-center gap-2 text-[13px] text-muted">
-										{#if entry.score}
-											<span class="flex items-center gap-1 tabular-nums">
-												<Star class="size-3.5 fill-amber-300 text-amber-300" />{entry.score}
+										subtitle={subtitle(entry)}
+									>
+										{#snippet leading()}
+											<Cover
+												src={entry.item.image}
+												title={entry.item.title}
+												type={entry.media_type}
+												class="aspect-[2/3] w-10 shrink-0 rounded-md"
+											/>
+										{/snippet}
+										{#snippet trailing()}
+											<span class="flex shrink-0 items-center gap-2 text-[13px] text-muted">
+												{#if entry.score}
+													<span class="flex items-center gap-1 tabular-nums">
+														<Star class="size-3.5 fill-amber-300 text-amber-300" />{entry.score}
+													</span>
+												{/if}
 											</span>
-										{/if}
-									</span>
-								{/snippet}
-							</ListRow>
-						</li>
-					{/each}
-				</ul>
+										{/snippet}
+									</ListRow>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				{/each}
 			{/if}
 
 			{#if entries && visible.length < sorted.length}

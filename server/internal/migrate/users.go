@@ -15,7 +15,7 @@ var kindFlags = []struct{ kind, prefix string }{
 }
 
 var (
-	validSorts    = map[string]bool{"activity": true, "score": true, "title": true, "progress": true, "start_date": true, "end_date": true}
+	validSorts    = map[string]bool{"year": true, "activity": true, "score": true, "title": true, "progress": true, "start_date": true, "end_date": true}
 	validStatuses = map[string]bool{"All": true, "Planning": true, "In progress": true, "Paused": true, "Dropped": true, "Completed": true}
 )
 

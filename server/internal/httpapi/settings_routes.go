@@ -20,12 +20,12 @@ import (
 
 const (
 	settingsMinPassword   = 8
-	settingsDefaultSort   = "activity"
-	settingsDefaultStatus = "In progress"
+	settingsDefaultSort   = "year"      // grouped by the year finished (games: year added)
+	settingsDefaultStatus = "Completed" // games have no status: "All"
 )
 
 var (
-	settingsSorts    = map[string]bool{"activity": true, "score": true, "title": true, "progress": true, "start_date": true, "end_date": true}
+	settingsSorts    = map[string]bool{"year": true, "activity": true, "score": true, "title": true, "progress": true, "start_date": true, "end_date": true}
 	settingsStatuses = map[string]bool{"All": true, library.Planning: true, library.InProgress: true, library.Paused: true, library.Dropped: true, library.Completed: true}
 	settingsLang     = regexp.MustCompile(`^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$`)
 )
@@ -73,6 +73,9 @@ func (s *Server) settingsMediaTypes(ctx context.Context, userID int64) ([]settin
 	out := make([]settingsMedia, 0, len(catalog.Kinds))
 	for _, k := range catalog.Kinds {
 		m := settingsMedia{Kind: k, Enabled: true, Sort: settingsDefaultSort, Status: settingsDefaultStatus}
+		if k == catalog.KindGame {
+			m.Status = "All"
+		}
 		if r, ok := have[k]; ok {
 			m = settingsMedia{Kind: k, Enabled: r.Enabled != 0, Sort: r.Sort, Status: r.Status}
 		}

@@ -17,7 +17,11 @@ func TestSettingsGetDefaults(t *testing.T) {
 	for _, m := range media {
 		mm := m.(map[string]any)
 		kinds = append(kinds, mm["kind"].(string))
-		if mm["enabled"] != true || mm["sort"] != "activity" || mm["status"] != "In progress" {
+		wantStatus := "Completed" // finished titles by year finished
+		if mm["kind"] == "game" {
+			wantStatus = "All" // games have no status
+		}
+		if mm["enabled"] != true || mm["sort"] != "year" || mm["status"] != wantStatus {
 			t.Errorf("default media setting = %v", mm)
 		}
 	}
@@ -43,7 +47,7 @@ func TestSettingsPatch(t *testing.T) {
 		mm := m.(map[string]any)
 		switch mm["kind"] {
 		case "comic":
-			if mm["enabled"] != false || mm["sort"] != "activity" {
+			if mm["enabled"] != false || mm["sort"] != "year" {
 				t.Errorf("comic = %v", mm)
 			}
 		case "tv":
