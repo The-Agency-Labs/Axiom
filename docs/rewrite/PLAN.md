@@ -92,7 +92,7 @@ and an `*http.Client`; every external call has a timeout and goes through
 
 | Phase | Work | Who |
 |---|---|---|
-| 0 | This doc, `schema.sql`, exported OpenAPI, golden responses recorded from prod | Opus |
+| 0 | This doc, `schema.sql`, exported OpenAPI, golden responses recorded from prod (done 2026-11-25: 110 responses + a prod DB snapshot, kept OUTSIDE the repo in `~/Projects/encompass-dev/` because they hold personal data; delete after cutover) | Opus |
 | 1 | Skeleton: config, db + migrations + sqlc, auth (sessions, tokens, Django password verify), jobs, cache, SPA embedding, `/health`, Dockerfile + GH Actions → GHCR | Opus + 1 Sonnet |
 | 2 | Providers (parallel): A tmdb+tvdb · B anilist+mal+anime mapping · C hardcover+openlibrary+mangaupdates · D igdb+bgg+comicvine | 4 Sonnet |
 | 3 | API areas (parallel): A library/shows/seasons/episodes/anime · B reading/KOSync/KOReader/book linking/Triple P · C people/credits · D now/activity/years/summary/search/tokens/me | 4 Sonnet |
