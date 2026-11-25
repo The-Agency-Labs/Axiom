@@ -8,6 +8,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -32,15 +33,24 @@ func acquire() func() {
 	return func() { <-hashSlots }
 }
 
+// argonHash runs argon2id and then hands its 19 MiB working set back to the OS,
+// so a login doesn't leave the process ~24 MB heavier. Logins are rare enough
+// that the forced GC is irrelevant.
+func argonHash(password, salt []byte, t, m uint32, p uint8, n uint32) []byte {
+	release := acquire()
+	defer release()
+	key := argon2.IDKey(password, salt, t, m, p, n)
+	debug.FreeOSMemory()
+	return key
+}
+
 // HashPassword returns a PHC-format argon2id hash.
 func HashPassword(password string) (string, error) {
 	salt := make([]byte, argonSaltLen)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	release := acquire()
-	key := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
-	release()
+	key := argonHash([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
 	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, argonMemory, argonTime, argonThreads,
 		base64.RawStdEncoding.EncodeToString(salt), base64.RawStdEncoding.EncodeToString(key)), nil
 }
@@ -77,9 +87,7 @@ func verifyArgon2(password, encoded string) (bool, bool) {
 	if err1 != nil || err2 != nil || len(want) == 0 {
 		return false, false
 	}
-	release := acquire()
-	got := argon2.IDKey([]byte(password), salt, t, m, p, uint32(len(want)))
-	release()
+	got := argonHash([]byte(password), salt, t, m, p, uint32(len(want)))
 	if subtle.ConstantTimeCompare(got, want) != 1 {
 		return false, false
 	}

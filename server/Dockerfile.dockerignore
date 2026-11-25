@@ -1,0 +1,10 @@
+# Used instead of the repo-root .dockerignore when building server/Dockerfile.
+# Only the frontend and the Go server go into the build context.
+*
+!frontend
+!server
+frontend/node_modules
+frontend/.svelte-kit
+frontend/build
+server/web/dist/*
+!server/web/dist/200.html

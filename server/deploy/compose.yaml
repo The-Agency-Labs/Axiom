@@ -1,0 +1,23 @@
+# Example deployment. Copy next to a .env file (see below) and run:
+#   mkdir -p data && sudo chown 65532:65532 data
+#   docker compose up -d
+#
+# .env holds everything environment-specific (nothing is hard-coded here):
+#   SECRET=<long random string>
+#   TZ=<IANA zone>
+#   URLS=<public URL(s), comma separated>
+#   TMDB_API=... and the other provider keys
+#   ENCOMPASS_TAG=rewrite            # optional: pin a short sha or v* tag
+#
+# Create the first account:
+#   docker compose exec -T encompass /encompass createuser <name> --admin <<< "<password>"
+services:
+  encompass:
+    image: ghcr.io/the-agency-labs/encompass:${ENCOMPASS_TAG:-rewrite}
+    env_file: .env
+    volumes:
+      - ./data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    mem_limit: 128m
