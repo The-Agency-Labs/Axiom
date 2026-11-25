@@ -8,6 +8,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { get, post, qs } from '#lib/api.ts';
+	import AnimeEpisodes from '#lib/components/AnimeEpisodes.svelte';
+	import CastSection from '#lib/components/CastSection.svelte';
 	import EpisodeBrowser from '#lib/components/EpisodeBrowser.svelte';
 	import MediaHero from '#lib/components/MediaHero.svelte';
 	import { MEDIA } from '#lib/media.ts';
@@ -116,11 +118,21 @@
 		</div>
 	</MediaHero>
 
-	{#if type === 'tv'}
-		<section class="mt-10 max-w-4xl">
-			<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
-			<!-- Marking an episode tracks the show; then switch to its library page. -->
-			<EpisodeBrowser {source} {mediaId} accent={meta.accent} onchange={openIfTracked} />
-		</section>
-	{/if}
+	<div class="mt-10 max-w-4xl space-y-8">
+		<!-- Marking an episode tracks the title; then switch to its library page. -->
+		{#if type === 'tv'}
+			<section>
+				<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
+				<EpisodeBrowser {source} {mediaId} accent={meta.accent} onchange={openIfTracked} />
+			</section>
+		{:else if type === 'anime' && ['mal', 'anilist'].includes(source)}
+			<section>
+				<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
+				<AnimeEpisodes {source} {mediaId} accent={meta.accent} onchange={openIfTracked} />
+			</section>
+		{/if}
+		{#if ['tv', 'movie', 'anime'].includes(type)}
+			<CastSection mediaType={type} {source} {mediaId} accent={meta.accent} />
+		{/if}
+	</div>
 {/if}

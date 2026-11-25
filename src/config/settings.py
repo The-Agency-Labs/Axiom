@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     "users",
     "api",
     "reading",
+    "catalog",
     "debug_toolbar",
     "django_celery_beat",
     "django_celery_results",
@@ -607,6 +608,14 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_user_messages": {
         "task": "Cleanup user messages",
         "schedule": 60 * 60 * 24,  # every 24 hours
+    },
+    "backfill_library_cast": {
+        "task": "Backfill library cast",
+        "schedule": 60 * 60 * 6,  # every 6 hours, only fetches what's missing
+    },
+    "refresh_anime_mappings": {
+        "task": "Refresh anime mappings",
+        "schedule": 60 * 60 * 24,  # checks daily, downloads weekly
     },
 }
 

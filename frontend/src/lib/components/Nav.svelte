@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Activity, BookOpenCheck, CalendarDays, CirclePlay, LibraryBig, LogOut, Search } from '@lucide/svelte';
+	import { Activity, BookOpenCheck, CalendarDays, CirclePlay, UsersRound, LibraryBig, LogOut, Search } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { logout } from '#lib/api.ts';
@@ -14,6 +14,7 @@
 		{ href: '/search', label: 'Search', icon: Search },
 		{ href: '/reading', label: 'Reading', icon: BookOpenCheck },
 		{ href: '/activity', label: 'Activity', icon: Activity },
+		{ href: '/people', label: 'People', icon: UsersRound },
 		{ href: '/year', label: 'Year in review', icon: CalendarDays }
 	];
 

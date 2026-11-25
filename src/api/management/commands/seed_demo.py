@@ -25,7 +25,7 @@ from app.models import (
 from app.providers import services
 from reading.models import ReadingDocument, ReadingSession, SessionSource
 
-# (media_type, query, source, status, progress)
+# Each row: media type, search query, source, status and progress.
 DEMO = [
     (MediaTypes.ANIME.value, "Frieren", "mal", Status.IN_PROGRESS, 17),
     (MediaTypes.ANIME.value, "Dandadan", "mal", Status.IN_PROGRESS, 6),
@@ -84,7 +84,7 @@ class Command(BaseCommand):
         )
         return item, meta
 
-    def handle(self, *args, **options):  # noqa: ARG002
+    def handle(self, *args, **options):  # noqa: ARG002, C901 one linear script
         """Create the user and data."""
         user_model = get_user_model()
         user, created = user_model.objects.get_or_create(username=options["username"])
@@ -122,7 +122,7 @@ class Command(BaseCommand):
                 item=tv_item,
                 defaults={"status": Status.IN_PROGRESS.value},
             )
-            season_item, season_meta = self._item(
+            season_item, _season_meta = self._item(
                 MediaTypes.SEASON.value,
                 result,
                 season_number,
@@ -173,7 +173,7 @@ class Command(BaseCommand):
             percentage=0.42,
             device="Kindle",
         )
-        rng = random.Random(7)
+        rng = random.Random(7)  # noqa: S311 demo data, not security
         page = 1
         for days_ago in range(45, -1, -1):
             if rng.random() < 0.22 and days_ago not in (0, 1, 2, 3):  # noqa: PLR2004

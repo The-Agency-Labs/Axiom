@@ -256,3 +256,64 @@ export interface YearSnapshot {
 	top_rated: Finished[];
 	genres: { name: string; count: number }[];
 }
+
+export interface AnimeEpisodes {
+	source: string;
+	media_id: string;
+	title: string;
+	entry: Entry | null;
+	progress: number;
+	total: number;
+	runtime_minutes: number;
+	episodes: ShowEpisode[];
+	providers: string[];
+	tmdb: { tmdb_id: number; season_number: number; episode_offset: number } | null;
+	anilist_id: number | null;
+}
+
+export interface Person {
+	id: number;
+	name: string;
+	native_name: string;
+	image: string | null;
+	source: string;
+	url: string;
+}
+
+export interface AlsoIn {
+	item: Item;
+	entry: { media_type: MediaType; id: number; status: Status; score: number | null };
+	character: string;
+}
+
+export interface CastCredit {
+	person: Person;
+	also_in: AlsoIn[];
+	character?: string;
+	job?: string;
+	episode_count?: number | null;
+	language?: string;
+}
+
+export interface TitleCredits {
+	supported: boolean;
+	cast: CastCredit[];
+	crew: CastCredit[];
+	characters: { character: string; image: string | null; role: string; voice_actors: CastCredit[] }[];
+	languages?: string[];
+}
+
+export interface Appearance {
+	item: Item;
+	entry: { media_type: MediaType; id: number; status: Status; score: number | null } | null;
+	characters: string[];
+	character_images?: string[];
+	role: 'actor' | 'voice' | 'crew';
+	language?: string;
+}
+
+export interface LibraryPerson {
+	person: Person;
+	titles: number;
+	appearances: Appearance[];
+}

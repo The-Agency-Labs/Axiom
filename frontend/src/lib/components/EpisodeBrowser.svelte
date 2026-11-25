@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Check, CheckCheck, ChevronDown, Clock, LoaderCircle, RotateCcw, Sparkles, Star } from '@lucide/svelte';
+	import { Check, CheckCheck, LoaderCircle, RotateCcw, Sparkles } from '@lucide/svelte';
 	import { get, post } from '#lib/api.ts';
+	import EpisodeRow from '#lib/components/EpisodeRow.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
-	import { formatDate, minutesLabel } from '#lib/media.ts';
+	import { minutesLabel } from '#lib/media.ts';
 	import type { SeasonDetail, Show, ShowSeason } from '#lib/types.ts';
 
 	let {
@@ -25,7 +26,6 @@
 	let loadingSeason = $state(false);
 	let busy = $state<Set<number>>(new Set());
 	let bulkBusy = $state(false);
-	let expanded = $state<Set<number>>(new Set());
 	let catchUp = $state<{ upTo: number; missing: number } | null>(null);
 	let error = $state('');
 
@@ -107,14 +107,6 @@
 		}
 	}
 
-	function toggleExpanded(number: number) {
-		const next = new Set(expanded);
-		if (next.has(number)) next.delete(number);
-		else next.add(number);
-		expanded = next;
-	}
-
-	const KIND_LABEL: Record<string, string> = { finale: 'Finale', mid_season: 'Mid-season finale' };
 	const allWatched = $derived(!!season && season.total > 0 && season.watched >= season.total);
 	const regular = $derived((show?.seasons ?? []).filter((s) => !s.is_special));
 </script>
@@ -253,76 +245,13 @@
 			{:else}
 				<ol class="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
 					{#each season.episodes as ep (ep.episode_number)}
-						{@const open = expanded.has(ep.episode_number)}
-						<li class="flex gap-3 p-3 sm:gap-4 {ep.aired ? '' : 'opacity-60'}">
-							<button
-								onclick={() => toggleExpanded(ep.episode_number)}
-								class="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-white/5 sm:w-36"
-								aria-label="Show details for episode {ep.episode_number}"
-							>
-								{#if ep.image}
-									<img src={ep.image} alt="" loading="lazy" class="h-full w-full object-cover" />
-								{/if}
-								{#if ep.watched}
-									<span class="absolute inset-0 bg-black/35"></span>
-								{/if}
-							</button>
-							<div class="min-w-0 flex-1">
-								<button onclick={() => toggleExpanded(ep.episode_number)} class="block w-full text-left">
-									<p class="flex items-baseline gap-2 text-sm font-medium">
-										<span class="shrink-0 text-faint tabular-nums">{ep.episode_number}</span>
-										<span class={open ? '' : 'truncate'}>{ep.title}</span>
-									</p>
-									<p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-faint">
-										{#if ep.air_date}
-											<span>{ep.aired ? '' : 'Airs '}{formatDate(ep.air_date, { year: 'numeric' })}</span>
-										{:else}
-											<span>Date TBA</span>
-										{/if}
-										{#if ep.runtime}<span class="flex items-center gap-1"><Clock class="size-3" />{ep.runtime}m</span>{/if}
-										{#if ep.score}<span class="flex items-center gap-1"><Star class="size-3" />{ep.score.toFixed(1)}</span>{/if}
-										{#if KIND_LABEL[ep.kind]}
-											<span class="rounded-full border border-line px-1.5 text-[10px] text-muted">{KIND_LABEL[ep.kind]}</span>
-										{/if}
-										{#if ep.watched && ep.watched_at}
-											<span>· Watched {formatDate(ep.watched_at, { year: 'numeric' })}{ep.watch_count > 1 ? ` · ${ep.watch_count}×` : ''}</span>
-										{/if}
-									</p>
-									{#if ep.overview}
-										<p class="mt-1.5 text-xs leading-relaxed text-muted {open ? '' : 'line-clamp-2 hidden sm:block'}">
-											{ep.overview}
-										</p>
-									{/if}
-									{#if !open && ep.overview}
-										<ChevronDown class="mt-1 size-3.5 text-faint sm:hidden" />
-									{/if}
-								</button>
-								{#if open && ep.watched}
-									<button
-										class="mt-2 text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
-										onclick={() => mark({ episodes: [ep.episode_number], rewatch: true })}
-									>
-										Log a rewatch
-									</button>
-								{/if}
-							</div>
-							<button
-								onclick={() => toggle(ep.episode_number, ep.watched)}
-								disabled={busy.has(ep.episode_number)}
-								class="grid size-9 shrink-0 place-items-center self-center rounded-full border transition {ep.watched
-									? 'border-transparent text-[#09090b]'
-									: 'border-line text-faint hover:border-line-strong hover:text-ink'}"
-								style={ep.watched ? `background: ${accent}` : ''}
-								aria-label={ep.watched ? `Unmark episode ${ep.episode_number}` : `Mark episode ${ep.episode_number} watched`}
-								aria-pressed={ep.watched}
-							>
-								{#if busy.has(ep.episode_number)}
-									<LoaderCircle class="size-4 animate-spin" />
-								{:else}
-									<Check class="size-4" />
-								{/if}
-							</button>
-						</li>
+						<EpisodeRow
+							{ep}
+							{accent}
+							busy={busy.has(ep.episode_number)}
+							ontoggle={() => toggle(ep.episode_number, ep.watched)}
+							onrewatch={() => mark({ episodes: [ep.episode_number], rewatch: true })}
+						/>
 					{/each}
 				</ol>
 			{/if}

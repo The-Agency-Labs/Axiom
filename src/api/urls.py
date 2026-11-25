@@ -3,7 +3,18 @@
 from django.urls import path
 from ninja import NinjaAPI
 
-from api import assistant, library, now, reading, session, shows, tokens, years
+from api import (
+    anime,
+    assistant,
+    library,
+    now,
+    people,
+    reading,
+    session,
+    shows,
+    tokens,
+    years,
+)
 from api.auth import AUTH
 
 api = NinjaAPI(
@@ -22,6 +33,8 @@ api.add_router("", assistant.router)
 api.add_router("", library.router)
 api.add_router("", shows.router)
 api.add_router("", years.router)
+api.add_router("", anime.router)
+api.add_router("", people.router)
 api.add_router("", reading.router)
 api.add_router("", tokens.router)
 

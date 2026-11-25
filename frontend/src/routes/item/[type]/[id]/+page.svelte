@@ -3,7 +3,9 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { del, get, post } from '#lib/api.ts';
-		import EpisodeBrowser from '#lib/components/EpisodeBrowser.svelte';
+		import AnimeEpisodes from '#lib/components/AnimeEpisodes.svelte';
+	import CastSection from '#lib/components/CastSection.svelte';
+	import EpisodeBrowser from '#lib/components/EpisodeBrowser.svelte';
 	import MediaHero from '#lib/components/MediaHero.svelte';
 	import ProgressBar from '#lib/components/ProgressBar.svelte';
 	import { formatDate, MEDIA, progressLabel, relativeTime, STATUSES } from '#lib/media.ts';
@@ -172,6 +174,22 @@
 						onchange={refresh}
 					/>
 				</section>
+			{/if}
+
+			{#if type === 'anime' && ['mal', 'anilist'].includes(entry.item.source)}
+				<section>
+					<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
+					<AnimeEpisodes source={entry.item.source} mediaId={entry.item.media_id} accent={meta.accent} onchange={refresh} />
+				</section>
+			{/if}
+
+			{#if ['tv', 'season', 'movie', 'anime'].includes(type)}
+				<CastSection
+					mediaType={type === 'season' ? 'tv' : type}
+					source={entry.item.source}
+					mediaId={entry.item.media_id}
+					accent={meta.accent}
+				/>
 			{/if}
 
 			<!-- History -->
