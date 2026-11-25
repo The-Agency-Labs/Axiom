@@ -103,11 +103,33 @@ func (c *readingItemCache) documentDict(ctx context.Context, d reading.Document)
 	if d.Percentage.Valid {
 		pct = d.Percentage.Float64
 	}
+	// display_title: the linked book's title, else "Series N: Title" read
+	// from the Kindle title (author and edition noise dropped).
+	disp := reading.DisplayName(d.Title, d.Authors)
+	item := c.dict(ctx, d.ItemID)
+	display := disp.String()
+	if m, ok := item.(map[string]any); ok {
+		if t, ok := m["title"].(string); ok && t != "" {
+			display = t
+			if disp.Series != "" && !strings.Contains(strings.ToLower(t), strings.ToLower(disp.Series)) {
+				display = (reading.Display{Title: t, Series: disp.Series, SeriesNumber: disp.SeriesNumber}).String()
+			}
+		}
+	}
+	var seriesNum any
+	if disp.SeriesNumber > 0 {
+		seriesNum = disp.SeriesNumber
+	}
+	var series any
+	if disp.Series != "" {
+		series = disp.Series
+	}
 	return map[string]any{
+		"display_title": display, "series": series, "series_number": seriesNum,
 		"id": d.ID, "document_hash": d.DocumentHash, "title": d.Title, "authors": d.Authors,
 		"total_pages": readingNullInt(d.TotalPages), "percentage": pct, "device": d.Device,
 		"progress_updated_at": readingNullISO(d.ProgressUpdatedAt),
-		"item":                c.dict(ctx, d.ItemID),
+		"item":                item,
 		"ignored":             d.Ignored != 0, "merged_into": readingNullInt(d.MergedInto),
 	}
 }
