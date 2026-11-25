@@ -95,6 +95,7 @@ func serve() error {
 	providerCache.RegisterJobs(jobMgr)
 	cat := newCatalog(cfg, conn, queries, providerCache, jobMgr)
 	lib := library.New(conn, queries, cat)
+	lib.Loc = loc // "today", released episodes and reading days use TZ
 	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
 		_, err := authSvc.CleanupSessions(ctx)
 		return err
