@@ -5,7 +5,7 @@
 	import NowItem from '#lib/components/library/NowItem.svelte';
 	import SectionHead from '#lib/components/library/SectionHead.svelte';
 	import ReadingStrip from '#lib/components/ReadingStrip.svelte';
-	import { LIBRARY_TYPES, MEDIA, relativeTime, titleHref } from '#lib/media.ts';
+	import { MEDIA, relativeTime, titleHref } from '#lib/media.ts';
 	import { onSynced } from '#lib/offline.svelte.ts';
 	import type { Finished, NowGroup, ReadingStats } from '#lib/types.ts';
 	import { Button, EmptyState, PosterCard, PullToRefresh, Skeleton } from '#lib/ui/index.ts';
@@ -21,8 +21,8 @@
 		return d.toLocaleDateString('en-CA');
 	};
 
-	const order = (list: NowGroup[]) =>
-		[...list].sort((a, b) => LIBRARY_TYPES.indexOf(a.media_type) - LIBRARY_TYPES.indexOf(b.media_type));
+	// The server orders sections by what you touched last.
+	const order = (list: NowGroup[]) => list;
 
 	async function load() {
 		error = false;
@@ -98,13 +98,6 @@
 			{/each}
 		</div>
 	{:else}
-		{#if reading}
-			<section class="mb-8">
-				<SectionHead title="Reading" icon={MEDIA.book.icon} accent={MEDIA.book.accent} href="/reading" />
-				<ReadingStrip stats={reading} />
-			</section>
-		{/if}
-
 		{#if groups.length === 0}
 			<EmptyState
 				icon={Sparkles}
@@ -134,6 +127,13 @@
 				</section>
 			{/each}
 		</div>
+
+		{#if reading}
+			<section class="mt-10">
+				<SectionHead title="Reading" icon={MEDIA.book.icon} accent={MEDIA.book.accent} href="/reading" />
+				<ReadingStrip stats={reading} />
+			</section>
+		{/if}
 
 		{#if finished.length}
 			<section class="mt-10">

@@ -396,6 +396,7 @@
 				step={entry
 					? {
 							display: stepDisplay,
+							short: kind === 'game' ? `${Math.round(entry.progress / 6) / 10}h` : String(entry.progress),
 							label: meta.unit,
 							canDecrement: entry.progress > 0,
 							canIncrement: total === null || entry.progress < total
@@ -539,7 +540,7 @@
 		</div>
 
 		<!-- Room for the pinned action bar on phones. -->
-		<div class="h-20 lg:hidden" aria-hidden="true"></div>
+		<div class="h-32 lg:hidden" aria-hidden="true"></div>
 	</PullToRefresh>
 
 	{#if entry}

@@ -2,7 +2,7 @@
 	import { Check, Clock } from '@lucide/svelte';
 	import { mutate } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
-	import { formatDate, hasEpisodes, MEDIA, progressLabel, relativeTime, titleHref, todayISO } from '#lib/media.ts';
+	import { formatDate, hasEpisodes, MEDIA, minutesLabel, progressLabel, relativeTime, titleHref, todayISO } from '#lib/media.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import type { MediaType, NowEntry } from '#lib/types.ts';
 	import { Button, ProgressBar, Stepper } from '#lib/ui/index.ts';
@@ -138,7 +138,7 @@
 		<div class="mt-3 flex items-center justify-between gap-3">
 			<span class="text-[13px] text-muted">{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}</span>
 			<Stepper
-				display={String(entry.progress)}
+				display={kind === 'game' ? minutesLabel(entry.progress) : String(entry.progress)}
 				label={meta.unit}
 				onstep={step}
 				canDecrement={entry.progress > 0}

@@ -72,7 +72,7 @@
 			</div>
 		</div>
 		<p class="mb-1 text-xs font-medium text-muted">Status</p>
-		<div class="-mx-5">
+		<div>
 			<ChipRow sticky={false} label="Status" class="!bg-transparent !backdrop-blur-none">
 				{#each STATUSES as s (s)}
 					<Chip selected={status === s} color={STATUS_COLOR[s]} onclick={() => (status = s)}>{s}</Chip>

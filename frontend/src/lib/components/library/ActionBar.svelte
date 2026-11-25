@@ -30,7 +30,7 @@
 		/** episodes: "mark next"; steps: stepper; film: watched button; none. */
 		mode: 'episodes' | 'steps' | 'film' | 'none';
 		next?: { label: string; disabled: boolean; upcoming?: boolean } | null;
-		step?: { display: string; label: string; canDecrement: boolean; canIncrement: boolean };
+		step?: { display: string; short: string; label: string; canDecrement: boolean; canIncrement: boolean };
 		film?: { done: boolean };
 		track: { primary: [Status, string]; secondary: [Status, string] };
 		onstatus: () => void;
@@ -45,7 +45,7 @@
 <div
 	class="fixed inset-x-0 bottom-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom))] z-30 border-t border-line bg-canvas/90 px-3 py-2 backdrop-blur-xl lg:static lg:mt-5 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none"
 >
-	<div class="mx-auto flex max-w-xl items-center gap-2 lg:mx-0">
+	<div class="mx-auto flex max-w-xl flex-wrap items-center gap-2 lg:mx-0">
 		{#if !tracked}
 			<Button variant="primary" class="min-w-0 flex-1" icon={track.primary[0] === 'Completed' ? Check : Play} onclick={() => ontrack(track.primary[0])}>
 				{track.primary[1]}
@@ -82,13 +82,16 @@
 					{next.label}
 				</Button>
 			{:else if mode === 'steps' && step}
-				<Stepper
-					display={step.display}
-					label={step.label}
-					onstep={onstep}
-					canDecrement={step.canDecrement}
-					canIncrement={step.canIncrement}
-				/>
+				<div class="order-first flex w-full items-center justify-between gap-3">
+					<span class="min-w-0 truncate pl-1 text-[15px] font-medium tabular-nums">{step.display}</span>
+					<Stepper
+						display={step.short}
+						label={step.label}
+						onstep={onstep}
+						canDecrement={step.canDecrement}
+						canIncrement={step.canIncrement}
+					/>
+				</div>
 			{:else if mode === 'film' && film}
 				{#if !film.done}
 					<Button variant="primary" class="shrink-0" icon={Check} onclick={onwatched}>Watched</Button>

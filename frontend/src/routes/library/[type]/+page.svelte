@@ -4,7 +4,7 @@
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import SortSheet from '#lib/components/library/SortSheet.svelte';
-	import { isMediaType, MEDIA, progressLabel, STATUS_COLOR, STATUSES, titleHref } from '#lib/media.ts';
+	import { hasEpisodes, isMediaType, MEDIA, progressLabel, STATUS_COLOR, STATUSES, titleHref } from '#lib/media.ts';
 	import { onSynced } from '#lib/offline.svelte.ts';
 	import { settings, typeDefaults } from '#lib/settings.svelte.ts';
 	import type { Entry, LibraryResponse, MediaType, Status } from '#lib/types.ts';
@@ -18,8 +18,7 @@
 		PosterCard,
 		PosterGrid,
 		PullToRefresh,
-		Skeleton,
-		StatusBadge
+		Skeleton
 	} from '#lib/ui/index.ts';
 
 	const PAGE = 60;
@@ -162,14 +161,16 @@
 		return { destroy: () => observer.disconnect() };
 	}
 
+	// Shows keep their progress per season (the list endpoint has no total of watched episodes), so only
+	// count-based kinds get a progress line here.
 	function subtitle(e: Entry) {
+		if (hasEpisodes(e.media_type, e.item.source)) return e.status;
 		if (e.status === 'In progress' && e.media_type !== 'movie' && e.media_type !== 'anime_movie') {
 			if (e.max_progress) return `${Math.round((e.progress / e.max_progress) * 100)}% · ${progressLabel(e.media_type, e.progress, e.max_progress)}`;
 			return e.progress ? progressLabel(e.media_type, e.progress, null) : e.status;
 		}
 		return e.status;
 	}
-	const percentOf = (e: Entry) => (e.status === 'In progress' && e.max_progress ? (e.progress / e.max_progress) * 100 : null);
 	const hasFilters = $derived(!!query || !!year);
 </script>
 
@@ -301,7 +302,6 @@
 							status={entry.status}
 							subtitle={subtitle(entry)}
 							score={entry.score}
-							progress={percentOf(entry)}
 						/>
 					{/each}
 				</PosterGrid>
@@ -329,7 +329,6 @@
 												<Star class="size-3.5 fill-amber-300 text-amber-300" />{entry.score}
 											</span>
 										{/if}
-										<StatusBadge status={entry.status} compact class="hidden sm:inline-flex">{entry.status}</StatusBadge>
 									</span>
 								{/snippet}
 							</ListRow>

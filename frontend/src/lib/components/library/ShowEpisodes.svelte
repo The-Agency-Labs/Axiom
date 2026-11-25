@@ -83,7 +83,7 @@
 				<div class="min-w-0">
 					<h3 class="truncate text-[15px] font-semibold">{season.title}</h3>
 					<p class="text-xs text-faint">
-						{season.watched} of {season.total} watched{#if season.runtime_minutes} · {minutesLabel(season.runtime_minutes)}{/if}
+						{season.watched} of {season.total} watched{season.runtime_minutes ? ` · ${minutesLabel(season.runtime_minutes)}` : ''}
 					</p>
 				</div>
 				{#if season.total}

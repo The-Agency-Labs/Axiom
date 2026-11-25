@@ -77,7 +77,7 @@
 	</div>
 {:else if data.episodes.length > 1}
 	<p class="mb-2 text-xs text-faint">
-		{data.progress} of {data.total} watched{#if data.runtime_minutes} · {minutesLabel(data.runtime_minutes)}{/if}
+		{data.progress} of {data.total} watched{data.runtime_minutes ? ` · ${minutesLabel(data.runtime_minutes)}` : ''}
 	</p>
 	<ProgressBar percent={data.total ? (data.progress / data.total) * 100 : 0} {accent} class="mb-3" label="Episode progress" />
 	{#if data.episodes.length > visible.length}
