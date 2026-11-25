@@ -15,7 +15,13 @@
 		try {
 			const data = await login(username, password);
 			auth.username = data.username;
-			goto('/');
+			// Legacy Django pages (settings, imports) send people here with ?next=.
+			const next = new URLSearchParams(location.search).get('next');
+			if (next && next.startsWith('/') && !next.startsWith('//')) {
+				location.href = next;
+			} else {
+				goto('/');
+			}
 		} catch (e) {
 			error = e instanceof ApiError && e.status === 401 ? 'Wrong username or password.' : 'Could not sign in.';
 		} finally {

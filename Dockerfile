@@ -3,6 +3,16 @@
 ARG PYTHON_VERSION=3.12
 ARG ALPINE_VERSION=3.23
 
+# --- Frontend stage: build the SvelteKit app to static files ---
+FROM node:22-alpine AS frontend
+
+WORKDIR /frontend
+RUN corepack enable
+COPY ./frontend/package.json ./frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY ./frontend ./
+RUN pnpm build
+
 # --- Builder stage: build the virtualenv with uv ---
 FROM ghcr.io/astral-sh/uv:python${PYTHON_VERSION}-alpine${ALPINE_VERSION} AS builder
 
@@ -50,6 +60,9 @@ RUN apk add --no-cache nginx shadow gettext \
 
 # Copy the pre-built virtualenv from the builder stage
 COPY --from=builder /encompass/.venv /encompass/.venv
+
+# Web app (served by nginx at /), built in the frontend stage
+COPY --from=frontend /frontend/build /encompass/frontend
 
 # Django app
 COPY src ./
