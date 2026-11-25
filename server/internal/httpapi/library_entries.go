@@ -18,6 +18,13 @@ import (
 // libraryMetadata fetches provider metadata for an item or a bare (kind,
 // source, id) triple, with the optional season of a show.
 func (s *Server) libraryMetadata(ctx context.Context, kind, source, id string, season *int) (catalog.Metadata, error) {
+	if catalog.IsShow(kind) {
+		// An old TMDB link resolves to the show's TVDB series.
+		source, id = s.Catalog.ResolveShowRef(ctx, source, id)
+	}
+	if season != nil && catalog.IsShow(kind) && source == catalog.SourceTVDB && s.Catalog.Reg.P.TVDB != nil {
+		return s.Catalog.Reg.P.TVDB.Season(ctx, id, *season)
+	}
 	if season != nil && catalog.IsShow(kind) && source == catalog.SourceTMDB && s.Catalog.Reg.P.TMDB != nil {
 		return s.Catalog.Reg.P.TMDB.TVWithSeasons(ctx, id, []int{*season})
 	}
@@ -124,7 +131,7 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		if !empty {
 			for _, row := range page.Results {
 				data := libraryEntryJSON(row.Entry, row.Item)
-				if catalog.IsShow(row.Item.Kind) && row.Item.Source == catalog.SourceTMDB {
+				if catalog.HasEpisodes(row.Item) {
 					data["max_progress"] = libraryIntPtr(row.MaxProgress)
 				}
 				results = append(results, data)

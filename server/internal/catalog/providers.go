@@ -7,6 +7,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
 	"github.com/the-agency-labs/encompass/server/internal/providers"
 	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
+	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
 )
 
 type (
@@ -29,6 +30,18 @@ type TMDB interface {
 	Find(ctx context.Context, externalID, externalSource string) (map[string]any, error)
 	TVChanges(ctx context.Context) (map[string]struct{}, error)
 	MovieChanges(ctx context.Context) (map[string]struct{}, error)
+}
+
+// TVDB is the TheTVDB client: the source of every show (tv and anime).
+type TVDB interface {
+	Series(ctx context.Context, id string) (Metadata, error)
+	Seasons(ctx context.Context, id string) ([]tvdb.Season, error)
+	Season(ctx context.Context, id string, number int) (Metadata, error)
+	Search(ctx context.Context, query string, page int) (SearchPage, error)
+	Characters(ctx context.Context, id string) ([]tvdb.Character, error)
+	PersonRemoteIDs(ctx context.Context, personID string) (map[string]string, error)
+	FindByRemoteID(ctx context.Context, remoteID string) (*tvdb.Hit, error)
+	Episode(ctx context.Context, episodeID string) (Metadata, error)
 }
 
 // AniList is the AniList client.
@@ -90,6 +103,7 @@ type Mappings interface {
 	Lookup(ctx context.Context, source, mediaID string) (*mappings.Mapping, error)
 	ByTMDBTV(ctx context.Context, id int64) ([]mappings.Mapping, error)
 	ByTMDBMovie(ctx context.Context, id int64) ([]mappings.Mapping, error)
+	ByTVDB(ctx context.Context, id int64) ([]mappings.Mapping, error)
 	AnimeTMDBIDs(ctx context.Context) (mappings.TMDBIDs, error)
 }
 
@@ -97,6 +111,7 @@ type Mappings interface {
 // not configured and its (kind, source) pairs return ErrUnsupported.
 type Providers struct {
 	TMDB         TMDB
+	TVDB         TVDB
 	AniList      AniList
 	MAL          MAL
 	MangaUpdates MangaUpdates

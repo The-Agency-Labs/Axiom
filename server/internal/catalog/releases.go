@@ -453,6 +453,10 @@ func (c *Catalog) RefreshAllReleases(ctx context.Context) (int, error) {
 		}
 		changed := false
 		switch {
+		case HasEpisodes(item) && item.Source == SourceTVDB:
+			// TVDB has no change feed: a show that is not over is re-synced
+			// (at most daily, SyncSeasons throttles) and its releases rebuilt.
+			changed = showOngoing(item)
 		case HasEpisodes(item):
 			_, changed = tvChanged[item.ExternalID]
 		case IsMovie(item.Kind) && item.Source == SourceTMDB:
@@ -470,7 +474,14 @@ func (c *Catalog) RefreshAllReleases(ctx context.Context) (int, error) {
 			continue
 		}
 		if changed && HasEpisodes(item) {
-			if err := c.SyncSeasons(ctx, item, Force); err != nil {
+			opts := []SyncOption{Force}
+			if item.Source == SourceTVDB {
+				opts = nil
+				if fresh, err := c.RefreshItem(ctx, item); err == nil {
+					item = fresh // status, poster and title follow TVDB
+				}
+			}
+			if err := c.SyncSeasons(ctx, item, opts...); err != nil {
 				slog.WarnContext(ctx, "catalog: season sync failed", "item", item.ID, "err", err)
 			}
 		}
@@ -491,4 +502,18 @@ func latestRelease(rows []db.Release) time.Time {
 		}
 	}
 	return latest
+}
+
+// showOngoing reports whether a show may still get episodes: its stored TVDB
+// status is anything but Ended.
+func showOngoing(item Item) bool {
+	var meta struct {
+		Details struct {
+			Status string `json:"status"`
+		} `json:"details"`
+	}
+	if json.Unmarshal([]byte(item.Meta), &meta) != nil {
+		return true
+	}
+	return !strings.EqualFold(meta.Details.Status, "Ended")
 }

@@ -82,15 +82,23 @@ type creditRow struct {
 	language, job                        string
 	order                                int
 	episodes                             sql.NullInt64
+	// keep: the person is an existing record recognised by a shared id, so its
+	// name is left alone (TVDB spells names its own way).
+	keep bool
 }
 
-// SupportsCredits reports whether credits can be fetched for an item: TMDB
-// shows and films, and anime and anime films from AniList voice actors.
+// SupportsCredits reports whether credits can be fetched for an item: TVDB
+// shows (their characters; TMDB for a legacy TMDB show), TMDB films, and
+// anime films and count-based anime from AniList voice actors.
 func SupportsCredits(item Item) bool {
 	switch item.Kind {
-	case KindTV, KindMovie:
+	case KindTV:
+		return item.Source == SourceTVDB || item.Source == SourceTMDB
+	case KindMovie:
 		return item.Source == SourceTMDB
-	case KindAnime, KindAnimeMovie:
+	case KindAnime:
+		return item.Source == SourceTVDB || item.Source == SourceTMDB || item.Source == SourceMAL || item.Source == SourceAniList
+	case KindAnimeMovie:
 		return item.Source == SourceTMDB || item.Source == SourceMAL || item.Source == SourceAniList
 	}
 	return false
@@ -127,9 +135,16 @@ func (c *Catalog) FetchCredits(ctx context.Context, item Item, force bool) error
 			return err
 		}
 		for _, r := range rows {
-			pid, err := q.UpsertPerson(ctx, db.UpsertPersonParams{
+			person := db.UpsertPersonParams{
 				Source: r.source, ExternalID: r.extID, Name: r.name, NativeName: r.native, Image: r.image,
-			})
+			}
+			var pid int64
+			var err error
+			if r.keep {
+				pid, err = q.EnsurePerson(ctx, db.EnsurePersonParams(person))
+			} else {
+				pid, err = q.UpsertPerson(ctx, person)
+			}
 			if err != nil {
 				return err
 			}
@@ -149,6 +164,11 @@ func (c *Catalog) FetchCredits(ctx context.Context, item Item, force bool) error
 
 func (c *Catalog) gatherCredits(ctx context.Context, item Item) ([]creditRow, error) {
 	var rows []creditRow
+	if item.Source == SourceTVDB {
+		// Shows are TVDB only: its characters and people, no TMDB credits and
+		// no AniList voice actors mixed in.
+		return c.tvdbCreditRows(ctx, item)
+	}
 	if item.Source == SourceTMDB {
 		if c.TMDBCredits == nil {
 			return nil, errors.New("TMDB credits are not configured")

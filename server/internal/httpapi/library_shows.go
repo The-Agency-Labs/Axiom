@@ -14,8 +14,8 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/library"
 )
 
-// libraryShowItem finds or creates the catalog item of a TMDB show (tv or
-// anime) and makes sure its seasons and episodes are synced. It works for
+// libraryShowItem finds or creates the catalog item of a show (tv or anime;
+// a TMDB id resolves to the show's TVDB series) and makes sure its seasons and episodes are synced. It works for
 // shows the user doesn't track yet, so a show can be browsed from search.
 func (s *Server) libraryShowItem(ctx context.Context, source, mediaID string) (db.Item, error) {
 	if !libraryKnownSource(source) {
@@ -26,7 +26,7 @@ func (s *Server) libraryShowItem(ctx context.Context, source, mediaID string) (d
 		return db.Item{}, libraryError(err, source)
 	}
 	if !catalog.HasEpisodes(item) {
-		return db.Item{}, Errorf(http.StatusBadRequest, "Only TMDB shows have seasons and episodes")
+		return db.Item{}, Errorf(http.StatusBadRequest, "Only TVDB shows have seasons and episodes")
 	}
 	if err := s.Catalog.SyncSeasons(ctx, item); err != nil {
 		if !item.SeasonsSyncedAt.Valid {
@@ -91,7 +91,7 @@ func (s *Server) librarySeasonJSON(ctx context.Context, userID int64, item db.It
 		return nil, err
 	}
 	var synopsis any
-	if s.Catalog.Reg.P.TMDB != nil {
+	if item.Source == catalog.SourceTMDB && s.Catalog.Reg.P.TMDB != nil {
 		if meta, err := s.Catalog.Reg.P.TMDB.Season(ctx, item.ExternalID, season); err == nil {
 			if txt, ok := meta["synopsis"].(string); ok && txt != "" {
 				synopsis = txt

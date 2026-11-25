@@ -20,6 +20,7 @@ import (
 
 // Episode describes one TMDB episode of a fake show.
 type Episode struct {
+	ID      int64 // TVDB episode id (TVDB fake only)
 	Number  int
 	AirDate string // "" = undated
 	Name    string
@@ -105,6 +106,21 @@ func (f *TMDB) AddShow(id, title string, seasons ...Season) *TMDB {
 		"related":        map[string]any{"seasons": related},
 		"tvdb_id":        float64(7000),
 		"external_links": map[string]any{"IMDb": "https://www.imdb.com/title/tt0042/", "TVDB": "https://www.thetvdb.com/dereferrer/series/7000"},
+	}
+	return f
+}
+
+// SetTVDBID sets the TVDB id TMDB lists for a show ("" = none, as for a show
+// TMDB has not linked to TVDB).
+func (f *TMDB) SetTVDBID(showID, tvdbID string) *TMDB {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	m := f.shows[showID]
+	if tvdbID == "" {
+		delete(m, "tvdb_id")
+		m["external_links"] = map[string]any{}
+	} else {
+		m["tvdb_id"] = tvdbID
 	}
 	return f
 }
@@ -252,6 +268,26 @@ func (m *Mappings) AddShow(tmdbTV, season, offset, anilistID, malID int64) {
 	})
 }
 
+// AddTVDBShow registers an anime mapping row of a TVDB series: the cour is
+// season `season` of it, after `offset` episodes (season 0 = specials).
+func (m *Mappings) AddTVDBShow(tvdbID, season, offset, anilistID, malID int64) {
+	m.Rows = append(m.Rows, mappings.Mapping{
+		ID: int64(len(m.Rows) + 1), AnilistID: nullInt(anilistID), MalID: nullInt(malID), Kind: "TV",
+		TvdbID: nullInt(tvdbID), TvdbSeason: sql.NullInt64{Int64: season, Valid: true}, TvdbOffset: offset,
+	})
+}
+
+// ByTVDB implements catalog.Mappings.
+func (m *Mappings) ByTVDB(_ context.Context, id int64) ([]mappings.Mapping, error) {
+	var out []mappings.Mapping
+	for _, r := range m.Rows {
+		if r.TvdbID.Valid && r.TvdbID.Int64 == id {
+			out = append(out, r)
+		}
+	}
+	return out, nil
+}
+
 // AddMovie registers an anime mapping row of a TMDB film.
 func (m *Mappings) AddMovie(tmdbMovie, anilistID, malID int64) {
 	m.Rows = append(m.Rows, mappings.Mapping{
@@ -298,8 +334,11 @@ func (m *Mappings) ByTMDBMovie(_ context.Context, id int64) ([]mappings.Mapping,
 
 // AnimeTMDBIDs implements catalog.Mappings.
 func (m *Mappings) AnimeTMDBIDs(context.Context) (mappings.TMDBIDs, error) {
-	ids := mappings.TMDBIDs{Shows: map[string]struct{}{}, Films: map[string]struct{}{}}
+	ids := mappings.TMDBIDs{Shows: map[string]struct{}{}, Films: map[string]struct{}{}, TVDBShows: map[string]struct{}{}}
 	for _, r := range m.Rows {
+		if r.TvdbID.Valid {
+			ids.TVDBShows[fmt.Sprint(r.TvdbID.Int64)] = struct{}{}
+		}
 		if r.TmdbTv.Valid {
 			ids.Shows[fmt.Sprint(r.TmdbTv.Int64)] = struct{}{}
 		}
@@ -316,9 +355,13 @@ type Env struct {
 	Q        *db.Queries
 	Catalog  *catalog.Catalog
 	TMDB     *TMDB
+	TVDB     *TVDB
 	Mappings *Mappings
 	clock    time.Time
 	mu       sync.Mutex
+
+	tmdb catalog.TMDB
+	tvdb catalog.TVDB
 }
 
 // NewEnv builds an Env whose clock starts at start (UTC).
@@ -329,10 +372,9 @@ func NewEnv(t testing.TB, start time.Time) *Env {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { conn.Close() })
-	e := &Env{Conn: conn, Q: db.New(conn), TMDB: NewTMDB(), Mappings: &Mappings{}, clock: start.UTC()}
-	reg := catalog.NewRegistry(catalog.Providers{TMDB: e.TMDB}, e.Mappings)
-	e.Catalog = catalog.New(conn, e.Q, reg)
-	e.Catalog.Now = e.Now
+	e := &Env{Conn: conn, Q: db.New(conn), TMDB: NewTMDB(), TVDB: NewTVDB(), Mappings: &Mappings{}, clock: start.UTC()}
+	e.tmdb = e.TMDB
+	e.rebuild() // TMDB only until UseTVDB: the TMDB-show tests predate TVDB shows
 	return e
 }
 

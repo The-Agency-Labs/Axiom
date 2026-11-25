@@ -13,6 +13,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/auth"
 	"github.com/the-agency-labs/encompass/server/internal/catalog"
 	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
 )
 
 const (
@@ -59,9 +60,12 @@ func peoplePersonOf(id int64, source, externalID, name, native, image string) pe
 	if image != "" {
 		p.Image = &image
 	}
-	if source == catalog.SourceTMDB {
+	switch source {
+	case catalog.SourceTMDB:
 		p.URL = "https://www.themoviedb.org/person/" + externalID
-	} else {
+	case catalog.SourceTVDB:
+		p.URL = tvdb.PersonURL(externalID)
+	default:
 		p.URL = "https://anilist.co/staff/" + externalID
 	}
 	return p

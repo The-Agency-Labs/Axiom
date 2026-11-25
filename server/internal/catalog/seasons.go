@@ -45,6 +45,12 @@ func (c *Catalog) SyncSeasons(ctx context.Context, item Item, opts ...SyncOption
 			return nil
 		}
 	}
+	if item.Source == SourceTVDB {
+		return c.syncTVDB(ctx, item)
+	}
+	if c.Reg.P.TMDB == nil {
+		return fmt.Errorf("%w: TMDB is not configured", ErrUnsupported)
+	}
 	tv, err := c.Reg.P.TMDB.TV(ctx, item.ExternalID)
 	if err != nil {
 		return err
