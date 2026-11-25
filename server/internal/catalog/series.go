@@ -88,15 +88,55 @@ var (
 	nonAlnumRe   = regexp.MustCompile(`[^\p{L}\p{N}]+`)
 )
 
+// A name with a subtitle: "The Mistborn Saga: The Original Trilogy",
+// "Discworld - Ankh-Morpork City Watch".
+var seriesSubtitleRe = regexp.MustCompile(`^(.+?)(\s*:\s+|\s+[-–—]\s+)(.+)$`)
+
+// seriesModifiers are generic one-word qualifiers: "The Original Trilogy" is
+// a name, "Original" alone is not, so the packaging word stays with them.
+var seriesModifiers = map[string]bool{
+	"original": true, "complete": true, "first": true, "second": true, "third": true, "new": true,
+	"early": true, "final": true, "classic": true, "modern": true, "young": true, "next": true,
+	"old": true, "whole": true, "entire": true, "full": true, "great": true, "later": true,
+}
+
+// stripSeriesKind drops the packaging word of a name ("The Red Rising
+// Trilogy" -> "Red Rising"). It does not when what is left is not a name:
+// a lone generic modifier ("The Original Trilogy"), or, in a subtitle (the
+// part after "Foo: "), anything under two words ("Era One Series" is fine,
+// "Trilogy" after "Mistborn: The Original" is the distinguishing part).
+func stripSeriesKind(s string, subtitle bool) string {
+	m := seriesKindRe.FindStringSubmatch(s)
+	if m == nil {
+		return s
+	}
+	words := strings.Fields(m[1])
+	if len(words) == 1 && seriesModifiers[strings.ToLower(words[0])] || subtitle && len(words) < 2 {
+		if subtitle {
+			return strings.TrimSpace(seriesArticleRe.ReplaceAllString(s, ""))
+		}
+		return s
+	}
+	return m[1]
+}
+
+var seriesArticleRe = regexp.MustCompile(`(?i)^the\s+`)
+
 // NormalizeSeriesName drops packaging words, so every book of a series shows
 // the same name: "The Red Rising Trilogy" and "Red Rising" are both "Red Rising".
+// Both halves of "Mistborn Saga: The Original Trilogy" are treated alone,
+// giving "Mistborn: Original Trilogy", never a dangling "Mistborn: The Original".
 func NormalizeSeriesName(s string) string {
 	s = strings.Trim(strings.TrimSpace(s), ",;:-–")
 	s = strings.TrimSpace(s)
-	if m := seriesKindRe.FindStringSubmatch(s); m != nil {
-		return m[1]
+	if m := seriesSubtitleRe.FindStringSubmatch(s); m != nil {
+		sep := m[2]
+		if strings.Contains(sep, ":") {
+			sep = ": "
+		}
+		return stripSeriesKind(m[1], false) + sep + stripSeriesKind(m[3], true)
 	}
-	return s
+	return stripSeriesKind(s, false)
 }
 
 // SeriesKey is the comparison key of a series name: normalised, lower-cased,
@@ -256,8 +296,9 @@ func (c *Catalog) syncHardcoverItemSeries(ctx context.Context, item Item) error 
 		return err
 	}
 	var primary int64
+	var primaryMeta bool
 	seen := map[string]bool{}
-	for i, bs := range list {
+	for _, bs := range list {
 		// Hardcover often has a saga and a sub-series with the same name
 		// once normalised ("Red Rising Saga", "Red Rising"): keep the first
 		// (featured) one so the series shows once.
@@ -277,8 +318,10 @@ func (c *Catalog) syncHardcoverItemSeries(ctx context.Context, item Item) error 
 		}); err != nil {
 			return err
 		}
-		if i == 0 {
-			primary = s.ID
+		// The first series is primary, unless it is a reading-order or
+		// umbrella list and a regular series follows.
+		if primary == 0 || (primaryMeta && !providers.IsMetaSeries(bs.Series.Name)) {
+			primary, primaryMeta = s.ID, providers.IsMetaSeries(bs.Series.Name)
 		}
 	}
 	if primary != 0 {
