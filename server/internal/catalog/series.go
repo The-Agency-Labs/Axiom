@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -295,10 +296,9 @@ func (c *Catalog) syncHardcoverItemSeries(ctx context.Context, item Item) error 
 	if err != nil {
 		return err
 	}
-	var primary int64
-	var primaryMeta bool
+	ids := make([]int64, len(list)) // stored series id per list entry; 0 = skipped
 	seen := map[string]bool{}
-	for _, bs := range list {
+	for i, bs := range list {
 		// Hardcover often has a saga and a sub-series with the same name
 		// once normalised ("Red Rising Saga", "Red Rising"): keep the first
 		// (featured) one so the series shows once.
@@ -318,11 +318,11 @@ func (c *Catalog) syncHardcoverItemSeries(ctx context.Context, item Item) error 
 		}); err != nil {
 			return err
 		}
-		// The first series is primary, unless it is a reading-order or
-		// umbrella list and a regular series follows.
-		if primary == 0 || (primaryMeta && !providers.IsMetaSeries(bs.Series.Name)) {
-			primary, primaryMeta = s.ID, providers.IsMetaSeries(bs.Series.Name)
-		}
+		ids[i] = s.ID
+	}
+	var primary int64
+	if i := choosePrimarySeries(list, ids); i >= 0 {
+		primary = ids[i]
 	}
 	if primary != 0 {
 		return c.Q.SetItemPrimarySeries(ctx, db.SetItemPrimarySeriesParams{
@@ -556,4 +556,69 @@ func (c *Catalog) registerSeriesJobs(m *jobs.Manager) {
 		slog.InfoContext(ctx, "series backfill", "books", n)
 		return err
 	})
+}
+
+// choosePrimarySeries picks the book's main series among the stored entries
+// (ids[i] != 0), in Hardcover's order:
+//   - a reading-order or umbrella list ("… Universe", "(Publication Order)")
+//     is never primary while a regular series exists;
+//   - a sub-arc named after its own first book whose books all belong to
+//     another regular series of the book defers to that larger series
+//     ("Iron Gold" inside "Red Rising Saga" → Red Rising 4, not Iron Gold 1),
+//     while a series like "The Hunger Games" (named after its first book but
+//     contained in no other regular series) stays primary.
+func choosePrimarySeries(list []providers.BookSeries, ids []int64) int {
+	var regular []int
+	for i, bs := range list {
+		if ids[i] != 0 && !providers.IsMetaSeries(bs.Series.Name) {
+			regular = append(regular, i)
+		}
+	}
+	if len(regular) == 0 {
+		for i := range list {
+			if ids[i] != 0 {
+				return i
+			}
+		}
+		return -1
+	}
+	first := regular[0]
+	if isSubArc(list[first].Series) {
+		for _, j := range regular[1:] {
+			if containsAllBooks(list[j].Series, list[first].Series) {
+				return j
+			}
+		}
+	}
+	return first
+}
+
+// isSubArc reports whether a series is named after its own first book.
+func isSubArc(s providers.SeriesInfo) bool {
+	var firstTitle string
+	lowest := math.Inf(1)
+	for _, b := range s.Books {
+		if b.Position >= 1 && b.Position < lowest {
+			lowest, firstTitle = b.Position, b.Title
+		}
+	}
+	return firstTitle != "" && SeriesKey(firstTitle) == SeriesKey(s.Name)
+}
+
+// containsAllBooks reports whether every book of sub is also in parent, and
+// parent is larger.
+func containsAllBooks(parent, sub providers.SeriesInfo) bool {
+	if len(parent.Books) <= len(sub.Books) || len(sub.Books) == 0 {
+		return false
+	}
+	in := map[string]bool{}
+	for _, b := range parent.Books {
+		in[b.ExternalID] = true
+	}
+	for _, b := range sub.Books {
+		if !in[b.ExternalID] {
+			return false
+		}
+	}
+	return true
 }

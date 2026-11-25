@@ -4,7 +4,7 @@ import "regexp"
 
 // metaSeriesRe matches reading-order and umbrella lists rather than series:
 // "Foo Universe (Chronological)", "Foo (Publication Order)", "Foo Collection".
-var metaSeriesRe = regexp.MustCompile(`(?i)(?:\b(?:universe|multiverse|reading order|publication order|release order|chronolog\w*|collection|omnibus|boxed set|box set)\b|\([^)]*\border\b[^)]*\))`)
+var metaSeriesRe = regexp.MustCompile(`(?i)(?:\b\w+verse\b|\b(?:universe|multiverse|reading order|publication order|release order|chronolog\w*|collection|omnibus|boxed set|box set)\b|\([^)]*\border\b[^)]*\))`)
 
 // IsMetaSeries reports a series name that is a reading-order or umbrella list.
 // Such a list may be stored as an extra series of a book but is never its
