@@ -97,12 +97,24 @@ and an `*http.Client`; every external call has a timeout and goes through
 | 2 | Providers (parallel): A tmdb+tvdb · B anilist+mal+anime mapping · C hardcover+openlibrary+mangaupdates · D igdb+bgg+comicvine | 4 Sonnet |
 | 3 | API areas (parallel): A library/shows/seasons/episodes/anime · B reading/KOSync/KOReader/book linking/Triple P · C people/credits · D now/activity/years/summary/search/tokens/me | 4 Sonnet |
 | 4 | Integrations: Jellyfin webhook + import, AniList import + poll, Goodreads CSV, Steam; calendar; lists | 2–3 Sonnet |
-| 5 | SPA: Settings (media toggles, password, tokens, users), per-type Sources page, Link your books, board games, anime/anime movie pages, Triple P | 1–2 Sonnet |
+| 5 | SPA (mobile-first PWA, see Frontend section): Settings (media toggles, password, tokens, users), per-type Sources page, Link your books, board games, anime/anime movie pages, Triple P | 1–2 Sonnet |
 | 6 | Django → Go data migration, golden comparison, side-by-side run, cutover, decommission Django | Opus + 1 Sonnet |
 
 Each phase: tests pass (`go test ./...`, `go vet`, `staticcheck`), golden
 comparison for touched endpoints, Opus review before merge. Agents work in
 their own worktrees on `rewrite/<phase>-<area>` branches off `rewrite/main`.
+
+## Frontend: one codebase, installable PWA, mobile-first (owner requirement)
+
+- One codebase: the SvelteKit SPA in `frontend/` is built into `server/web/dist` and embedded in the Go binary; one image, one container. No separate frontend deploy, no native apps.
+- PWA: installable (manifest, maskable icons, `display: standalone`, shortcuts), service worker that precaches the app shell and serves cached API GETs when offline (stale-while-revalidate for library/now/item pages), with an "offline" indicator. Episode/progress taps made offline are queued and replayed in order when back online (manual source, same rules).
+- Mobile-first, designed for a phone held in one hand, then scaled up to desktop:
+  - bottom tab bar on phones (Now, Library, Search, Reading, More), sidebar on wide screens; respects safe areas and the iOS home indicator;
+  - tap targets ≥ 44 px, primary actions in thumb reach (mark next episode, +1 page/chapter, rate) without opening menus; swipe/long-press are shortcuts, never the only way;
+  - poster-grid and list views, sticky filter chips that scroll horizontally, bottom sheets instead of modals, pull-to-refresh;
+  - fast: route-level code splitting, lazy images with fixed aspect ratios (no layout shift), skeletons not spinners, optimistic updates;
+  - dark by default with light theme support, system font stack, readable at 375 px width with no horizontal scroll;
+  - every screen checked on a 375×812 viewport (and installed-PWA mode) before merge.
 
 ## Conventions for agents
 
