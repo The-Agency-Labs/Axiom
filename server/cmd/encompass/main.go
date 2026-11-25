@@ -6,6 +6,7 @@
 //	encompass serve
 //	encompass createuser <name> [--admin]   password is read from stdin
 //	encompass healthcheck              GET /health on the local server, exit 0/1
+//	encompass migrate-django --from <django.db> [--dry-run] [--force]   one-shot data migration
 package main
 
 import (
@@ -62,8 +63,10 @@ func main() {
 		err = createUser(args, os.Stdin)
 	case "healthcheck":
 		err = healthcheck()
+	case "migrate-django":
+		err = migrateDjango(args, os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck]\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db>]\n", cmd)
 		os.Exit(2)
 	}
 	if err != nil {
