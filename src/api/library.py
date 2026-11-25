@@ -158,6 +158,29 @@ def list_library(  # noqa: PLR0917
     }
 
 
+@router.get("/library/find")
+def find_entry(
+    request,
+    media_type: MediaType,
+    source: str,
+    media_id: str,
+    season_number: int | None = None,
+):
+    """Return the user's entry id for a provider item, or null if untracked."""
+    entry = (
+        _model(media_type)
+        .objects.filter(
+            user=request.user,
+            item__source=source,
+            item__media_id=media_id,
+            item__season_number=season_number,
+        )
+        .only("id")
+        .first()
+    )
+    return {"id": entry.id if entry else None}
+
+
 @router.get("/library/{media_type}/{instance_id}")
 def get_entry(
     request,

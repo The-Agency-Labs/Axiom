@@ -41,6 +41,7 @@
 	});
 
 	const key = (r: SearchResult) => `${r.source}:${r.media_id}`;
+	const href = (r: SearchResult) => `/media/${type}/${r.source}/${encodeURIComponent(String(r.media_id))}`;
 
 	async function track(result: SearchResult, status: 'Planning' | 'In progress', open = false) {
 		adding = key(result);
@@ -112,7 +113,14 @@
 				{@const k = key(result)}
 				<div class="group">
 					<div class="relative">
-						<Cover src={result.image} title={result.title} {type} class="aspect-[2/3] w-full" />
+						<a href={href(result)} aria-label="Open {result.title}" class="block">
+							<Cover
+								src={result.image}
+								title={result.title}
+								{type}
+								class="aspect-[2/3] w-full transition duration-300 group-hover:-translate-y-0.5 group-hover:ring-line-strong"
+							/>
+						</a>
 						<div
 							class="absolute inset-x-2 bottom-2 flex gap-1.5 opacity-100 transition sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100"
 						>
@@ -139,7 +147,9 @@
 							{/if}
 						</div>
 					</div>
-					<p class="mt-2 line-clamp-2 text-[13px] leading-snug font-medium">{result.title}</p>
+					<a href={href(result)} class="mt-2 line-clamp-2 block text-[13px] leading-snug font-medium hover:underline">
+						{result.title}
+					</a>
 					<p class="text-[11px] text-faint">{SOURCE_NAMES[result.source] ?? result.source}</p>
 				</div>
 			{/each}
