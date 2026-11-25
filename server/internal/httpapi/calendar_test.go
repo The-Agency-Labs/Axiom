@@ -48,7 +48,7 @@ func newCalFx(t *testing.T) *calFx {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.calToken = u.WebhookToken
+	f.calToken = u.CalendarToken.String
 	return f
 }
 
@@ -220,9 +220,14 @@ func TestCalendarRegenerateToken(t *testing.T) {
 	if code, _, _ := anon.do("POST", "/api/v1/settings/calendar-token", nil, f.overviewFx.token("write")); code != 403 {
 		t.Errorf("api token must be refused, got %d", code)
 	}
+	before := getObj(t, f.c, "/api/v1/settings", nil)
 	code, body, _ := f.c.do("POST", "/api/v1/settings/calendar-token", nil, nil)
 	if code != 200 {
 		t.Fatalf("regenerate: %d %v", code, body)
+	}
+	// Rotating the calendar token leaves the Jellyfin webhook URL alone.
+	if body["webhook_url_path"] != before["webhook_url_path"] {
+		t.Errorf("webhook path changed: %v -> %v", before["webhook_url_path"], body["webhook_url_path"])
 	}
 	path, _ := body["calendar_url_path"].(string)
 	if !strings.HasPrefix(path, "/calendar/") || path == "/calendar/"+f.calToken+".ics" {

@@ -84,7 +84,7 @@ func (s *Server) settingsMediaTypes(ctx context.Context, userID int64) ([]settin
 func settingsPaths(u db.User) map[string]any {
 	return map[string]any{
 		"webhook_url_path":  "/webhook/jellyfin/" + u.WebhookToken,
-		"calendar_url_path": "/calendar/" + u.WebhookToken + ".ics",
+		"calendar_url_path": "/calendar/" + u.CalendarToken.String + ".ics",
 	}
 }
 

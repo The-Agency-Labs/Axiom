@@ -273,6 +273,7 @@ type User struct {
 	WatchedPercent int64          `json:"watched_percent"`
 	CreatedAt      string         `json:"created_at"`
 	LastLoginAt    sql.NullString `json:"last_login_at"`
+	CalendarToken  sql.NullString `json:"calendar_token"`
 }
 
 type UserMediaSetting struct {

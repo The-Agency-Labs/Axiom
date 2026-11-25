@@ -117,7 +117,7 @@ func (s *Server) calendarFeed(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	u, err := s.Queries.GetUserByWebhookToken(r.Context(), token)
+	u, err := s.Queries.GetUserByCalendarToken(r.Context(), sql.NullString{String: token, Valid: true})
 	if err != nil || u.IsActive == 0 {
 		http.NotFound(w, r)
 		return
@@ -206,17 +206,16 @@ func (s *Server) calendarJSON(_ http.ResponseWriter, r *http.Request) (any, erro
 	return out, nil
 }
 
-// calendarRegenerateToken is POST /api/v1/settings/calendar-token. The calendar
-// feed and the Jellyfin webhook share one token per user (as Django's users.token),
-// so this rotates both URLs, exactly like POST /settings/webhook-token.
+// calendarRegenerateToken is POST /api/v1/settings/calendar-token. It rotates
+// only the calendar feed's token; the Jellyfin webhook URL is unaffected.
 func (s *Server) calendarRegenerateToken(_ http.ResponseWriter, r *http.Request) (any, error) {
 	u := overviewUser(r.Context())
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return nil, err
 	}
-	u.WebhookToken = base64.RawURLEncoding.EncodeToString(b)
-	if err := s.Queries.SetWebhookToken(r.Context(), db.SetWebhookTokenParams{WebhookToken: u.WebhookToken, ID: u.ID}); err != nil {
+	u.CalendarToken = sql.NullString{String: base64.RawURLEncoding.EncodeToString(b), Valid: true}
+	if err := s.Queries.SetCalendarToken(r.Context(), db.SetCalendarTokenParams{CalendarToken: u.CalendarToken, ID: u.ID}); err != nil {
 		return nil, err
 	}
 	return settingsPaths(u), nil

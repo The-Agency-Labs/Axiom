@@ -25,7 +25,7 @@ func TestSettingsGetDefaults(t *testing.T) {
 		t.Errorf("kinds = %v", kinds)
 	}
 	u, _ := f.env.Q.GetUser(context.Background(), f.uid)
-	if s["webhook_url_path"] != "/webhook/jellyfin/"+u.WebhookToken || s["calendar_url_path"] != "/calendar/"+u.WebhookToken+".ics" {
+	if s["webhook_url_path"] != "/webhook/jellyfin/"+u.WebhookToken || s["calendar_url_path"] != "/calendar/"+u.CalendarToken.String+".ics" || u.CalendarToken.String == u.WebhookToken {
 		t.Errorf("paths = %v %v", s["webhook_url_path"], s["calendar_url_path"])
 	}
 }
@@ -115,7 +115,8 @@ func TestSettingsWebhookToken(t *testing.T) {
 	if code != 200 || after.WebhookToken == before.WebhookToken || len(after.WebhookToken) < 32 {
 		t.Fatalf("regenerate: %d %v", code, b)
 	}
-	if b["webhook_url_path"] != "/webhook/jellyfin/"+after.WebhookToken || b["calendar_url_path"] != "/calendar/"+after.WebhookToken+".ics" {
+	// Rotating the webhook token leaves the calendar URL alone.
+	if b["webhook_url_path"] != "/webhook/jellyfin/"+after.WebhookToken || after.CalendarToken != before.CalendarToken || b["calendar_url_path"] != "/calendar/"+before.CalendarToken.String+".ics" {
 		t.Errorf("paths = %v", b)
 	}
 }

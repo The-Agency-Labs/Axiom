@@ -22,9 +22,9 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, password_hash, is_admin, webhook_token, created_at)
-VALUES (?, ?, ?, ?, ?)
-RETURNING id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at
+INSERT INTO users (username, password_hash, is_admin, webhook_token, calendar_token, created_at)
+VALUES (?, ?, ?, ?, lower(hex(randomblob(32))), ?)
+RETURNING id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at, calendar_token
 `
 
 type CreateUserParams struct {
@@ -57,12 +57,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.WatchedPercent,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.CalendarToken,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at FROM users WHERE id = ?
+SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at, calendar_token FROM users WHERE id = ?
 `
 
 func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
@@ -81,12 +82,38 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.WatchedPercent,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.CalendarToken,
+	)
+	return i, err
+}
+
+const getUserByCalendarToken = `-- name: GetUserByCalendarToken :one
+SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at, calendar_token FROM users WHERE calendar_token = ?
+`
+
+func (q *Queries) GetUserByCalendarToken(ctx context.Context, calendarToken sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByCalendarToken, calendarToken)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.IsAdmin,
+		&i.IsActive,
+		&i.Timezone,
+		&i.Language,
+		&i.WebhookToken,
+		&i.JellyfinUsers,
+		&i.WatchedPercent,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.CalendarToken,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at FROM users WHERE username = ?
+SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at, calendar_token FROM users WHERE username = ?
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -105,12 +132,13 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.WatchedPercent,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.CalendarToken,
 	)
 	return i, err
 }
 
 const getUserByWebhookToken = `-- name: GetUserByWebhookToken :one
-SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at FROM users WHERE webhook_token = ?
+SELECT id, username, password_hash, is_admin, is_active, timezone, language, webhook_token, jellyfin_users, watched_percent, created_at, last_login_at, calendar_token FROM users WHERE webhook_token = ?
 `
 
 func (q *Queries) GetUserByWebhookToken(ctx context.Context, webhookToken string) (User, error) {
@@ -129,8 +157,23 @@ func (q *Queries) GetUserByWebhookToken(ctx context.Context, webhookToken string
 		&i.WatchedPercent,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.CalendarToken,
 	)
 	return i, err
+}
+
+const setCalendarToken = `-- name: SetCalendarToken :exec
+UPDATE users SET calendar_token = ? WHERE id = ?
+`
+
+type SetCalendarTokenParams struct {
+	CalendarToken sql.NullString `json:"calendar_token"`
+	ID            int64          `json:"id"`
+}
+
+func (q *Queries) SetCalendarToken(ctx context.Context, arg SetCalendarTokenParams) error {
+	_, err := q.db.ExecContext(ctx, setCalendarToken, arg.CalendarToken, arg.ID)
+	return err
 }
 
 const setPasswordHash = `-- name: SetPasswordHash :exec

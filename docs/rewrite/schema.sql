@@ -13,7 +13,8 @@ CREATE TABLE users (
     is_active       INTEGER NOT NULL DEFAULT 1,
     timezone        TEXT NOT NULL DEFAULT 'UTC',
     language        TEXT NOT NULL DEFAULT 'en',
-    webhook_token   TEXT NOT NULL UNIQUE,     -- /webhook/jellyfin/{token}, /calendar/{token}.ics (migrated from Django users.token)
+    webhook_token   TEXT NOT NULL UNIQUE,     -- /webhook/jellyfin/{token} (migrated from Django users.token)
+    calendar_token  TEXT UNIQUE,              -- /calendar/{token}.ics; separate so rotating one never breaks the other (00006)
     jellyfin_users  TEXT NOT NULL DEFAULT '', -- Jellyfin usernames matched to this user, comma separated
     watched_percent INTEGER NOT NULL DEFAULT 75,
     created_at      TEXT NOT NULL,
@@ -289,6 +290,7 @@ CREATE TABLE lists (
     owner_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name        TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
+    visibility  TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('private', 'public')), -- 00004
     created_at  TEXT NOT NULL
 );
 CREATE TABLE list_members (
@@ -300,6 +302,7 @@ CREATE TABLE list_items (
     list_id  INTEGER NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
     item_id  INTEGER NOT NULL REFERENCES items(id),
     added_at TEXT NOT NULL,
+    position INTEGER NOT NULL DEFAULT 0,      -- manual order (00004)
     PRIMARY KEY (list_id, item_id)
 );
 
