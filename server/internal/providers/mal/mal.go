@@ -101,7 +101,20 @@ type node struct {
 // altTitles are MAL's other names for an entry; En is the official English
 // title, empty when there is none.
 type altTitles struct {
-	En string `json:"en"`
+	En       string   `json:"en"`
+	Ja       string   `json:"ja"`
+	Synonyms []string `json:"synonyms"`
+}
+
+// aliases lists every name of an entry (main, English, Japanese, synonyms),
+// used to tell whether another provider's hit is the same title.
+func aliases(main string, alt *altTitles) []string {
+	out := []string{main}
+	if alt != nil {
+		out = append(out, alt.En, alt.Ja)
+		out = append(out, alt.Synonyms...)
+	}
+	return out
 }
 
 // displayTitles returns the title to show and the original one to keep as
@@ -132,7 +145,7 @@ func (c *Client) Search(ctx context.Context, mediaType, query string, page int, 
 	if page < 1 {
 		page = 1
 	}
-	key := fmt.Sprintf("search2_%s_%s_%s_%d_%s", Source, mediaType, query, page, pyBool(showAdult))
+	key := fmt.Sprintf("search3_%s_%s_%s_%d_%s", Source, mediaType, query, page, pyBool(showAdult))
 	var out providers.SearchPage
 	err := c.base.Cached(ctx, key, cacheTTL, &out, func() (any, error) {
 		params := url.Values{
@@ -165,6 +178,7 @@ func (c *Client) Search(ctx context.Context, mediaType, query string, page int, 
 				"media_type": mediaType,
 				"title":      title,
 				"image":      imageURL(m.Node),
+				"aliases":    aliases(m.Node.Title, m.Node.AltTitles),
 			}
 			if native != "" {
 				md["native_title"] = native

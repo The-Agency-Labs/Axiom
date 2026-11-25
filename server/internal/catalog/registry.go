@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
+	"sync"
+	"unicode"
 
 	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
 	"github.com/the-agency-labs/encompass/server/internal/providers"
@@ -177,7 +180,7 @@ func (r *Registry) Search(ctx context.Context, kind, source, query string, page 
 			}
 		default:
 			if p.MAL != nil {
-				return p.MAL.Search(ctx, "manga", query, page, showAdult)
+				return r.searchManga(ctx, query, page, showAdult)
 			}
 		}
 	case KindComic:
@@ -493,4 +496,129 @@ func idString(v any) string {
 		return ""
 	}
 	return fmt.Sprint(v)
+}
+
+// searchManga is the default manga search: MyAnimeList first, always. On the
+// first page, MangaUpdates fills the gaps MAL doesn't track (many manhua and
+// webcomics): a MangaUpdates hit is added after MAL's only when no MAL hit
+// shares one of its names and it contains every word of the query (MU's own
+// search is loose). Either provider failing leaves the other's results.
+func (r *Registry) searchManga(ctx context.Context, query string, page int, showAdult bool) (SearchPage, error) {
+	if r.P.MangaUpdates == nil || page > 1 {
+		return r.P.MAL.Search(ctx, "manga", query, page, showAdult)
+	}
+	var (
+		mu    SearchPage
+		muErr error
+		wg    sync.WaitGroup
+	)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		mu, muErr = r.P.MangaUpdates.Search(ctx, query, 1, showAdult)
+	}()
+	mal, malErr := r.P.MAL.Search(ctx, "manga", query, page, showAdult)
+	wg.Wait()
+	if malErr != nil {
+		if muErr != nil {
+			return nil, malErr
+		}
+		return mu, nil
+	}
+	if muErr != nil {
+		slog.Warn("manga search: MangaUpdates failed", "err", muErr)
+		return mal, nil
+	}
+
+	known := map[string]bool{}
+	malHits := providers.List(mal, "results")
+	out := make([]providers.Metadata, 0, len(malHits))
+	for _, hit := range malHits {
+		for _, n := range hitNames(hit) {
+			known[n] = true
+		}
+		out = append(out, hit)
+	}
+	words := strings.Fields(mangaKey(query))
+	for _, hit := range providers.List(mu, "results") {
+		names := hitNames(hit)
+		dup, relevant := false, false
+		for _, n := range names {
+			dup = dup || known[n]
+			relevant = relevant || hasAllWords(n, words)
+		}
+		if dup || !relevant {
+			continue
+		}
+		for _, n := range names {
+			known[n] = true
+		}
+		out = append(out, hit)
+	}
+	merged := copyMap(mal)
+	merged["results"] = out
+	return merged, nil
+}
+
+// hitNames is a search hit's title, native title and aliases as match keys.
+func hitNames(hit providers.Metadata) []string {
+	raw := []string{providers.Str(hit, "title"), providers.Str(hit, "native_title")}
+	switch a := hit["aliases"].(type) {
+	case []string:
+		raw = append(raw, a...)
+	case []any:
+		for _, v := range a {
+			if s, ok := v.(string); ok {
+				raw = append(raw, s)
+			}
+		}
+	}
+	out := make([]string, 0, len(raw))
+	for _, s := range raw {
+		if k := mangaKey(s); k != "" {
+			out = append(out, k)
+		}
+	}
+	return out
+}
+
+// mangaKey normalises a title for matching across providers: lower case,
+// letters and digits only, a trailing "(Novel)"-style note and a leading
+// "the" dropped.
+func mangaKey(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if i := strings.LastIndex(s, " ("); i > 0 && strings.HasSuffix(s, ")") {
+		s = s[:i]
+	}
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			b.WriteRune(r)
+		default:
+			b.WriteByte(' ')
+		}
+	}
+	f := strings.Fields(b.String())
+	if len(f) > 1 && f[0] == "the" {
+		f = f[1:]
+	}
+	return strings.Join(f, " ")
+}
+
+// hasAllWords reports whether every query word appears as a word of name.
+func hasAllWords(name string, words []string) bool {
+	if len(words) == 0 {
+		return false
+	}
+	have := map[string]bool{}
+	for _, w := range strings.Fields(name) {
+		have[w] = true
+	}
+	for _, w := range words {
+		if !have[w] {
+			return false
+		}
+	}
+	return true
 }

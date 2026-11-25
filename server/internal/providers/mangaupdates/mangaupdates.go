@@ -62,7 +62,7 @@ const emptyQueryMsg = `"" must have a length between 1 and 400`
 // per-user show_adult_titles flag; adult genres are excluded unless both it
 // and MU_NSFW allow them.
 func (c *Client) Search(ctx context.Context, query string, page int, showAdult bool) (providers.SearchPage, error) {
-	key := fmt.Sprintf("search_mangaupdates_manga_%s_%d_%s", query, page, pyBool(showAdult))
+	key := fmt.Sprintf("search2_mangaupdates_manga_%s_%d_%s", query, page, pyBool(showAdult))
 	var out providers.SearchPage
 	err := c.base.Cached(ctx, key, cacheTTL, &out, func() (any, error) {
 		params := map[string]any{
@@ -77,7 +77,8 @@ func (c *Client) Search(ctx context.Context, query string, page int, showAdult b
 		var resp struct {
 			TotalHits int `json:"total_hits"`
 			Results   []struct {
-				Record struct {
+				HitTitle string `json:"hit_title"`
+				Record   struct {
 					SeriesID int       `json:"series_id"`
 					Title    string    `json:"title"`
 					Image    *imageObj `json:"image"`
@@ -98,13 +99,19 @@ func (c *Client) Search(ctx context.Context, query string, page int, showAdult b
 		}
 		results := make([]any, 0, len(resp.Results))
 		for _, m := range resp.Results {
-			results = append(results, map[string]any{
+			r := map[string]any{
 				"media_id":   m.Record.SeriesID,
 				"source":     source,
 				"media_type": "manga",
 				"title":      m.Record.Title,
 				"image":      imageURL(m.Record.Image),
-			})
+			}
+			// hit_title is the name the query matched, e.g. an English
+			// title of a series MU lists under its original one.
+			if m.HitTitle != "" && m.HitTitle != m.Record.Title {
+				r["aliases"] = []string{m.HitTitle}
+			}
+			results = append(results, r)
 		}
 		return providers.SearchPage{
 			"page":          page,
