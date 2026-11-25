@@ -14,6 +14,7 @@ from api.years import entry_years
 from app.forms import get_form_class
 from app.models import Item, MediaTypes, Sources
 from app.providers import services
+from catalog.mappings import anime_tmdb_ids
 
 logger = logging.getLogger(__name__)
 router = Router(tags=["library"])
@@ -121,7 +122,12 @@ def list_library(  # noqa: PLR0917
     ``year`` keeps entries with any activity in that year; the response lists
     every year with activity so a client can offer a year picker.
     """
+    anime_shows, anime_films = anime_tmdb_ids()
+    anime_ids = {MediaTypes.TV.value: anime_shows, MediaTypes.MOVIE.value: anime_films}
     types = [media_type] if media_type else TRACKABLE
+    if media_type == MediaTypes.ANIME.value:
+        # The Anime section also holds anime tracked as TMDB shows and films.
+        types = [MediaTypes.ANIME.value, MediaTypes.TV.value, MediaTypes.MOVIE.value]
     results = []
     years_seen = set()
     for kind in types:
@@ -139,10 +145,19 @@ def list_library(  # noqa: PLR0917
         if search:
             queryset = queryset.filter(item__title__icontains=search)
         for entry in queryset:
+            is_anime = kind == MediaTypes.ANIME.value or (
+                kind in anime_ids
+                and entry.item.source == Sources.TMDB.value
+                and entry.item.media_id in anime_ids[kind]
+            )
+            if media_type and is_anime != (media_type == MediaTypes.ANIME.value):
+                # Anime shows and films live in the Anime section, not TV/Movies.
+                continue
             active = entry_years(entry)
             years_seen.update(active)
             if year is None or year in active:
                 data = media_dict(entry, kind)
+                data["is_anime"] = is_anime
                 if kind == MediaTypes.TV.value:
                     data["max_progress"] = _tv_total(entry.item)
                 results.append(data)

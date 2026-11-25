@@ -97,3 +97,23 @@ def lookup(source, media_id):
         return None
     field = "anilist_id" if source == "anilist" else "mal_id"
     return AnimeMapping.objects.filter(**{field: media_id}).order_by("id").first()
+
+
+ANIME_IDS_KEY = "catalog:anime_tmdb_ids"
+
+
+def anime_tmdb_ids():
+    """TMDB show and film IDs that are anime, as two sets of strings.
+
+    Anime is tracked as TMDB shows and films, so this is what tells an anime
+    series apart from a live-action one. Cached until the mapping refreshes.
+    """
+    stamp = cache.get(REFRESHED_KEY)
+    cached = cache.get(ANIME_IDS_KEY)
+    if cached and cached[0] == stamp:
+        return cached[1], cached[2]
+    rows = AnimeMapping.objects.values_list("tmdb_tv", "tmdb_movie")
+    shows = {str(tv) for tv, _ in rows if tv}
+    films = {str(movie) for _, movie in rows if movie}
+    cache.set(ANIME_IDS_KEY, (stamp, shows, films), 60 * 60 * 24)
+    return shows, films

@@ -12,12 +12,22 @@
 	let entries = $state<Entry[] | null>(null);
 	let tab = $state<Status | 'All'>('In progress');
 	let filter = $state('');
+	// The Anime section mixes series (anime and TMDB shows) and films.
+	let form = $state<'All' | 'Series' | 'Films'>('All');
 	let year = $state<number | null>(null);
 	let years = $state<number[]>([]);
 
 	$effect(() => {
 		void type;
 		year = null;
+		form = 'All';
+	});
+
+	const isFilm = (e: Entry) => e.media_type === 'movie';
+	const formCounts = $derived({
+		All: entries?.length ?? 0,
+		Series: (entries ?? []).filter((e) => !isFilm(e)).length,
+		Films: (entries ?? []).filter(isFilm).length
 	});
 
 	$effect(() => {
@@ -47,6 +57,7 @@
 		(entries ?? []).filter(
 			(e) =>
 				(tab === 'All' || e.status === tab) &&
+				(form === 'All' || (form === 'Films') === isFilm(e)) &&
 				(!filter || e.item.title.toLowerCase().includes(filter.toLowerCase()))
 		)
 	);
@@ -89,6 +100,23 @@
 	</div>
 </header>
 
+{#if type === 'anime' && formCounts.Films}
+	<div class="mb-3 inline-flex rounded-xl border border-line bg-surface p-1 text-sm" role="group" aria-label="Series or films">
+		{#each ['All', 'Series', 'Films'] as option (option)}
+			<button
+				onclick={() => (form = option as typeof form)}
+				aria-pressed={form === option}
+				class="flex items-center gap-2 rounded-lg px-3 py-1 font-medium transition {form === option
+					? 'bg-white/8 text-ink'
+					: 'text-muted hover:text-ink'}"
+			>
+				{option}
+				<span class="text-xs text-faint tabular-nums">{formCounts[option as typeof form]}</span>
+			</button>
+		{/each}
+	</div>
+{/if}
+
 <div class="shelf -mx-4 mb-6 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
 	{#each ['All', ...STATUSES] as status (status)}
 		<button
@@ -119,7 +147,7 @@
 {:else}
 	<div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
 		{#each visible as entry (entry.id)}
-			<a href="/item/{type}/{entry.id}" class="group">
+			<a href="/item/{entry.media_type}/{entry.id}" class="group">
 				<div class="relative">
 					<Cover
 						src={entry.item.image}
@@ -138,10 +166,10 @@
 				<p class="mt-2 line-clamp-2 text-[13px] leading-snug font-medium">{entry.item.title}</p>
 				<p class="mt-0.5 flex items-center gap-1.5 text-[11px] text-faint">
 					<span class="size-1.5 rounded-full" style="background: {STATUS_COLOR[entry.status]}"></span>
-					{#if type === 'tv' && entry.max_progress}
+					{#if entry.media_type === 'tv' && entry.max_progress}
 						{Math.round((entry.progress / entry.max_progress) * 100)}% · {entry.progress}/{entry.max_progress} ep
-					{:else if entry.status === 'In progress' && type !== 'movie'}
-						{progressLabel(type, entry.progress, null)}
+					{:else if entry.status === 'In progress' && entry.media_type !== 'movie'}
+						{progressLabel(entry.media_type, entry.progress, null)}
 					{:else}
 						{entry.status}
 					{/if}

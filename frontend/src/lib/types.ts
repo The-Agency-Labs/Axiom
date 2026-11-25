@@ -36,6 +36,8 @@ export interface Entry {
 	notes: string;
 	created_at: string;
 	max_progress?: number;
+	/** Anime, including anime tracked as TMDB shows and films. */
+	is_anime?: boolean;
 }
 
 export interface Episode {

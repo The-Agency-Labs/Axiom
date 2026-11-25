@@ -2,10 +2,12 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 
 from api.models import ApiToken, TokenScope
-from app.models import Anime, Item, MediaTypes, Sources, Status
+from app.models import TV, Anime, Item, MediaTypes, Movie, Sources, Status
+from catalog.models import AnimeMapping
 
 METADATA = {
     "title": "Frieren",
@@ -164,3 +166,45 @@ class LibraryTests(TestCase):
         response = self.client.get("/api/v1/openapi.json")
         self.assertEqual(response.status_code, 200)
         self.assertIn("/api/v1/summary", response.json()["paths"])
+
+
+@patch("api.library._tv_total", return_value=12)
+class AnimeSectionTests(TestCase):
+    """Anime tracked as TMDB shows and films is listed under Anime only."""
+
+    def setUp(self):
+        """Create an anime show, a live-action show and an anime film."""
+        cache.clear()
+        self.user = get_user_model().objects.create_user(username="otaku")
+        _, key = ApiToken.objects.create_token(self.user, "app")
+        self.auth = {"HTTP_AUTHORIZATION": f"Bearer {key}"}
+        AnimeMapping.objects.create(mal_id=1, tmdb_tv=100, tmdb_season=1)
+        AnimeMapping.objects.create(mal_id=2, tmdb_movie=300)
+        for media_id, media_type, title in [
+            ("100", MediaTypes.TV.value, "Anime Show"),
+            ("200", MediaTypes.TV.value, "Live Show"),
+            ("300", MediaTypes.MOVIE.value, "Anime Film"),
+        ]:
+            item = Item.objects.create(
+                media_id=media_id,
+                source=Sources.TMDB.value,
+                media_type=media_type,
+                title=title,
+            )
+            model = TV if media_type == MediaTypes.TV.value else Movie
+            model.objects.create(
+                item=item, user=self.user, status=Status.PLANNING.value
+            )
+
+    def titles(self, media_type):
+        """Titles listed for a section."""
+        data = self.client.get(
+            f"/api/v1/library?media_type={media_type}", **self.auth
+        ).json()
+        return {e["item"]["title"]: e["is_anime"] for e in data["results"]}
+
+    def test_sections(self, _total):
+        """Anime holds the anime show and film; TV and Movies leave them out."""
+        self.assertEqual(self.titles("anime"), {"Anime Show": True, "Anime Film": True})
+        self.assertEqual(self.titles("tv"), {"Live Show": False})
+        self.assertEqual(self.titles("movie"), {})
