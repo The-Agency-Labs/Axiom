@@ -8,10 +8,10 @@ import (
 // Slot is a season and a position (1 = first) inside it.
 type Slot struct{ Season, Position int }
 
-// Start is where an AniList entry begins in its TMDB show.
+// Start is where an AniList entry begins in its TVDB show.
 type Start struct{ Season, Offset int }
 
-// startOf is the TMDB (season, offset) where an entry starts. The mapping
+// startOf is the TVDB (season, offset) where an entry starts. The mapping
 // leaves the season out for long runners that are a single AniList entry
 // (Naruto, Hunter x Hunter); those start at season 1. ok is false when the
 // start is unknown.
@@ -27,8 +27,8 @@ func startOf(season *int, offset int, format string) (Start, bool) {
 }
 
 // episodeSlots lists the (season, position) pairs of `count` episodes from
-// start. seasons maps TMDB season numbers to their episode counts. Long
-// runners are one AniList entry but several TMDB seasons, so episodes past
+// start. seasons maps TVDB season numbers to their episode counts. Long
+// runners are one AniList entry but several TVDB seasons, so episodes past
 // the end of a season continue in the next one, unless another AniList entry
 // is mapped to that season (claimed). Specials (season 0) never spill over.
 func episodeSlots(start Start, seasons map[int]int, count int, claimed map[int]bool) []Slot {

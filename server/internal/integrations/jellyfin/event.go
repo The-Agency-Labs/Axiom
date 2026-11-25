@@ -25,7 +25,7 @@ type Event struct {
 	Tmdb       string
 	Imdb       string
 	Tvdb       string
-	SeriesTmdb string // TMDB id of the series (import only)
+	SeriesTvdb string // TVDB id of the series (when the payload or import has it)
 	Played     bool
 }
 
@@ -83,7 +83,7 @@ func ParsePayload(payload map[string]any, percent int) Event {
 	}
 	ids := asMap(item["ProviderIds"])
 	ev.Tmdb, ev.Imdb, ev.Tvdb = str(ids["Tmdb"]), str(ids["Imdb"]), str(ids["Tvdb"])
-	ev.SeriesTmdb = str(asMap(asMap(payload["Series"])["ProviderIds"])["Tmdb"])
+	ev.SeriesTvdb = str(asMap(asMap(payload["Series"])["ProviderIds"])["Tvdb"])
 	ev.Played = asBool(asMap(item["UserData"])["Played"])
 	if ev.Kind == EventStop && watchedEnough(item, percent) {
 		ev.Played = true

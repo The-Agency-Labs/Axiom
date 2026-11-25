@@ -5,9 +5,10 @@
 //
 // Every play is recorded with source library.SourceJellyfin, so the library
 // rules apply: nothing is ever undone or lowered, imports are additive, and a
-// show first seen at season N assumes seasons 1..N-1 watched. Anime are
-// TMDB shows (ANIME_AS_TV), so the AniDB/MAL routing helpers are not ported,
-// and MarkPlayed/MarkUnplayed events are ignored (they could only delete).
+// show first seen at season N assumes seasons 1..N-1 watched. Shows (anime
+// too) are TVDB shows and Jellyfin numbers by TVDB, so episodes map directly;
+// movies are TMDB. The AniDB/MAL routing helpers are not ported, and
+// MarkPlayed/MarkUnplayed events are ignored (they could only delete).
 package jellyfin
 
 import (
@@ -39,7 +40,7 @@ var processMu sync.Mutex
 // TVDB is the slice of the TVDB client the matcher uses.
 type TVDB interface {
 	Episode(ctx context.Context, episodeID string) (providers.Metadata, error)
-	SeriesTMDBID(ctx context.Context, seriesID string) (string, error)
+	FindByRemoteID(ctx context.Context, remoteID string) (*tvdb.Hit, error)
 }
 
 // Deps are what a Service needs.
@@ -48,8 +49,8 @@ type Deps struct {
 	Q       *db.Queries
 	Catalog *catalog.Catalog
 	Library *library.Service
-	TMDB    catalog.TMDB // Find
-	TVDB    TVDB         // nil: TVDB matching is skipped
+	TMDB    catalog.TMDB // Find, for movies
+	TVDB    TVDB         // nil: episodes cannot be matched
 	Jobs    *jobs.Manager
 	Config  config.Config
 	HTTP    *http.Client
@@ -69,13 +70,16 @@ func New(d Deps) *Service {
 	return &Service{Deps: d}
 }
 
-// NewService builds a Service on the app's shared parts, with the real TVDB
-// client (the token lives in memory per client, so a second one just logs in again).
+// NewService builds a Service on the app's shared parts, with the catalog's
+// TVDB client (a client of its own when the catalog has none).
 func NewService(conn *sql.DB, q *db.Queries, cfg config.Config, cat *catalog.Catalog, lib *library.Service, c *cache.Cache, m *jobs.Manager) *Service {
 	d := Deps{Conn: conn, Q: q, Catalog: cat, Library: lib, Jobs: m, Config: cfg,
 		TVDB: tvdb.New(providers.NewClient(c), cfg)}
 	if cat != nil && cat.Reg != nil {
 		d.TMDB = cat.Reg.P.TMDB
+		if cat.Reg.P.TVDB != nil { // the catalog's client: one login, one cache
+			d.TVDB = cat.Reg.P.TVDB
+		}
 	}
 	return New(d)
 }
@@ -130,7 +134,7 @@ func (s *Service) Process(ctx context.Context, u db.User, ev Event, opt Options)
 		slog.DebugContext(ctx, "jellyfin: ignoring media type", "type", ev.Type)
 		return res, nil
 	}
-	if ev.Tmdb == "" && ev.Imdb == "" && ev.Tvdb == "" && ev.SeriesTmdb == "" {
+	if ev.Tmdb == "" && ev.Imdb == "" && ev.Tvdb == "" && ev.SeriesTvdb == "" {
 		slog.WarnContext(ctx, "jellyfin: no provider id on item", "item", res.Label)
 		res.Outcome = Unmatched
 		return res, nil
@@ -160,23 +164,40 @@ func (s *Service) Process(ctx context.Context, u db.User, ev Event, opt Options)
 	return res, nil
 }
 
-// episodeRef is an episode located on TMDB.
+// episodeRef is an episode located on TVDB: the series, and the episode by
+// its aired season and number (itemID is set when the catalog already knew
+// the episode's TVDB id).
 type episodeRef struct {
 	showID          string
 	season, episode int
+	itemID          int64
 }
 
-// processEpisode matches the episode like Django's TV mixin: TVDB episode id
-// (TMDB find, then the TVDB series' TMDB id with TVDB numbering), then the
-// IMDb id via TMDB find, then the series TMDB id with Jellyfin's numbering.
+// processEpisode matches the episode against TheTVDB, which Jellyfin numbers
+// by: the TVDB episode id (found in the catalog, else asked from TVDB), the
+// TVDB series id with Jellyfin's season and episode numbers, then the
+// episode's IMDb id through TVDB. There is no TMDB step: shows are TVDB only.
 func (s *Service) processEpisode(ctx context.Context, u db.User, ev Event, at time.Time, opt Options) (bool, error) {
 	ref, ok, err := s.resolveEpisode(ctx, ev)
 	if err != nil || !ok {
 		return false, err
 	}
-	item, err := s.Catalog.EnsureItem(ctx, catalog.KindTV, catalog.SourceTMDB, ref.showID)
+	var item catalog.Item
+	if ref.itemID != 0 {
+		item, err = s.Catalog.GetItem(ctx, ref.itemID)
+	} else {
+		item, err = s.Catalog.EnsureItem(ctx, catalog.KindTV, catalog.SourceTVDB, ref.showID)
+	}
 	if err != nil {
-		return false, fmt.Errorf("tmdb show %s: %w", ref.showID, err)
+		return false, fmt.Errorf("tvdb show %s: %w", ref.showID, err)
+	}
+	if ref.itemID == 0 && ev.Tvdb != "" {
+		// A renumbered episode keeps its TVDB id: trust the id over the numbers.
+		if err := s.Catalog.SyncSeasons(ctx, item); err == nil {
+			if e, err := s.Q.FindEpisodeByExtID(ctx, ev.Tvdb); err == nil && e.ItemID == item.ID {
+				ref.season, ref.episode = int(e.Season), int(e.Number)
+			}
+		}
 	}
 	if !ev.Played {
 		return true, s.startShow(ctx, u.ID, item.ID, ref.season, at)
@@ -187,35 +208,38 @@ func (s *Service) processEpisode(ctx context.Context, u db.User, ev Event, at ti
 
 func (s *Service) resolveEpisode(ctx context.Context, ev Event) (episodeRef, bool, error) {
 	if ev.Tvdb != "" {
+		// The catalog knows the episodes of every show it has synced.
+		if e, err := s.Q.FindEpisodeByExtID(ctx, ev.Tvdb); err == nil {
+			return episodeRef{showID: strconv.FormatInt(e.ItemID, 10), season: int(e.Season), episode: int(e.Number), itemID: e.ItemID}, true, nil
+		}
 		ref, ok, err := s.viaTVDB(ctx, ev.Tvdb)
 		if err != nil {
-			// TVDB trouble must not block the IMDb/TMDB fallbacks.
+			// TVDB trouble must not block the series/IMDb fallbacks.
 			slog.WarnContext(ctx, "jellyfin: TVDB lookup failed", "tvdb_episode", ev.Tvdb, "err", err)
 		} else if ok {
 			return ref, true, nil
 		}
 	}
-	if ev.Imdb != "" {
-		ref, ok, err := s.findEpisode(ctx, ev.Imdb, "imdb_id")
-		if err != nil {
-			return ref, false, err
-		}
-		if ok {
-			return ref, true, nil
-		}
-		slog.WarnContext(ctx, "jellyfin: no TMDB episode for IMDb id", "imdb", ev.Imdb)
-	}
-	if ev.SeriesTmdb != "" {
+	if ev.SeriesTvdb != "" {
 		if ev.Season == nil || ev.Episode == nil {
-			slog.WarnContext(ctx, "jellyfin: no season or episode number", "show", ev.SeriesTmdb)
-			return episodeRef{}, false, nil
+			slog.WarnContext(ctx, "jellyfin: no season or episode number", "show", ev.SeriesTvdb)
+		} else {
+			return episodeRef{showID: ev.SeriesTvdb, season: *ev.Season, episode: *ev.Episode}, true, nil
 		}
-		return episodeRef{ev.SeriesTmdb, *ev.Season, *ev.Episode}, true, nil
+	}
+	if ev.Imdb != "" && s.TVDB != nil {
+		hit, err := s.TVDB.FindByRemoteID(ctx, ev.Imdb)
+		if err != nil {
+			slog.WarnContext(ctx, "jellyfin: TVDB lookup by IMDb id failed", "imdb", ev.Imdb, "err", err)
+		} else if hit != nil && hit.Episode != nil {
+			return episodeRef{showID: strconv.FormatInt(hit.SeriesID, 10), season: hit.Episode.Season, episode: hit.Episode.Number}, true, nil
+		}
+		slog.WarnContext(ctx, "jellyfin: no TVDB episode for IMDb id", "imdb", ev.Imdb)
 	}
 	return episodeRef{}, false, nil
 }
 
-// viaTVDB resolves a TVDB episode id. A TVDB 404 (or no TVDB) is a miss.
+// viaTVDB asks TVDB where an episode id belongs. A TVDB 404 (or no TVDB) is a miss.
 func (s *Service) viaTVDB(ctx context.Context, episodeID string) (episodeRef, bool, error) {
 	if s.TVDB == nil {
 		return episodeRef{}, false, nil
@@ -224,47 +248,12 @@ func (s *Service) viaTVDB(ctx context.Context, episodeID string) (episodeRef, bo
 	if err != nil || ep == nil {
 		return episodeRef{}, false, err
 	}
-	if ref, ok, err := s.findEpisode(ctx, episodeID, "tvdb_id"); err != nil || ok {
-		return ref, ok, err
-	}
 	seriesID := idString(ep["series_id"])
 	season, episode := asInt(ep["season_number"]), asInt(ep["episode_number"])
 	if seriesID == "" || season == nil || episode == nil {
 		return episodeRef{}, false, nil
 	}
-	// A show already in the catalog knows its TVDB series id; otherwise ask TVDB.
-	showID := ""
-	if it, err := s.Catalog.FindByExternalID(ctx, "tvdb", seriesID, catalog.KindTV, catalog.KindAnime); err == nil && it.Source == catalog.SourceTMDB {
-		showID = it.ExternalID
-	} else if showID, err = s.TVDB.SeriesTMDBID(ctx, seriesID); err != nil {
-		return episodeRef{}, false, err
-	}
-	if showID == "" {
-		slog.WarnContext(ctx, "jellyfin: no TMDB id for TVDB series", "tvdb_episode", episodeID)
-		return episodeRef{}, false, nil
-	}
-	return episodeRef{showID, *season, *episode}, true, nil
-}
-
-// findEpisode asks TMDB which episode an external id belongs to.
-func (s *Service) findEpisode(ctx context.Context, id, source string) (episodeRef, bool, error) {
-	if s.TMDB == nil {
-		return episodeRef{}, false, nil
-	}
-	resp, err := s.TMDB.Find(ctx, id, source)
-	if err != nil {
-		return episodeRef{}, false, fmt.Errorf("tmdb find %s: %w", source, err)
-	}
-	list, _ := resp["tv_episode_results"].([]any)
-	if len(list) == 0 {
-		return episodeRef{}, false, nil
-	}
-	r := asMap(list[0])
-	show, season, episode := idString(r["show_id"]), asInt(r["season_number"]), asInt(r["episode_number"])
-	if show == "" || season == nil || episode == nil {
-		return episodeRef{}, false, nil
-	}
-	return episodeRef{show, *season, *episode}, true, nil
+	return episodeRef{showID: seriesID, season: *season, episode: *episode}, true, nil
 }
 
 // idString renders a JSON id (number or string) as a string; 0 and null are "".
