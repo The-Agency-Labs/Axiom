@@ -1,0 +1,29 @@
+{
+ "status": "success",
+ "data": {
+  "id": 121361,
+  "name": "Game of Thrones",
+  "remoteIds": [
+   {
+    "id": "10.5240/C1B5-3BA1-8991-A571-8472-W",
+    "type": 13,
+    "sourceName": "EIDR"
+   },
+   {
+    "id": "tt0944947",
+    "type": 2,
+    "sourceName": "IMDB"
+   },
+   {
+    "id": "1399",
+    "type": 12,
+    "sourceName": "TheMovieDB.com"
+   },
+   {
+    "id": "82",
+    "type": 19,
+    "sourceName": "TV Maze"
+   }
+  ]
+ }
+}
