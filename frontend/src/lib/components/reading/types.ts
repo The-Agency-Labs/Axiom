@@ -128,6 +128,8 @@ export interface CalendarEvent {
 	title: string;
 	media_type: MediaType;
 	item_id: number;
+	source: string;
+	media_id: string;
 	season: number | null;
 	episode: number | null;
 	image: string;

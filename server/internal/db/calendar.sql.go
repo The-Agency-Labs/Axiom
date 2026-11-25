@@ -12,7 +12,7 @@ import (
 
 const listCalendarReleases = `-- name: ListCalendarReleases :many
 SELECT r.item_id, r.season, r.number, r.at,
-       i.kind, i.title, i.image,
+       i.kind, i.title, i.image, i.source, i.external_id,
        COALESCE(ie.title, '') AS episode_title
 FROM releases r
 JOIN items i ON i.id = r.item_id
@@ -44,6 +44,8 @@ type ListCalendarReleasesRow struct {
 	Kind         string        `json:"kind"`
 	Title        string        `json:"title"`
 	Image        string        `json:"image"`
+	Source       string        `json:"source"`
+	ExternalID   string        `json:"external_id"`
 	EpisodeTitle string        `json:"episode_title"`
 }
 
@@ -67,6 +69,8 @@ func (q *Queries) ListCalendarReleases(ctx context.Context, arg ListCalendarRele
 			&i.Kind,
 			&i.Title,
 			&i.Image,
+			&i.Source,
+			&i.ExternalID,
 			&i.EpisodeTitle,
 		); err != nil {
 			return nil, err

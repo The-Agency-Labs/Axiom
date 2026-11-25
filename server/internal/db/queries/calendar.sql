@@ -3,7 +3,7 @@
 -- turned off are omitted. Episode titles come from item_episodes.
 -- name: ListCalendarReleases :many
 SELECT r.item_id, r.season, r.number, r.at,
-       i.kind, i.title, i.image,
+       i.kind, i.title, i.image, i.source, i.external_id,
        COALESCE(ie.title, '') AS episode_title
 FROM releases r
 JOIN items i ON i.id = r.item_id

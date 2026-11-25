@@ -27,7 +27,9 @@ const QUEUEABLE: [string, RegExp][] = [
 	['POST', /^\/library\/[a-z_]+\/\d+\/step$/], // progress step
 	['POST', /^\/library$/], // status / score / notes / progress on an entry
 	['POST', /^\/anime\/[^/]+\/[^/]+\/episodes$/], // anime episodes
-	['POST', /^\/shows\/[^/]+\/[^/]+\/seasons\/\d+\/episodes$/] // tv episodes
+	['POST', /^\/shows\/[^/]+\/[^/]+\/seasons\/\d+\/episodes$/], // tv episodes
+	['PUT', /^\/books\/\d+\/notes$/], // Triple P + Reflect notes
+	['POST', /^\/library\/[a-z_]+\/\d+\/watches$/] // movie (re)watch
 ];
 
 export const isQueueable = (method: string, path: string) =>

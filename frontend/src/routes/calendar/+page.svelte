@@ -4,7 +4,7 @@
 	import Cover from '#lib/components/Cover.svelte';
 	import { isoDate, parseDay } from '#lib/components/reading/format.ts';
 	import type { CalendarEvent } from '#lib/components/reading/types.ts';
-	import { MEDIA, LIBRARY_TYPES } from '#lib/media.ts';
+	import { MEDIA, LIBRARY_TYPES, titleHref } from '#lib/media.ts';
 	import { loadSettings, settings } from '#lib/settings.svelte.ts';
 	import type { MediaType } from '#lib/types.ts';
 	import { Button, Chip, ChipRow, CopyField, EmptyState, IconButton, PullToRefresh, Sheet, Skeleton, Tabs } from '#lib/ui/index.ts';
@@ -104,12 +104,14 @@
 
 {#snippet eventRow(e: CalendarEvent)}
 	{@const meta = MEDIA[e.media_type]}
-	<li class="flex min-h-14 items-center gap-3 px-3 py-2">
+	<li>
+	<a href={titleHref(e)} class="flex min-h-14 items-center gap-3 px-3 py-2 active:bg-ink/5">
 		<Cover src={e.image} title={e.title} type={e.media_type} class="aspect-[2/3] w-9 shrink-0 !rounded-md" />
 		<div class="min-w-0 flex-1">
 			<p class="line-clamp-2 text-[14px] leading-snug font-medium">{e.title}</p>
 			<p class="flex items-center gap-1 text-[12px] text-faint"><meta.icon class="size-3" style="color: {meta.accent}" />{meta.label}{timeOf(e) ? ` · ${timeOf(e)}` : ''}</p>
 		</div>
+	</a>
 	</li>
 {/snippet}
 

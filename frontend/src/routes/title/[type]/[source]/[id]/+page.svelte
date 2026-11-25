@@ -351,7 +351,8 @@
 	const canReclassify = $derived(isAdmin && !!entry && source === 'tmdb' && ['tv', 'anime', 'movie', 'anime_movie'].includes(kind));
 	const bookItem = $derived<Record<string, unknown>>({
 		...(entry?.item ?? { source, media_id: mediaId, media_type: 'book', title, image }),
-		...(md ? { metadata: md } : {})
+		...(md ? { metadata: md } : {}),
+		...(entry ? { status: entry.status } : {})
 	});
 
 	function back() {
