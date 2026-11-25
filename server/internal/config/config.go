@@ -29,6 +29,8 @@ type Config struct {
 	SteamKey     string
 	HardcoverKey string
 	ComicVineKey string
+	MALNSFW      bool // include adult titles in MyAnimeList search
+	AniListNSFW  bool // include adult titles in AniList search
 
 	JellyfinURL            string
 	JellyfinKey            string
@@ -58,6 +60,8 @@ func Load() (Config, error) {
 		SteamKey:               secret("STEAM_API_KEY"),
 		HardcoverKey:           strings.TrimPrefix(secret("HARDCOVER_API"), "Bearer "),
 		ComicVineKey:           secret("COMICVINE_API"),
+		MALNSFW:                boolean("MAL_NSFW", false),
+		AniListNSFW:            boolean("ANILIST_NSFW", false),
 		JellyfinURL:            strings.TrimRight(env("JELLYFIN_URL", ""), "/"),
 		JellyfinKey:            secret("JELLYFIN_API_KEY"),
 		JellyfinUsers:          list("JELLYFIN_USERS"),

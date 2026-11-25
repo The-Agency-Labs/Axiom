@@ -1,0 +1,14 @@
+[
+  {"type": "TV", "anidb_id": 1, "anilist_id": 290, "mal_id": 290, "imdb_id": ["tt0286390"],
+   "themoviedb_id": {"tv": 26209}, "tvdb_id": 72025, "season": {"tvdb": 1, "tmdb": 1}},
+  {"type": "TV", "anilist_id": 154587, "mal_id": 52991, "themoviedb_id": {"tv": 209867},
+   "tvdb_id": 424536, "season": {"tvdb": 1, "tmdb": 1}},
+  {"type": "TV", "anilist_id": 182255, "mal_id": 59978, "themoviedb_id": {"tv": 209867},
+   "tvdb_id": 424536, "season": {"tvdb": 2, "tmdb": 2}, "episode_offset": {"tmdb": 28}},
+  {"type": "MOVIE", "anilist_id": 431, "mal_id": [431, 999], "themoviedb_id": {"movie": 4935}},
+  {"type": "OVA", "mal_id": "300", "themoviedb_id": 12345, "tvdb_id": "70973", "season": {"tmdb": 2}},
+  {"type": "TV", "kitsu_id": 5},
+  {"type": "TV", "mal_id": 0, "anilist_id": null},
+  "not an object",
+  {"type": "TV", "mal_id": 77, "themoviedb_id": {"tv": null, "movie": 4935}, "season": [], "episode_offset": {"tmdb": null}}
+]
