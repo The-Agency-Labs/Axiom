@@ -1,32 +1,49 @@
 <script lang="ts">
-	import { CalendarDays, LoaderCircle } from '@lucide/svelte';
+	import { CalendarDays, History } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
-	import { MEDIA } from '#lib/media.ts';
+	import { MEDIA, titleHref } from '#lib/media.ts';
 	import type { ActivityEntry } from '#lib/types.ts';
+	import { Button, EmptyState, ListRow, PullToRefresh, Skeleton } from '#lib/ui/index.ts';
 
 	let entries = $state<ActivityEntry[]>([]);
 	let cursor = $state<string | null>(null);
 	let loading = $state(false);
 	let done = $state(false);
+	let failed = $state(false);
+	let generation = 0;
 
 	async function more() {
 		if (loading || done) return;
+		const mine = generation;
 		loading = true;
+		failed = false;
 		try {
 			const data = await get<{ entries: ActivityEntry[]; next_cursor: string | null }>(
 				'/activity' + qs({ limit: 40, cursor })
 			);
+			if (mine !== generation) return;
 			entries = [...entries, ...data.entries];
 			cursor = data.next_cursor;
 			done = !data.next_cursor;
+		} catch {
+			if (mine === generation) failed = true;
 		} finally {
-			loading = false;
+			if (mine === generation) loading = false;
 		}
 	}
 
+	async function reset() {
+		generation++;
+		entries = [];
+		cursor = null;
+		done = false;
+		loading = false;
+		await more();
+	}
+
 	$effect(() => {
-		more();
+		void more();
 	});
 
 	const days = $derived.by(() => {
@@ -47,63 +64,74 @@
 	}
 
 	function sentinel(node: HTMLElement) {
-		const observer = new IntersectionObserver((items) => items[0].isIntersecting && more(), {
-			rootMargin: '400px'
-		});
+		const observer = new IntersectionObserver((items) => items[0].isIntersecting && more(), { rootMargin: '500px' });
 		observer.observe(node);
 		return { destroy: () => observer.disconnect() };
 	}
+
+	const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 </script>
 
 <svelte:head><title>Activity · Encompass</title></svelte:head>
 
-<header class="mb-8 flex flex-wrap items-end justify-between gap-4">
-	<div>
-		<h1 class="text-3xl font-semibold tracking-tight">Activity</h1>
-		<p class="mt-1 text-sm text-muted">Everything you've tracked, newest first.</p>
-	</div>
-	<a
-		href="/year"
-		class="flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium transition hover:border-line-strong hover:bg-raised"
-	>
-		<CalendarDays class="size-4 text-brand" /> {new Date().getFullYear()} in review
-	</a>
-</header>
-
-<div class="max-w-3xl space-y-8">
-	{#each days as [day, items] (day)}
-		<section>
-			<h2 class="sticky top-0 z-10 -mx-1 mb-2 bg-canvas/90 px-1 py-2 text-xs font-semibold tracking-wider text-faint uppercase backdrop-blur">
-				{dayLabel(day)}
-			</h2>
-			<ol class="space-y-1">
-				{#each items as entry, i (i)}
-					{@const meta = MEDIA[entry.media_type]}
-					<li class="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-ink/[0.03]">
-						<Cover src={entry.item.image} title={entry.item.title} type={entry.media_type} class="aspect-[2/3] w-9 shrink-0 rounded-md" />
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-medium">{entry.item.title}</p>
-							<p class="line-clamp-1 text-xs text-muted">
-								{entry.changes.map((c) => c.description).join(' · ')}
-							</p>
-						</div>
-						<div class="flex shrink-0 flex-col items-end gap-1">
-							<meta.icon class="size-3.5" style="color: {meta.accent}" />
-							<span class="text-[11px] text-faint tabular-nums">
-								{new Date(entry.date).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-							</span>
-						</div>
-					</li>
-				{/each}
-			</ol>
-		</section>
-	{/each}
-
-	{#if !done}
-		<div use:sentinel class="flex justify-center py-6 text-faint">
-			{#if loading}<LoaderCircle class="size-5 animate-spin" />{/if}
+<PullToRefresh onrefresh={reset}>
+	<header class="mb-3 flex items-center justify-between gap-3">
+		<div>
+			<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Activity</h1>
+			<p class="text-[13px] text-faint">Everything you tracked, newest first</p>
 		</div>
-	{:else if entries.length === 0}
-		<p class="text-sm text-muted">No activity yet.</p>
-	{/if}
-</div>
+		<Button href="/year" variant="secondary" icon={CalendarDays} class="shrink-0">{new Date().getFullYear()}</Button>
+	</header>
+
+	<div class="max-w-3xl">
+		{#each days as [day, items] (day)}
+			<section class="mb-5">
+				<h2
+					class="sticky top-[env(safe-area-inset-top)] z-10 -mx-4 bg-canvas/90 px-4 py-2 text-xs font-semibold tracking-wider text-faint uppercase backdrop-blur-xl sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0"
+				>
+					{dayLabel(day)}
+				</h2>
+				<ol class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+					{#each items as entry, i (day + i + entry.date)}
+						{@const meta = MEDIA[entry.media_type] ?? MEDIA.tv}
+						<li>
+							<ListRow
+								href={titleHref(entry.item, entry.media_type)}
+								title={entry.item.display_title ?? entry.item.title}
+								subtitle={entry.changes.map((c) => c.description).join(' · ')}
+							>
+								{#snippet leading()}
+									<Cover src={entry.item.image} title={entry.item.title} type={entry.media_type} class="aspect-[2/3] w-10 shrink-0 rounded-md" />
+								{/snippet}
+								{#snippet trailing()}
+									<span class="flex shrink-0 flex-col items-end gap-1">
+										<meta.icon class="size-3.5" style="color: {meta.accent}" />
+										<span class="text-[11px] text-faint tabular-nums">{timeOf(entry.date)}</span>
+									</span>
+								{/snippet}
+							</ListRow>
+						</li>
+					{/each}
+				</ol>
+			</section>
+		{/each}
+
+		{#if entries.length === 0 && loading}
+			<div class="space-y-2" aria-busy="true">
+				{#each Array(8) as _, i (i)}<Skeleton class="h-16 w-full" />{/each}
+			</div>
+		{:else if failed}
+			<EmptyState title="Could not load activity" description="Check your connection and try again.">
+				{#snippet actions()}<Button variant="primary" onclick={more}>Retry</Button>{/snippet}
+			</EmptyState>
+		{:else if done && entries.length === 0}
+			<EmptyState icon={History} title="No activity yet" description="Mark an episode or log some pages and it will appear here.">
+				{#snippet actions()}<Button variant="primary" href="/search">Find something</Button>{/snippet}
+			</EmptyState>
+		{:else if !done}
+			<div use:sentinel class="h-20 py-2">
+				{#if loading}<Skeleton class="h-16 w-full" />{/if}
+			</div>
+		{/if}
+	</div>
+</PullToRefresh>
