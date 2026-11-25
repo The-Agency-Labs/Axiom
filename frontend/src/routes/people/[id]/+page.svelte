@@ -52,7 +52,7 @@
 			{#if data.person.native_name}<p class="text-muted">{data.person.native_name}</p>{/if}
 			<p class="mt-1 text-sm text-faint">In {data.in_library.length} of your titles</p>
 			<a href={data.person.url} target="_blank" rel="noreferrer" class="mt-1 inline-flex min-h-11 items-center gap-1 text-[13px] text-muted hover:text-ink">
-				Full filmography on {data.person.source === 'tmdb' ? 'TMDB' : 'AniList'} <ExternalLink class="size-3.5" />
+				Full filmography on {data.person.source === 'tmdb' ? 'TMDB' : data.person.source === 'tvdb' ? 'TheTVDB' : 'AniList'} <ExternalLink class="size-3.5" />
 			</a>
 		</div>
 	</header>

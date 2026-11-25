@@ -38,6 +38,7 @@ var Kinds = []string{KindTV, KindAnime, KindMovie, KindAnimeMovie, KindManga, Ki
 // Metadata sources.
 const (
 	SourceTMDB         = "tmdb"
+	SourceTVDB         = "tvdb"
 	SourceMAL          = "mal"
 	SourceAniList      = "anilist"
 	SourceMangaUpdates = "mangaupdates"
@@ -63,9 +64,13 @@ func IsShow(kind string) bool { return kind == KindTV || kind == KindAnime }
 // IsMovie reports whether a kind is a single-viewing film.
 func IsMovie(kind string) bool { return kind == KindMovie || kind == KindAnimeMovie }
 
-// HasEpisodes reports whether an item has TMDB seasons and episodes: a show
-// whose metadata source is TMDB. MAL/AniList-only anime are count-based.
-func HasEpisodes(item Item) bool { return IsShow(item.Kind) && item.Source == SourceTMDB }
+// HasEpisodes reports whether an item has seasons and episodes: a show whose
+// metadata source is TheTVDB (every show is) or, for a show with no TVDB
+// match left over from before the switch, TMDB. MAL/AniList-only anime are
+// count-based.
+func HasEpisodes(item Item) bool {
+	return IsShow(item.Kind) && (item.Source == SourceTVDB || item.Source == SourceTMDB)
+}
 
 // Catalog is the item store and its background jobs. Create it with New.
 type Catalog struct {

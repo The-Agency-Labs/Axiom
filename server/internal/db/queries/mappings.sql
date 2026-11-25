@@ -3,7 +3,7 @@ DELETE FROM anime_mappings;
 
 -- Inserts a batch of rows given as a JSON array of objects with the column names as keys.
 -- name: InsertAnimeMappingBatch :exec
-INSERT INTO anime_mappings (mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id)
+INSERT INTO anime_mappings (mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset)
 SELECT
     json_extract(j.value, '$.mal_id'),
     json_extract(j.value, '$.anilist_id'),
@@ -12,7 +12,9 @@ SELECT
     json_extract(j.value, '$.tmdb_movie'),
     json_extract(j.value, '$.tmdb_season'),
     COALESCE(json_extract(j.value, '$.tmdb_offset'), 0),
-    json_extract(j.value, '$.tvdb_id')
+    json_extract(j.value, '$.tvdb_id'),
+    json_extract(j.value, '$.tvdb_season'),
+    COALESCE(json_extract(j.value, '$.tvdb_offset'), 0)
 FROM json_each(CAST(sqlc.arg(rows) AS TEXT)) AS j;
 
 -- name: AnimeMappingsExist :one
@@ -35,3 +37,6 @@ SELECT * FROM anime_mappings WHERE tvdb_id = ? ORDER BY id;
 
 -- name: ListAnimeTMDBIDs :many
 SELECT tmdb_tv, tmdb_movie FROM anime_mappings WHERE tmdb_tv IS NOT NULL OR tmdb_movie IS NOT NULL;
+
+-- name: ListAnimeTVDBIDs :many
+SELECT DISTINCT tvdb_id FROM anime_mappings WHERE tvdb_id IS NOT NULL AND tvdb_id != 0;

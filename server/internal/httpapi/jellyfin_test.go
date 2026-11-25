@@ -26,6 +26,7 @@ func newJellyfinFx(t *testing.T) *jellyfinFx {
 	f := newOverviewFx(t)
 	find := catalogtest.NewFindTMDB(f.env.TMDB)
 	f.env.UseTMDB(find)
+	f.env.UseTVDB(f.env.TVDB)
 	f.s.Catalog = f.env.Catalog
 	f.s.Library = library.New(f.env.Conn, f.env.Q, f.env.Catalog)
 	f.s.Library.Now = f.env.Now
@@ -128,9 +129,9 @@ func TestJellyfinWebhookPluginTemplateMovie(t *testing.T) {
 
 func TestJellyfinWebhookLegacyTemplateEpisode(t *testing.T) {
 	f := newJellyfinFx(t)
-	f.env.TMDB.AddShow("1668", "Friends",
-		catalogtest.Season{Number: 1, AirDate: "2000-01-01", Episodes: catalogtest.Eps(1, 2, "2000-01-01")})
-	f.find.AddEpisodeResult("imdb_id", "tt0583459", 1668, 1, 1)
+	eps := catalogtest.Eps(1, 2, "2000-01-01")
+	eps[0].ID, eps[1].ID = 303821, 303822
+	f.env.TVDB.AddShow("7000", "Friends", catalogtest.Season{Number: 1, AirDate: "2000-01-01", Episodes: eps})
 	payload := map[string]any{
 		"Event": "Stop",
 		"Item": map[string]any{
@@ -140,11 +141,11 @@ func TestJellyfinWebhookLegacyTemplateEpisode(t *testing.T) {
 			"UserData": map[string]any{"Played": true},
 		},
 	}
-	// TVDB is not configured here (a miss), so IMDb resolves it.
+	// The TVDB episode id places it; TMDB is not involved.
 	if code := f.post("/webhook/jellyfin/"+f.token, payload); code != 200 {
 		t.Fatalf("status %d", code)
 	}
-	if s, ok := f.entryStatus("tmdb", "1668"); !ok || s != library.InProgress {
+	if s, ok := f.entryStatus("tvdb", "7000"); !ok || s != library.InProgress {
 		t.Errorf("show = %q, %v", s, ok)
 	}
 	var n int

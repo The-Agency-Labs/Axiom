@@ -7,6 +7,7 @@
 //	encompass createuser <name> [--admin]   password is read from stdin
 //	encompass healthcheck              GET /health on the local server, exit 0/1
 //	encompass migrate-django --from <django.db> [--dry-run] [--force]   one-shot data migration
+//	encompass shows-to-tvdb [--dry-run]   move shows tracked from TMDB onto TheTVDB (idempotent; back up first)
 package main
 
 import (
@@ -46,6 +47,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/providers/mangaupdates"
 	"github.com/the-agency-labs/encompass/server/internal/providers/openlibrary"
 	"github.com/the-agency-labs/encompass/server/internal/providers/tmdb"
+	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
 	"github.com/the-agency-labs/encompass/server/web"
 )
 
@@ -65,8 +67,10 @@ func main() {
 		err = healthcheck()
 	case "migrate-django":
 		err = migrateDjango(args, os.Stdout)
+	case "shows-to-tvdb":
+		err = showsToTVDB(args, os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db>]\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db> | shows-to-tvdb [--dry-run]]\n", cmd)
 		os.Exit(2)
 	}
 	if err != nil {
@@ -86,6 +90,9 @@ func serve() error {
 	loc, err := time.LoadLocation(cfg.TimeZone)
 	if err != nil {
 		return fmt.Errorf("TZ %q: %w", cfg.TimeZone, err)
+	}
+	if cfg.TVDBKey == "" {
+		slog.Warn("TVDB_API is not set: shows (tv and anime) are TheTVDB shows, so they cannot be searched, added or synced")
 	}
 	conn, err := db.Open(ctx, cfg.DatabasePath)
 	if err != nil {
@@ -164,6 +171,7 @@ func newCatalog(cfg config.Config, conn *sql.DB, queries *db.Queries, providerCa
 	mapStore := mappings.New(conn, queries, base)
 	reg := catalog.NewRegistry(catalog.Providers{
 		TMDB:         tmdb.New(base, cfg),
+		TVDB:         tvdb.New(base, cfg),
 		AniList:      anilist.New(base, cfg),
 		MAL:          mal.New(base, cfg),
 		MangaUpdates: mangaupdates.New(base, cfg),

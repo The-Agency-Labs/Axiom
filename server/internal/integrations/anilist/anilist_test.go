@@ -190,6 +190,7 @@ func collectionOf(entries []map[string]any) map[string]any {
 func newEnv(t *testing.T) *env {
 	t.Helper()
 	ce := catalogtest.NewEnv(t, t0)
+	ce.UseTVDB(ce.TVDB)
 	lib := library.New(ce.Conn, ce.Q, ce.Catalog)
 	lib.Now = ce.Now
 	e := &env{Env: ce, lib: lib, user: ce.User(t, "owner"), list: &aniList{}}
@@ -241,7 +242,7 @@ func completed(y, mo, d int) opt {
 }
 
 func (e *env) show(id, title string, seasons ...catalogtest.Season) {
-	e.TMDB.AddShow(id, title, seasons...)
+	e.TVDB.AddShow(id, title, seasons...)
 }
 
 func sn(number int, date string, first, n int) catalogtest.Season {
@@ -315,13 +316,13 @@ func equalInts(a, b []int) bool {
 	return true
 }
 
-func TestRunPlacesEntriesInTMDBShows(t *testing.T) {
+func TestRunPlacesEntriesInTVDBShows(t *testing.T) {
 	e := newEnv(t)
 	// Show 100: S1 has 12 episodes, S2 has 12 (cour 2 of S1 is AniList 11), S3 has 10.
 	e.show("100", "Big Show", sn(1, "2016-04-01", 1, 24), sn(2, "2017-04-01", 1, 12), sn(3, "2018-04-01", 1, 10))
-	e.Mappings.AddShow(100, 1, 0, 11, 111)  // S1, first cour
-	e.Mappings.AddShow(100, 1, 12, 12, 112) // S1, second cour (offset 12)
-	e.Mappings.AddShow(100, 3, 0, 13, 113)  // S3 claimed by its own entry
+	e.Mappings.AddTVDBShow(100, 1, 0, 11, 111)  // S1, first cour
+	e.Mappings.AddTVDBShow(100, 1, 12, 12, 112) // S1, second cour (offset 12)
+	e.Mappings.AddTVDBShow(100, 3, 0, 13, 113)  // S3 claimed by its own entry
 	e.list.anime = []map[string]any{
 		listEntry(11, 111, "TV", "COMPLETED", 12, 12),
 		listEntry(12, 112, "TV", "CURRENT", 5, 12, with("updatedAt", time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC).Unix())),
@@ -329,7 +330,7 @@ func TestRunPlacesEntriesInTMDBShows(t *testing.T) {
 	}
 	res := e.run(t, Options{})
 
-	item := e.item(t, "anime", "tmdb", "100")
+	item := e.item(t, "anime", "tvdb", "100")
 	ws := e.watches(t, item)
 	if len(ws) != 12+5 {
 		t.Fatalf("watches = %d (%v)", len(ws), watched(ws))
@@ -366,15 +367,15 @@ func TestSpillStopsAtClaimedSeasonAndLongRunnersStartAtOne(t *testing.T) {
 	e.show("200", "Long Runner", sn(1, "2007-01-01", 1, 25), sn(2, "2008-01-01", 1, 25), sn(3, "2009-01-01", 1, 30))
 	// A long runner (no season in the mapping) and another entry owning S3.
 	e.Mappings.Rows = append(e.Mappings.Rows, mappings.Mapping{
-		ID: 1, AnilistID: sql.NullInt64{Int64: 21, Valid: true}, Kind: "TV", TmdbTv: sql.NullInt64{Int64: 200, Valid: true},
+		ID: 1, AnilistID: sql.NullInt64{Int64: 21, Valid: true}, Kind: "TV", TvdbID: sql.NullInt64{Int64: 200, Valid: true},
 	})
-	e.Mappings.AddShow(200, 3, 0, 22, 0)
+	e.Mappings.AddTVDBShow(200, 3, 0, 22, 0)
 	e.list.anime = []map[string]any{
 		listEntry(21, 0, "TV", "COMPLETED", 60, 60, withMedia("startDate", map[string]any{"year": 2002, "month": 10, "day": 3})),
 		listEntry(22, 0, "TV", "PLANNING", 0, 30),
 	}
 	e.run(t, Options{})
-	ws := e.watches(t, e.item(t, "anime", "tmdb", "200"))
+	ws := e.watches(t, e.item(t, "anime", "tvdb", "200"))
 	// 60 episodes would reach S3, but S3 is claimed: only S1 and S2 (50 episodes).
 	if len(ws) != 50 {
 		t.Fatalf("watches = %d", len(ws))
@@ -393,10 +394,10 @@ func TestContinuousNumberingUsesPositions(t *testing.T) {
 	e := newEnv(t)
 	// Season 2 is numbered on from season 1: episodes 33..35.
 	e.show("300", "Shippuden-like", sn(1, "2007-02-15", 1, 32), sn(2, "2009-02-01", 33, 3))
-	e.Mappings.AddShow(300, 2, 0, 31, 0)
+	e.Mappings.AddTVDBShow(300, 2, 0, 31, 0)
 	e.list.anime = []map[string]any{listEntry(31, 0, "TV", "CURRENT", 2, 3)}
 	e.run(t, Options{})
-	got := watched(e.watches(t, e.item(t, "anime", "tmdb", "300")))
+	got := watched(e.watches(t, e.item(t, "anime", "tvdb", "300")))
 	if !equalInts(got, []int{2033, 2034}) {
 		t.Fatalf("watched = %v", got)
 	}
@@ -405,10 +406,10 @@ func TestContinuousNumberingUsesPositions(t *testing.T) {
 func TestSecondSeasonFirstDoesNotCreateSeasonOne(t *testing.T) {
 	e := newEnv(t)
 	e.show("310", "Mid Show", sn(1, "2016-01-01", 1, 12), sn(2, "2017-01-01", 1, 12))
-	e.Mappings.AddShow(310, 2, 0, 32, 0)
+	e.Mappings.AddTVDBShow(310, 2, 0, 32, 0)
 	e.list.anime = []map[string]any{listEntry(32, 0, "TV", "COMPLETED", 12, 12)}
 	e.run(t, Options{})
-	item := e.item(t, "anime", "tmdb", "310")
+	item := e.item(t, "anime", "tvdb", "310")
 	ws := e.watches(t, item)
 	if len(ws) != 12 {
 		t.Fatalf("watches = %d", len(ws))
@@ -421,10 +422,10 @@ func TestSecondSeasonFirstDoesNotCreateSeasonOne(t *testing.T) {
 	}
 }
 
-func TestSeasonMissingInTMDBFallsBackToCountBased(t *testing.T) {
+func TestSeasonMissingInTVDBFallsBackToCountBased(t *testing.T) {
 	e := newEnv(t)
 	e.show("320", "Merged", sn(1, "2016-01-01", 1, 12))
-	e.Mappings.AddShow(320, 4, 0, 33, 333) // TMDB has no season 4
+	e.Mappings.AddTVDBShow(320, 4, 0, 33, 333) // TVDB has no season 4
 	e.list.anime = []map[string]any{listEntry(33, 333, "TV", "CURRENT", 7, 12, withMedia("episodes", 24))}
 	res := e.run(t, Options{})
 	if res.Counts["anime (unmapped)"] != 1 {
@@ -494,7 +495,7 @@ func TestBulkCompletionDatesAreIgnoredForShows(t *testing.T) {
 	e := newEnv(t)
 	for i, id := range []string{"500", "501", "502", "503"} {
 		e.show(id, "Bulk "+id, sn(1, "2016-04-01", 1, 2))
-		e.Mappings.AddShow(int64(500+i), 1, 0, int64(60+i), 0)
+		e.Mappings.AddTVDBShow(int64(500+i), 1, 0, int64(60+i), 0)
 	}
 	// Three entries share one completion date (bulk), one has its own.
 	e.list.anime = []map[string]any{
@@ -504,10 +505,10 @@ func TestBulkCompletionDatesAreIgnoredForShows(t *testing.T) {
 		listEntry(63, 0, "TV", "COMPLETED", 2, 2, completed(2021, 5, 5)),
 	}
 	e.run(t, Options{})
-	if ws := e.watches(t, e.item(t, "anime", "tmdb", "500")); !strings.HasPrefix(ws[0].WatchedAt, "2016-04-01") {
+	if ws := e.watches(t, e.item(t, "anime", "tvdb", "500")); !strings.HasPrefix(ws[0].WatchedAt, "2016-04-01") {
 		t.Fatalf("bulk date should fall back to the air date, got %s", ws[0].WatchedAt)
 	}
-	if ws := e.watches(t, e.item(t, "anime", "tmdb", "503")); !strings.HasPrefix(ws[0].WatchedAt, "2021-05-05") {
+	if ws := e.watches(t, e.item(t, "anime", "tvdb", "503")); !strings.HasPrefix(ws[0].WatchedAt, "2021-05-05") {
 		t.Fatalf("entry-specific date should be kept, got %s", ws[0].WatchedAt)
 	}
 }
@@ -515,8 +516,8 @@ func TestBulkCompletionDatesAreIgnoredForShows(t *testing.T) {
 func TestAdditiveNeverLowers(t *testing.T) {
 	e := newEnv(t)
 	e.show("600", "Owned", sn(1, "2016-04-01", 1, 12))
-	e.Mappings.AddShow(600, 1, 0, 71, 0)
-	item, err := e.Catalog.EnsureItem(ctx, "anime", "tmdb", "600")
+	e.Mappings.AddTVDBShow(600, 1, 0, 71, 0)
+	item, err := e.Catalog.EnsureItem(ctx, "anime", "tvdb", "600")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -557,18 +558,18 @@ func TestAdditiveNeverLowers(t *testing.T) {
 func TestPausedAndDroppedShowsStartWithThatStatus(t *testing.T) {
 	e := newEnv(t)
 	e.show("700", "Paused Show", sn(1, "2016-04-01", 1, 12))
-	e.Mappings.AddShow(700, 1, 0, 81, 0)
+	e.Mappings.AddTVDBShow(700, 1, 0, 81, 0)
 	e.show("701", "Planned Show", sn(1, "2016-04-01", 1, 12))
-	e.Mappings.AddShow(701, 1, 0, 82, 0)
+	e.Mappings.AddTVDBShow(701, 1, 0, 82, 0)
 	e.list.anime = []map[string]any{
 		listEntry(81, 0, "TV", "PAUSED", 4, 12),
 		listEntry(82, 0, "TV", "PLANNING", 0, 12),
 	}
 	e.run(t, Options{})
-	if en := e.entry(t, e.item(t, "anime", "tmdb", "700")); en.Status != library.Paused {
+	if en := e.entry(t, e.item(t, "anime", "tvdb", "700")); en.Status != library.Paused {
 		t.Fatalf("status = %s", en.Status)
 	}
-	p := e.item(t, "anime", "tmdb", "701")
+	p := e.item(t, "anime", "tvdb", "701")
 	if en := e.entry(t, p); en.Status != library.Planning {
 		t.Fatalf("status = %s", en.Status)
 	}
@@ -580,7 +581,7 @@ func TestPausedAndDroppedShowsStartWithThatStatus(t *testing.T) {
 func TestDryRunWritesNothingToTheLibrary(t *testing.T) {
 	e := newEnv(t)
 	e.show("800", "Dry Show", sn(1, "2016-04-01", 1, 12))
-	e.Mappings.AddShow(800, 1, 0, 91, 0)
+	e.Mappings.AddTVDBShow(800, 1, 0, 91, 0)
 	e.TMDB.AddMovie("801", "Dry Film", "2016-01-01")
 	e.Mappings.AddMovie(801, 92, 0)
 	e.list.anime = []map[string]any{
@@ -618,7 +619,7 @@ func TestDryRunWritesNothingToTheLibrary(t *testing.T) {
 func TestSyncIncrementalMarkerAndStatus(t *testing.T) {
 	e := newEnv(t)
 	e.show("900", "Inc Show", sn(1, "2016-04-01", 1, 12))
-	e.Mappings.AddShow(900, 1, 0, 95, 0)
+	e.Mappings.AddTVDBShow(900, 1, 0, 95, 0)
 	u1 := time.Date(2024, 5, 1, 10, 0, 0, 0, time.UTC)
 	e.list.anime = []map[string]any{listEntry(95, 0, "TV", "CURRENT", 3, 12, with("updatedAt", u1.Unix()))}
 	e.list.manga = []map[string]any{listEntry(96, 0, "MANGA", "CURRENT", 4, 0, with("updatedAt", u1.Add(-24*time.Hour).Unix()))}
@@ -711,7 +712,7 @@ func (failing) GraphQL(context.Context, string, map[string]any) (json.RawMessage
 
 func TestOneBadEntryDoesNotStopTheImport(t *testing.T) {
 	e := newEnv(t)
-	e.Mappings.AddShow(1000, 1, 0, 97, 0) // TMDB has no show 1000
+	e.Mappings.AddTVDBShow(1000, 1, 0, 97, 0) // TVDB has no show 1000
 	e.list.anime = []map[string]any{listEntry(97, 0, "TV", "COMPLETED", 12, 12)}
 	e.list.manga = []map[string]any{listEntry(98, 0, "MANGA", "CURRENT", 2, 0)}
 	res := e.run(t, Options{})
@@ -721,3 +722,28 @@ func TestOneBadEntryDoesNotStopTheImport(t *testing.T) {
 }
 
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
+
+func TestOVACourPlacesInTVDBSeasonZeroAndNeverSpills(t *testing.T) {
+	e := newEnv(t)
+	e.show("1100", "Show With OVA", sn(0, "2016-01-01", 1, 3), sn(1, "2016-04-01", 1, 12))
+	e.Mappings.AddTVDBShow(1100, 0, 0, 101, 0)
+	e.Mappings.AddTVDBShow(1100, 1, 0, 102, 0)
+	e.list.anime = []map[string]any{
+		listEntry(101, 0, "OVA", "COMPLETED", 5, 5), // more than the 3 specials: stops at the end of season 0
+		listEntry(102, 0, "TV", "COMPLETED", 12, 12),
+	}
+	e.run(t, Options{})
+	got := watched(e.watches(t, e.item(t, "anime", "tvdb", "1100")))
+	if len(got) != 15 {
+		t.Fatalf("watched %v", got)
+	}
+	var specials []int
+	for _, w := range got {
+		if w < 1000 {
+			specials = append(specials, w)
+		}
+	}
+	if !equalInts(specials, []int{1, 2, 3}) {
+		t.Fatalf("specials %v", specials)
+	}
+}

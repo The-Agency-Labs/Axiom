@@ -11,6 +11,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/config"
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
 )
 
 var (
@@ -22,7 +23,6 @@ type fixture struct {
 	t    *testing.T
 	env  *catalogtest.Env
 	find *catalogtest.FindTMDB
-	tvdb *catalogtest.TVDB
 	lib  *library.Service
 	svc  *Service
 	user db.User
@@ -33,11 +33,11 @@ func newFixture(t *testing.T) *fixture {
 	env := catalogtest.NewEnv(t, t0)
 	find := catalogtest.NewFindTMDB(env.TMDB)
 	env.UseTMDB(find)
+	env.UseTVDB(env.TVDB)
 	lib := library.New(env.Conn, env.Q, env.Catalog)
 	lib.Now = env.Now
-	tvdb := catalogtest.NewTVDB()
 	svc := New(Deps{
-		Conn: env.Conn, Q: env.Q, Catalog: env.Catalog, Library: lib, TMDB: find, TVDB: tvdb,
+		Conn: env.Conn, Q: env.Q, Catalog: env.Catalog, Library: lib, TMDB: find, TVDB: env.TVDB,
 		Config: config.Config{JellyfinWatchedPercent: 75}, Now: env.Now,
 	})
 	uid := env.User(t, "owner")
@@ -45,16 +45,28 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &fixture{t: t, env: env, find: find, tvdb: tvdb, lib: lib, svc: svc, user: u}
+	return &fixture{t: t, env: env, find: find, lib: lib, svc: svc, user: u}
 }
 
-// friends registers TMDB show 1668 with two seasons of three episodes.
+// friends registers TVDB series 7000 with three seasons of three episodes;
+// the TVDB id of an episode is 700000 + 100*season + episode.
 func (f *fixture) friends() {
-	f.env.TMDB.AddShow("1668", "Friends",
-		catalogtest.Season{Number: 1, AirDate: "2000-01-01", Episodes: catalogtest.Eps(1, 3, "2000-01-01")},
-		catalogtest.Season{Number: 2, AirDate: "2001-01-01", Episodes: catalogtest.Eps(1, 3, "2001-01-01")},
-		catalogtest.Season{Number: 3, AirDate: "2002-01-01", Episodes: catalogtest.Eps(1, 3, "2002-01-01")},
-	)
+	season := func(n int, date string) catalogtest.Season {
+		eps := catalogtest.Eps(1, 3, date)
+		for i := range eps {
+			eps[i].ID = int64(700000 + 100*n + eps[i].Number)
+		}
+		return catalogtest.Season{Number: n, AirDate: date, Episodes: eps}
+	}
+	f.env.TVDB.AddShow("7000", "Friends", season(1, "2000-01-01"), season(2, "2001-01-01"), season(3, "2002-01-01"))
+}
+
+// ep is an event for episode (season, episode) of Friends, identified by its TVDB episode id.
+func (f *fixture) ep(kind string, season, episode int, played bool) Event {
+	return Event{
+		Kind: kind, Type: "Episode", Name: "Ep", SeriesName: "Friends", Season: ip(season), Episode: ip(episode),
+		Tvdb: fmt.Sprint(700000 + 100*season + episode), Played: played,
+	}
 }
 
 func (f *fixture) process(ev Event, opt Options) Result {
@@ -186,10 +198,10 @@ func TestParsePayload(t *testing.T) {
 		"Event": "Stop", "NotificationType": "PlaybackStart",
 		"Item": map[string]any{"Type": "Movie", "Name": "The Matrix", "ProductionYear": float64(1999),
 			"ProviderIds": map[string]any{"Tmdb": "603"}, "UserData": map[string]any{"Played": true}},
-		"Series": map[string]any{"ProviderIds": map[string]any{"Tmdb": "1668"}},
+		"Series": map[string]any{"ProviderIds": map[string]any{"Tvdb": "7000"}},
 	}
 	ev = ParsePayload(legacy, 75)
-	if ev.Kind != EventStop || !ev.Played || ev.Tmdb != "603" || ev.SeriesTmdb != "1668" || ev.Label() != "The Matrix (1999)" {
+	if ev.Kind != EventStop || !ev.Played || ev.Tmdb != "603" || ev.SeriesTvdb != "7000" || ev.Label() != "The Matrix (1999)" {
 		t.Errorf("legacy template: %+v", ev)
 	}
 	if got := epEvent("Stop", "1", 1, 2, true).Label(); got != "Friends S01E02" {
@@ -197,15 +209,13 @@ func TestParsePayload(t *testing.T) {
 	}
 }
 
-func TestEpisodeViaTVDBThenTMDBFind(t *testing.T) {
+func TestEpisodeByTVDBEpisodeID(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	f.tvdb.AddEpisode("303821", 7000, 1, 1)
-	f.find.AddEpisodeResult("tvdb_id", "303821", 1668, 1, 1)
-	if r := f.process(epEvent("Stop", "303821", 1, 1, true), Options{}); r.Outcome != Matched {
+	if r := f.process(f.ep("Stop", 1, 1, true), Options{}); r.Outcome != Matched {
 		t.Fatalf("outcome = %v", r.Outcome)
 	}
-	e := f.entry("tmdb", "1668")
+	e := f.entry("tvdb", "7000")
 	if e.Status != library.InProgress {
 		t.Errorf("show status = %s", e.Status)
 	}
@@ -216,69 +226,83 @@ func TestEpisodeViaTVDBThenTMDBFind(t *testing.T) {
 	if len(ws) != 1 || ws[0].Source != library.SourceJellyfin || ws[0].Season.Int64 != 1 || ws[0].Episode.Int64 != 1 {
 		t.Fatalf("watches = %+v", ws)
 	}
-	if f.env.TMDB.Calls["TVWithSeasons"]+f.env.TMDB.Calls["Season"]+f.env.TMDB.Calls["TV"] == 0 {
-		t.Error("expected TMDB metadata fetches")
+	// No TMDB at all: the show is a TVDB show and the TMDB client is never asked.
+	if n := f.env.TMDB.Calls["TV"] + f.env.TMDB.Calls["TVWithSeasons"] + f.env.TMDB.Calls["Season"] + len(f.find.Finds); n != 0 {
+		t.Errorf("TMDB was used for a show: %v finds=%v", f.env.TMDB.Calls, f.find.Finds)
 	}
 }
 
-func TestTVDBSeriesFallbackUsesCatalogThenTVDB(t *testing.T) {
+func TestEpisodeIDIsTrustedOverJellyfinNumbers(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	// TMDB find misses the episode; TVDB numbering with the series' TMDB id.
-	f.tvdb.AddEpisode("900", 7000, 2, 3)
-	f.tvdb.AddSeries(7000, "1668")
-	f.process(epEvent("Stop", "900", 9, 9, true), Options{})
-	e := f.entry("tmdb", "1668")
-	w := f.jfWatches(e)
+	// Jellyfin says S9E9; TVDB knows the episode id as S2E3 and wins.
+	ev := f.ep("Stop", 2, 3, true)
+	ev.Season, ev.Episode = ip(9), ip(9)
+	f.process(ev, Options{})
+	w := f.jfWatches(f.entry("tvdb", "7000"))
 	if len(w) != 1 || w[0].Season.Int64 != 2 || w[0].Episode.Int64 != 3 {
 		t.Fatalf("watches = %+v (TVDB numbering must win over Jellyfin's)", w)
 	}
-	// Show now known by its TVDB series id (7000 in the fake metadata):
-	// the next episode needs no TVDB series lookup.
-	f.tvdb.Calls = nil
-	f.tvdb.AddEpisode("901", 7000, 2, 2)
-	f.process(epEvent("Stop", "901", 9, 9, true), Options{})
-	for _, c := range f.tvdb.Calls {
-		if c == "series:7000" {
-			t.Errorf("series looked up on TVDB although the catalog knows it: %v", f.tvdb.Calls)
+	// The show is in the catalog now: the next episode needs no TVDB lookup.
+	f.env.TVDB.Calls = nil
+	f.process(f.ep("Stop", 2, 2, true), Options{})
+	for _, c := range f.env.TVDB.Calls {
+		if c == "episode:700202" {
+			t.Errorf("episode looked up on TVDB although the catalog knows it: %v", f.env.TVDB.Calls)
 		}
 	}
-	if len(f.jfWatches(e)) != 2 {
-		t.Errorf("watches = %+v", f.jfWatches(e))
+	if len(f.jfWatches(f.entry("tvdb", "7000"))) != 2 {
+		t.Errorf("watches = %+v", f.jfWatches(f.entry("tvdb", "7000")))
 	}
 }
 
-func TestTVDB404FallsBackToIMDbThenShowID(t *testing.T) {
+func TestSeriesIDWithJellyfinNumbering(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	// TVDB knows nothing (404 = miss); IMDb resolves through TMDB find.
-	f.find.AddEpisodeResult("imdb_id", "tt777", 1668, 2, 1)
-	ev := epEvent("Stop", "404404", 1, 1, true)
-	ev.Imdb = "tt777"
+	// An unknown episode id, but the series' TVDB id and Jellyfin's numbers (TVDB's).
+	ev := Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Season: ip(2), Episode: ip(1), Tvdb: "404404", SeriesTvdb: "7000", Played: true}
 	if r := f.process(ev, Options{}); r.Outcome != Matched {
 		t.Fatalf("outcome = %v", r.Outcome)
 	}
-	w := f.jfWatches(f.entry("tmdb", "1668"))
+	w := f.jfWatches(f.entry("tvdb", "7000"))
 	if len(w) != 1 || w[0].Season.Int64 != 2 || w[0].Episode.Int64 != 1 {
-		t.Fatalf("imdb path watches = %+v", w)
+		t.Fatalf("watches = %+v", w)
 	}
-	if len(f.tvdb.Calls) == 0 || f.tvdb.Calls[0] != "episode:404404" {
-		t.Errorf("TVDB not tried first: %v", f.tvdb.Calls)
-	}
-
-	// Neither TVDB nor IMDb: the series TMDB id with Jellyfin's numbering.
-	ev = epEvent("Stop", "404405", 1, 3, true)
-	ev.SeriesTmdb = "1668"
-	f.process(ev, Options{})
-	if got := len(f.jfWatches(f.entry("tmdb", "1668"))); got != 2 {
-		t.Errorf("series id path: %d watches", got)
-	}
-
-	// A show id without episode numbers cannot be placed.
-	ev = Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", SeriesTmdb: "1668", Played: true}
+	// A series id without episode numbers cannot be placed.
+	ev = Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", SeriesTvdb: "7000", Played: true}
 	if r := f.process(ev, Options{}); r.Outcome != Unmatched {
 		t.Errorf("no numbers: outcome = %v", r.Outcome)
 	}
+}
+
+func TestIMDbEpisodeIDGoesThroughTVDB(t *testing.T) {
+	f := newFixture(t)
+	f.friends()
+	f.env.TVDB.AddRemote("tt777", tvdb.Hit{SeriesID: 7000, Episode: &tvdb.Episode{ID: 1, Season: 2, Number: 2}})
+	ev := Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Season: ip(1), Episode: ip(1), Imdb: "tt777", Played: true}
+	if r := f.process(ev, Options{}); r.Outcome != Matched {
+		t.Fatalf("outcome = %v", r.Outcome)
+	}
+	w := f.jfWatches(f.entry("tvdb", "7000"))
+	if len(w) != 1 || w[0].Season.Int64 != 2 || w[0].Episode.Int64 != 2 {
+		t.Fatalf("imdb path watches = %+v", w)
+	}
+	if len(f.find.Finds) != 0 {
+		t.Errorf("TMDB find used for an episode: %v", f.find.Finds)
+	}
+}
+
+func TestNoTMDBNumberingFallback(t *testing.T) {
+	f := newFixture(t)
+	f.friends()
+	// The old fallback took the series' TMDB id and used Jellyfin's (or TVDB's)
+	// numbers as TMDB numbers. It is gone: a TMDB id alone places nothing.
+	ev := Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Season: ip(1), Episode: ip(1), Tvdb: "404405", Tmdb: "1668", Played: true}
+	if r := f.process(ev, Options{}); r.Outcome != Unmatched {
+		t.Errorf("outcome = %v, want Unmatched", r.Outcome)
+	}
+	f.noEntry("tvdb", "7000")
+	f.noEntry("tmdb", "1668")
 }
 
 func TestUnmatchedItemsAreNotErrors(t *testing.T) {
@@ -303,23 +327,20 @@ func TestUnmatchedItemsAreNotErrors(t *testing.T) {
 	if r := f.process(Event{Kind: "Stop", Type: "Audio", Tmdb: "1"}, Options{}); r.Outcome != Ignored {
 		t.Errorf("Audio: %v", r.Outcome)
 	}
-	f.noEntry("tmdb", "1668")
+	f.noEntry("tvdb", "7000")
 }
 
 func TestStopBelowThresholdOnlyStartsThenPlayedFlagCounts(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	f.find.AddEpisodeResult("imdb_id", "tt1", 1668, 1, 1)
-	ev := Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Season: ip(1), Episode: ip(1), Imdb: "tt1"}
 	// Below the threshold ParsePayload leaves Played false: only In progress.
-	f.process(ev, Options{})
-	e := f.entry("tmdb", "1668")
+	f.process(f.ep("Stop", 1, 1, false), Options{})
+	e := f.entry("tvdb", "7000")
 	if e.Status != library.InProgress || len(f.watches(e)) != 0 {
 		t.Fatalf("status %s, watches %d", e.Status, len(f.watches(e)))
 	}
 	// Played flag set by Jellyfin (no ticks needed).
-	ev.Played = true
-	f.process(ev, Options{})
+	f.process(f.ep("Stop", 1, 1, true), Options{})
 	if got := len(f.watches(e)); got != 1 {
 		t.Fatalf("watches = %d", got)
 	}
@@ -328,24 +349,20 @@ func TestStopBelowThresholdOnlyStartsThenPlayedFlagCounts(t *testing.T) {
 func TestPlayIsForwardOnlyAndNeverReopens(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	f.find.AddEpisodeResult("imdb_id", "tt1", 1668, 1, 1)
-	f.find.AddEpisodeResult("imdb_id", "tt2", 1668, 1, 3)
-	play := func(imdb string) {
-		f.process(Event{Kind: "Play", Type: "Episode", SeriesName: "Friends", Imdb: imdb}, Options{})
-	}
+	play := func(s, e int) { f.process(f.ep("Play", s, e, false), Options{}) }
 	// Play on a new S1 show creates it In progress with S1 In progress.
-	play("tt1")
-	e := f.entry("tmdb", "1668")
+	play(1, 1)
+	e := f.entry("tvdb", "7000")
 	if e.Status != library.InProgress || f.seasonStatus(e, 1) != library.InProgress {
 		t.Fatalf("after play: %s / %s", e.Status, f.seasonStatus(e, 1))
 	}
 	// Finish the season (finale S1E3) then more plays change nothing.
-	f.process(Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Imdb: "tt2", Played: true}, Options{})
-	if got := f.seasonStatus(f.entry("tmdb", "1668"), 1); got != library.Completed {
+	f.process(f.ep("Stop", 1, 3, true), Options{})
+	if got := f.seasonStatus(f.entry("tvdb", "7000"), 1); got != library.Completed {
 		t.Fatalf("S1 should be completed by the finale, is %s", got)
 	}
-	play("tt1")
-	if got := f.seasonStatus(f.entry("tmdb", "1668"), 1); got != library.Completed {
+	play(1, 1)
+	if got := f.seasonStatus(f.entry("tvdb", "7000"), 1); got != library.Completed {
 		t.Errorf("play reopened a completed season: %s", got)
 	}
 }
@@ -353,35 +370,32 @@ func TestPlayIsForwardOnlyAndNeverReopens(t *testing.T) {
 func TestNeverUndoRewatchAndDuplicates(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	f.find.AddEpisodeResult("imdb_id", "tt1", 1668, 1, 1)
-	f.find.AddEpisodeResult("imdb_id", "tt3", 1668, 1, 3)
-	stop := func(imdb string, played bool, at time.Time) {
-		f.process(Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Imdb: imdb, Played: played}, Options{WatchedAt: at})
+	stop := func(s, e int, played bool, at time.Time) {
+		f.process(f.ep("Stop", s, e, played), Options{WatchedAt: at})
 	}
-	stop("tt1", true, t0)
+	stop(1, 1, true, t0)
 	// Webhook retry a couple of seconds later: one play.
-	stop("tt1", true, t0.Add(2*time.Second))
-	e := f.entry("tmdb", "1668")
+	stop(1, 1, true, t0.Add(2*time.Second))
+	e := f.entry("tvdb", "7000")
 	if got := len(f.watches(e)); got != 1 {
 		t.Fatalf("duplicate stop recorded %d watches", got)
 	}
-	stop("tt3", true, t0.Add(time.Hour)) // finale: S1 completed
-	// Only S1 exists, all aired: show completes? S2 and S3 are aired, so no.
-	e = f.entry("tmdb", "1668")
+	stop(1, 3, true, t0.Add(time.Hour)) // finale: S1 completed
+	e = f.entry("tvdb", "7000")
 	if f.seasonStatus(e, 1) != library.Completed {
 		t.Fatalf("S1 = %s", f.seasonStatus(e, 1))
 	}
 	before := e
 	nWatches := len(f.watches(e))
 	// Rewind: an unfinished stop of an earlier episode changes nothing.
-	stop("tt1", false, t0.Add(2*time.Hour))
-	e = f.entry("tmdb", "1668")
+	stop(1, 1, false, t0.Add(2*time.Hour))
+	e = f.entry("tvdb", "7000")
 	if e.Status != before.Status || e.Progress != before.Progress || f.seasonStatus(e, 1) != library.Completed || len(f.watches(e)) != nWatches {
 		t.Errorf("unfinished stop changed state: %+v -> %+v", before, e)
 	}
 	// A full rewatch later adds a watch but undoes nothing.
-	stop("tt1", true, t0.Add(48*time.Hour))
-	e = f.entry("tmdb", "1668")
+	stop(1, 1, true, t0.Add(48*time.Hour))
+	e = f.entry("tvdb", "7000")
 	if f.seasonStatus(e, 1) != library.Completed || e.Status == library.Planning || len(f.watches(e)) != nWatches+1 {
 		t.Errorf("rewatch: status %s, S1 %s, watches %d", e.Status, f.seasonStatus(e, 1), len(f.watches(e)))
 	}
@@ -389,20 +403,21 @@ func TestNeverUndoRewatchAndDuplicates(t *testing.T) {
 
 func TestCompletedShowStaysCompletedOnRewatch(t *testing.T) {
 	f := newFixture(t)
-	f.env.TMDB.AddShow("5", "Mini", catalogtest.Season{Number: 1, AirDate: "2000-01-01", Episodes: catalogtest.Eps(1, 2, "2000-01-01")})
-	f.find.AddEpisodeResult("imdb_id", "a", 5, 1, 1)
-	f.find.AddEpisodeResult("imdb_id", "b", 5, 1, 2)
-	st := func(imdb string, at time.Time) {
-		f.process(Event{Kind: "Stop", Type: "Episode", SeriesName: "Mini", Imdb: imdb, Played: true}, Options{WatchedAt: at})
+	f.env.TVDB.AddShow("5", "Mini", catalogtest.Season{Number: 1, AirDate: "2000-01-01", Episodes: []catalogtest.Episode{
+		{ID: 501, Number: 1, AirDate: "2000-01-01", Name: "a"}, {ID: 502, Number: 2, AirDate: "2000-01-01", Name: "b"},
+	}})
+	ev := func(kind, id string) Event {
+		return Event{Kind: kind, Type: "Episode", SeriesName: "Mini", Tvdb: id, Played: kind == "Stop"}
 	}
-	st("a", t0)
-	st("b", t0.Add(time.Hour))
-	if e := f.entry("tmdb", "5"); e.Status != library.Completed {
+	st := func(id string, at time.Time) { f.process(ev("Stop", id), Options{WatchedAt: at}) }
+	st("501", t0)
+	st("502", t0.Add(time.Hour))
+	if e := f.entry("tvdb", "5"); e.Status != library.Completed {
 		t.Fatalf("show = %s", e.Status)
 	}
-	st("a", t0.Add(24*time.Hour))
-	f.process(Event{Kind: "Play", Type: "Episode", SeriesName: "Mini", Imdb: "a"}, Options{})
-	if e := f.entry("tmdb", "5"); e.Status != library.Completed {
+	st("501", t0.Add(24*time.Hour))
+	f.process(ev("Play", "501"), Options{})
+	if e := f.entry("tvdb", "5"); e.Status != library.Completed {
 		t.Errorf("rewatch reopened the show: %s", e.Status)
 	}
 }
@@ -410,13 +425,12 @@ func TestCompletedShowStaysCompletedOnRewatch(t *testing.T) {
 func TestFirstSightingAtSeason3AssumesEarlierSeasons(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
-	f.find.AddEpisodeResult("imdb_id", "s3e2", 1668, 3, 2)
 	// A Play at S3 for an untracked show creates nothing yet.
-	f.process(Event{Kind: "Play", Type: "Episode", SeriesName: "Friends", Imdb: "s3e2"}, Options{})
-	f.noEntry("tmdb", "1668")
+	f.process(f.ep("Play", 3, 2, false), Options{})
+	f.noEntry("tvdb", "7000")
 	// The first finished play does, and assumes S1-S2.
-	f.process(Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Imdb: "s3e2", Played: true}, Options{})
-	e := f.entry("tmdb", "1668")
+	f.process(f.ep("Stop", 3, 2, true), Options{})
+	e := f.entry("tvdb", "7000")
 	ws := f.watches(e)
 	if got := countSource(ws, library.SourceAssumed); got != 6 {
 		t.Errorf("assumed watches = %d, want 6 (S1 and S2, 3 episodes each)", got)
@@ -431,9 +445,8 @@ func TestFirstSightingAtSeason3AssumesEarlierSeasons(t *testing.T) {
 		t.Errorf("show = %s", e.Status)
 	}
 	// Already tracked: a later first play of S1 does not add assumed watches.
-	f.find.AddEpisodeResult("imdb_id", "s1e1", 1668, 1, 1)
 	before := len(f.watches(e))
-	f.process(Event{Kind: "Stop", Type: "Episode", SeriesName: "Friends", Imdb: "s1e1", Played: true}, Options{})
+	f.process(f.ep("Stop", 1, 1, true), Options{})
 	if got := countSource(f.watches(e), library.SourceAssumed); got != 6 {
 		t.Errorf("assumed watches grew to %d", got)
 	}

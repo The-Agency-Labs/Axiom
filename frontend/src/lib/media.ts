@@ -114,10 +114,10 @@ export const SOURCE_NAMES: Record<string, string> = {
 	manual: 'Manual'
 };
 
-/** Shows and anime tracked through TMDB have seasons and per-episode watches. */
-export const hasEpisodes = (kind: string, source: string) => (kind === 'tv' || kind === 'anime') && source === 'tmdb';
-/** Anime without a TMDB match: just an episode counter (MyAnimeList / AniList). */
-export const isCountAnime = (kind: string, source: string) => kind === 'anime' && source !== 'tmdb';
+/** Shows and anime come from TheTVDB (a leftover TMDB show without a TVDB match still works) and have seasons and per-episode watches. */
+export const hasEpisodes = (kind: string, source: string) => (kind === 'tv' || kind === 'anime') && (source === 'tvdb' || source === 'tmdb');
+/** Anime without a TVDB match: just an episode counter (MyAnimeList / AniList). */
+export const isCountAnime = (kind: string, source: string) => kind === 'anime' && source !== 'tvdb' && source !== 'tmdb';
 export const isFilmKind = (kind: string) => kind === 'movie' || kind === 'anime_movie';
 
 /**

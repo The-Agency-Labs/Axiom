@@ -2,11 +2,9 @@ package catalogtest
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
 )
 
 // FindTMDB wraps a TMDB fake with a scriptable Find (lookup by external id).
@@ -55,53 +53,19 @@ func (f *FindTMDB) Find(_ context.Context, id, source string) (map[string]any, e
 // UseTMDB rebuilds the Env's catalog on another TMDB implementation (e.g. a
 // FindTMDB); the Env keeps using its clock.
 func (e *Env) UseTMDB(p catalog.TMDB) {
-	reg := catalog.NewRegistry(catalog.Providers{TMDB: p}, e.Mappings)
+	e.tmdb = p
+	e.rebuild()
+}
+
+// UseTVDB adds a TVDB client (normally the Env's TVDB fake) to the catalog:
+// from then on shows are TVDB shows.
+func (e *Env) UseTVDB(p catalog.TVDB) {
+	e.tvdb = p
+	e.rebuild()
+}
+
+func (e *Env) rebuild() {
+	reg := catalog.NewRegistry(catalog.Providers{TMDB: e.tmdb, TVDB: e.tvdb}, e.Mappings)
 	e.Catalog = catalog.New(e.Conn, e.Q, reg)
 	e.Catalog.Now = e.Now
-}
-
-// TVDB is a scriptable fake of the TVDB client's Episode and SeriesTMDBID.
-type TVDB struct {
-	mu       sync.Mutex
-	episodes map[string]providers.Metadata
-	series   map[string]string
-	// Calls records "episode:<id>" and "series:<id>".
-	Calls []string
-}
-
-// NewTVDB returns an empty fake: every episode is a 404 (a miss).
-func NewTVDB() *TVDB {
-	return &TVDB{episodes: map[string]providers.Metadata{}, series: map[string]string{}}
-}
-
-// AddEpisode scripts a TVDB episode.
-func (f *TVDB) AddEpisode(id string, seriesID, season, episode int) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.episodes[id] = providers.Metadata{
-		"episode_id": id, "series_id": float64(seriesID), "season_number": float64(season), "episode_number": float64(episode),
-	}
-}
-
-// AddSeries scripts the TMDB id of a TVDB series.
-func (f *TVDB) AddSeries(seriesID int, tmdbID string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.series[fmt.Sprint(seriesID)] = tmdbID
-}
-
-// Episode returns (nil, nil) for unknown episodes, like the real client on a 404.
-func (f *TVDB) Episode(_ context.Context, id string) (providers.Metadata, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.Calls = append(f.Calls, "episode:"+id)
-	return f.episodes[id], nil
-}
-
-// SeriesTMDBID returns "" for unknown series.
-func (f *TVDB) SeriesTMDBID(_ context.Context, id string) (string, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.Calls = append(f.Calls, "series:"+id)
-	return f.series[id], nil
 }

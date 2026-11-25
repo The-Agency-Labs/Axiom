@@ -28,17 +28,23 @@ func unsupported(kind, source string) error {
 
 // Metadata returns the provider metadata for one title.
 //
-//   - tv, movie: TMDB.
-//   - anime, anime_movie from TMDB: the whole show (seasons, specials,
-//     episodes) or the film, enriched with AniList data (native title,
-//     studios) when a mapping exists. With source mal or anilist (a title
-//     with no TMDB match) the MAL/AniList entry itself, a count-based anime.
+//   - tv, anime from TVDB: the series with its aired seasons, entirely from
+//     TheTVDB (no TMDB or AniList data is mixed in; the anilist/mal ids of the
+//     mapping are added for matching only).
+//   - movie: TMDB. anime_movie from TMDB: the film, enriched with AniList data
+//     (native title, studios) when a mapping exists.
+//   - tv, anime from TMDB: a show with no TVDB match that was never converted.
+//   - anime with source mal or anilist (a title with no TVDB or TMDB match) is
+//     the MAL/AniList entry itself, a count-based anime.
 //   - manga: MangaUpdates, AniList or MAL (the default); comic: Comic Vine;
 //     book: Hardcover or Open Library; game: IGDB; boardgame: BoardGameGeek.
 func (r *Registry) Metadata(ctx context.Context, kind, source, id string) (Metadata, error) {
 	p := r.P
 	switch kind {
 	case KindTV:
+		if source == SourceTVDB && p.TVDB != nil {
+			return p.TVDB.Series(ctx, id)
+		}
 		if source == SourceTMDB && p.TMDB != nil {
 			return p.TMDB.TV(ctx, id)
 		}
@@ -48,6 +54,15 @@ func (r *Registry) Metadata(ctx context.Context, kind, source, id string) (Metad
 		}
 	case KindAnime, KindAnimeMovie:
 		switch source {
+		case SourceTVDB:
+			if p.TVDB == nil || kind != KindAnime {
+				break
+			}
+			meta, err := p.TVDB.Series(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return r.withTVDBMappingIDs(ctx, id, meta), nil
 		case SourceTMDB:
 			if p.TMDB == nil {
 				break
@@ -124,7 +139,10 @@ func (r *Registry) Search(ctx context.Context, kind, source, query string, page 
 	}
 	switch kind {
 	case KindTV:
-		if p.TMDB != nil {
+		if p.TVDB != nil {
+			return r.searchShows(ctx, KindTV, query, page, showAdult)
+		}
+		if p.TMDB != nil { // no TVDB key: the old TMDB behaviour
 			return p.TMDB.Search(ctx, "tv", query, page, showAdult)
 		}
 	case KindMovie:
@@ -142,6 +160,9 @@ func (r *Registry) Search(ctx context.Context, kind, source, query string, page 
 				return p.MAL.Search(ctx, "anime", query, page, showAdult)
 			}
 		default:
+			if kind == KindAnime && p.TVDB != nil {
+				return r.searchShows(ctx, KindAnime, query, page, showAdult)
+			}
 			return r.searchAnime(ctx, kind, query, page, showAdult)
 		}
 	case KindManga:
@@ -183,11 +204,58 @@ func (r *Registry) Search(ctx context.Context, kind, source, query string, page 
 	return nil, unsupported(kind, source)
 }
 
+// searchShows is the show search: TVDB's own search (anime and live action
+// alike), split by the Fribb mapping into tv and anime, so "tv" lists the live
+// action and "anime" the anime. The anime search also asks AniList (the best
+// anime search there is) and places its hits in TVDB, so romaji titles that
+// TVDB's aliases miss are found; AniList hits come first.
+func (r *Registry) searchShows(ctx context.Context, kind, query string, page int, showAdult bool) (SearchPage, error) {
+	res, err := r.P.TVDB.Search(ctx, query, page)
+	if err != nil && kind != KindAnime {
+		return nil, err
+	}
+	var anime map[string]struct{}
+	if r.Mappings != nil {
+		if ids, ierr := r.Mappings.AnimeTMDBIDs(ctx); ierr == nil {
+			anime = ids.TVDBShows
+		}
+	}
+	out := []providers.Metadata{}
+	seen := map[string]bool{}
+	if kind == KindAnime && r.P.AniList != nil {
+		if placed, perr := r.searchAnime(ctx, kind, query, page, showAdult); perr == nil {
+			for _, hit := range providers.List(placed, "results") {
+				out = append(out, hit)
+				seen[providers.Str(hit, "source")+":"+idString(hit["media_id"])] = true
+			}
+		} else if err != nil {
+			return nil, err
+		}
+	}
+	for _, hit := range providers.List(res, "results") {
+		id := idString(hit["media_id"])
+		_, isAnime := anime[id]
+		if isAnime != (kind == KindAnime) || seen["tvdb:"+id] {
+			continue
+		}
+		hit = copyMap(hit)
+		hit["media_type"] = kind
+		out = append(out, hit)
+	}
+	page2 := copyMap(res)
+	if page2 == nil {
+		page2 = SearchPage{"page": page, "total_results": len(out), "total_pages": 1}
+	}
+	page2["results"] = out
+	return page2, nil
+}
+
 // searchAnime searches AniList (the best anime search there is) and places
-// every hit in TMDB through the mapping: a hit with a TMDB show (or film, for
-// anime_movie) becomes a TMDB result, so adding it creates the whole
-// TMDB-structured anime; several cours of one show collapse into one result.
-// Hits with no TMDB match stay AniList results (count-based anime).
+// every hit through the mapping: a hit with a TVDB series becomes a TVDB
+// result (adding it creates the whole show with TVDB's seasons), a hit that is
+// a film (and for anime_movie any hit with a TMDB film) becomes a TMDB film;
+// several cours of one show collapse into one result. Hits with no match stay
+// AniList results (count-based anime).
 func (r *Registry) searchAnime(ctx context.Context, kind, query string, page int, showAdult bool) (SearchPage, error) {
 	if r.P.AniList == nil {
 		return nil, unsupported(kind, "")
@@ -201,20 +269,23 @@ func (r *Registry) searchAnime(ctx context.Context, kind, query string, page int
 	for _, hit := range providers.List(res, "results") {
 		hit = copyMap(hit)
 		m, _ := r.Mappings.Lookup(ctx, SourceAniList, idString(hit["media_id"]))
-		var tmdbID int64
+		var placedID int64
+		placedSource := SourceTMDB
 		hitKind := KindAnime
 		if m != nil {
 			switch {
-			case m.TmdbMovie.Valid && (kind == KindAnimeMovie || !m.TmdbTv.Valid):
-				tmdbID, hitKind = m.TmdbMovie.Int64, KindAnimeMovie
-			case m.TmdbTv.Valid:
-				tmdbID = m.TmdbTv.Int64
+			case m.TmdbMovie.Valid && (kind == KindAnimeMovie || toUpper(m.Kind) == "MOVIE" || (!m.TvdbID.Valid && !m.TmdbTv.Valid)):
+				placedID, hitKind = m.TmdbMovie.Int64, KindAnimeMovie
+			case m.TvdbID.Valid && r.P.TVDB != nil:
+				placedID, placedSource = m.TvdbID.Int64, SourceTVDB
+			case m.TmdbTv.Valid && r.P.TVDB == nil: // no TVDB key: the old TMDB behaviour
+				placedID = m.TmdbTv.Int64
 			}
 		}
-		if tmdbID != 0 {
-			hit["source"] = SourceTMDB
-			hit["media_id"] = tmdbID
-			key := hitKind + ":" + strconv.FormatInt(tmdbID, 10)
+		if placedID != 0 {
+			hit["source"] = placedSource
+			hit["media_id"] = placedID
+			key := hitKind + ":" + placedSource + ":" + strconv.FormatInt(placedID, 10)
 			if seen[key] {
 				continue
 			}
@@ -316,6 +387,50 @@ func (r *Registry) pickMapping(ctx context.Context, kind, id string) *mappings.M
 		}
 	}
 	return best
+}
+
+// withTVDBMappingIDs adds the AniList and MAL ids of the series' first cour
+// to its metadata, for matching (they are never a metadata source).
+func (r *Registry) withTVDBMappingIDs(ctx context.Context, tvdbID string, meta Metadata) Metadata {
+	out := copyMap(meta)
+	if r.Mappings == nil {
+		return out
+	}
+	n, err := strconv.ParseInt(tvdbID, 10, 64)
+	if err != nil {
+		return out
+	}
+	rows, err := r.Mappings.ByTVDB(ctx, n)
+	if err != nil || len(rows) == 0 {
+		return out
+	}
+	best := rows[0]
+	for _, m := range rows {
+		if m.TvdbSeason.Valid && m.TvdbSeason.Int64 == 1 && m.TvdbOffset == 0 {
+			best = m
+			break
+		}
+	}
+	if best.AnilistID.Valid {
+		out["anilist_id"] = best.AnilistID.Int64
+	}
+	if best.MalID.Valid {
+		out["mal_id"] = best.MalID.Int64
+	}
+	return out
+}
+
+// IsAnimeTVDB classifies a TVDB series with the mapping: whether it is anime.
+func (r *Registry) IsAnimeTVDB(ctx context.Context, tvdbID string) bool {
+	if r.Mappings == nil {
+		return false
+	}
+	ids, err := r.Mappings.AnimeTMDBIDs(ctx)
+	if err != nil {
+		return false
+	}
+	_, ok := ids.TVDBShows[tvdbID]
+	return ok
 }
 
 // IsAnime classifies a TMDB title with the mapping: whether a show (or film)

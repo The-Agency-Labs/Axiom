@@ -106,9 +106,9 @@ func (s *Service) ImportHistory(ctx context.Context, u db.User, c *Client, jelly
 	if err != nil {
 		return res, err
 	}
-	seriesTmdb := map[string]string{}
+	seriesTvdb := map[string]string{}
 	for _, sr := range series {
-		seriesTmdb[sr.ID] = sr.ProviderIDs["Tmdb"]
+		seriesTvdb[sr.ID] = sr.ProviderIDs["Tvdb"]
 	}
 	all, err := c.Items(ctx, jfID, "Movie,Episode", url.Values{"Filters": {"IsPlayed"}})
 	if err != nil {
@@ -144,7 +144,7 @@ func (s *Service) ImportHistory(ctx context.Context, u db.User, c *Client, jelly
 			Kind: EventStop, Type: p.item.Type, Name: p.item.Name, Year: p.item.ProductionYear,
 			SeriesName: p.item.SeriesName, Season: p.item.ParentIndexNumber, Episode: p.item.IndexNumber,
 			Tmdb: p.item.ProviderIDs["Tmdb"], Imdb: p.item.ProviderIDs["Imdb"], Tvdb: p.item.ProviderIDs["Tvdb"],
-			SeriesTmdb: seriesTmdb[p.item.SeriesID], Played: true,
+			SeriesTvdb: seriesTvdb[p.item.SeriesID], Played: true,
 		}
 		r, err := s.Process(ctx, u, ev, Options{WatchedAt: p.at, Import: true})
 		switch {

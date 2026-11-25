@@ -80,7 +80,15 @@
 		sheet = null;
 
 		get<TitleMetadata>(`/metadata/${kind}/${source}/${encodeURIComponent(mediaId)}`)
-			.then((d) => key === loadedFor && (md = d))
+			.then((d) => {
+				if (key !== loadedFor) return;
+				md = d;
+				// An old TMDB link to a show: the server answers with its TVDB series; follow it.
+				const canonical = d.source;
+				if ((kind === 'tv' || kind === 'anime') && canonical === 'tvdb' && source !== 'tvdb' && d.media_id) {
+					void goto(titleHref({ source: 'tvdb', media_id: String(d.media_id) }, kind, hint), { replaceState: true });
+				}
+			})
 			.catch(() => {})
 			.finally(() => key === loadedFor && (mdLoading = false));
 
@@ -348,7 +356,7 @@
 		});
 	}
 
-	const canReclassify = $derived(isAdmin && !!entry && source === 'tmdb' && ['tv', 'anime', 'movie', 'anime_movie'].includes(kind));
+	const canReclassify = $derived(isAdmin && !!entry && (source === 'tmdb' || source === 'tvdb') && ['tv', 'anime', 'movie', 'anime_movie'].includes(kind));
 	const bookItem = $derived<Record<string, unknown>>({
 		...(entry?.item ?? { source, media_id: mediaId, media_type: 'book', title, image }),
 		...(md ? { metadata: md } : {}),

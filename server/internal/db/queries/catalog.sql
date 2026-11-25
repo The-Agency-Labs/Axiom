@@ -51,12 +51,12 @@ INSERT INTO item_seasons (item_id, number, title, image, air_date, episode_count
 VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: InsertItemEpisode :exec
-INSERT INTO item_episodes (item_id, season, number, position, title, air_date, runtime, image, overview, kind, score)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO item_episodes (item_id, season, number, position, title, air_date, runtime, image, overview, kind, score, ext_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT (item_id, season, number) DO UPDATE SET
     position = excluded.position, title = excluded.title, air_date = excluded.air_date,
     runtime = excluded.runtime, image = excluded.image, overview = excluded.overview,
-    kind = excluded.kind, score = excluded.score;
+    kind = excluded.kind, score = excluded.score, ext_id = excluded.ext_id;
 
 -- name: ListItemSeasons :many
 SELECT * FROM item_seasons WHERE item_id = ? ORDER BY number;

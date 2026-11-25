@@ -27,7 +27,7 @@ func libraryValidKind(kind string) bool {
 // libraryKnownSource mirrors app.models.Sources.
 func libraryKnownSource(source string) bool {
 	switch source {
-	case catalog.SourceTMDB, catalog.SourceMAL, catalog.SourceAniList, catalog.SourceMangaUpdates,
+	case catalog.SourceTMDB, catalog.SourceTVDB, catalog.SourceMAL, catalog.SourceAniList, catalog.SourceMangaUpdates,
 		catalog.SourceIGDB, catalog.SourceOpenLibrary, catalog.SourceHardcover, catalog.SourceComicVine,
 		catalog.SourceBGG, catalog.SourceManual:
 		return true

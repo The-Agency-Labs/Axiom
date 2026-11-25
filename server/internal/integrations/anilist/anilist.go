@@ -3,9 +3,9 @@
 // and the manga/count-based half of anilist.py.
 //
 // AniList splits a show into one entry per cour or season. Encompass tracks
-// the show itself, so each anime entry is placed in its TMDB show through the
-// Fribb mapping (season plus episode offset) and its watched episodes are
-// marked there, by position. Anime films become anime_movie items. Entries
+// the show itself, so each anime entry is placed in its TVDB series through
+// the Fribb mapping (TVDB season plus episode offset) and its watched
+// episodes are marked there, by position. Anime films become anime_movie items. Entries
 // the mapping can't place stay count-based anime (source mal when the media
 // has a MAL id, else anilist), and manga are count-based entries whose
 // progress is chapters.
@@ -226,7 +226,7 @@ type run struct {
 	loc    *time.Location
 
 	bulk map[dateKey]bool
-	// expected: statuses of the AniList entries of each TMDB show, from the
+	// expected: statuses of the AniList entries of each TVDB series, from the
 	// placement pass (decides the status a new show starts with).
 	expected map[int64]map[string]bool
 	// placed: the same for entries that were actually placed.
@@ -293,9 +293,9 @@ func (im *Importer) Run(ctx context.Context, userID int64, username string, opts
 			continue
 		}
 		fresh = append(fresh, placement{e, m})
-		if m != nil && m.TmdbTv.Valid && !(e.Media.Format == "MOVIE" && m.TmdbMovie.Valid) {
-			if _, ok := startOf(seasonOf(m), int(m.TmdbOffset), e.Media.Format); ok {
-				add(r.expected, m.TmdbTv.Int64, e.Status)
+		if m != nil && m.TvdbID.Valid && !(e.Media.Format == "MOVIE" && m.TmdbMovie.Valid) {
+			if _, ok := startOf(seasonOf(m), int(m.TvdbOffset), e.Media.Format); ok {
+				add(r.expected, m.TvdbID.Int64, e.Status)
 			}
 		}
 	}
@@ -333,11 +333,12 @@ func add(m map[int64]map[string]bool, id int64, status string) {
 	m[id][status] = true
 }
 
+// seasonOf is the TVDB season the mapping puts the cour in (nil: not given).
 func seasonOf(m *mappings.Mapping) *int {
-	if !m.TmdbSeason.Valid {
+	if !m.TvdbSeason.Valid {
 		return nil
 	}
-	s := int(m.TmdbSeason.Int64)
+	s := int(m.TvdbSeason.Int64)
 	return &s
 }
 
@@ -366,7 +367,7 @@ func (r *run) mapping(ctx context.Context, m media) (*mappings.Mapping, error) {
 	return nil, nil
 }
 
-// importAnime places an entry as a TMDB show or film; false if it can't be placed.
+// importAnime places an entry as a TVDB show or a TMDB film; false if it can't be placed.
 func (r *run) importAnime(ctx context.Context, e entry, m *mappings.Mapping) (bool, error) {
 	if m == nil {
 		return false, nil
@@ -374,7 +375,7 @@ func (r *run) importAnime(ctx context.Context, e entry, m *mappings.Mapping) (bo
 	if e.Media.Format == "MOVIE" && m.TmdbMovie.Valid {
 		return true, r.importMovie(ctx, e, m.TmdbMovie.Int64)
 	}
-	if m.TmdbTv.Valid {
+	if m.TvdbID.Valid {
 		ok, err := r.importShow(ctx, e, m)
 		if err != nil || ok {
 			return ok, err
@@ -397,18 +398,22 @@ func watchedCount(e entry) int {
 func isWatching(status string) bool { return status == "CURRENT" || status == "REPEATING" }
 
 func ensureItem(ctx context.Context, cat *catalog.Catalog, kind, id string) (catalog.Item, error) {
-	return cat.EnsureItem(ctx, kind, catalog.SourceTMDB, id)
+	source := catalog.SourceTVDB
+	if kind == catalog.KindAnimeMovie {
+		source = catalog.SourceTMDB // films are TMDB
+	}
+	return cat.EnsureItem(ctx, kind, source, id)
 }
 
-// importShow marks the entry's episodes in its TMDB show; false if TMDB lacks
-// the season. The mapping sometimes names a season TMDB has since merged or
-// renumbered; such entries are better kept as plain anime than misplaced.
+// importShow marks the entry's episodes in its TVDB series; false if TVDB
+// lacks the season. The mapping sometimes names a season TVDB has since merged
+// or renumbered; such entries are better kept as plain anime than misplaced.
 func (r *run) importShow(ctx context.Context, e entry, m *mappings.Mapping) (bool, error) {
-	start, ok := startOf(seasonOf(m), int(m.TmdbOffset), e.Media.Format)
+	start, ok := startOf(seasonOf(m), int(m.TvdbOffset), e.Media.Format)
 	if !ok {
 		return false, nil
 	}
-	tvID := m.TmdbTv.Int64
+	tvID := m.TvdbID.Int64
 	item, err := ensureItem(ctx, r.im.Catalog, catalog.KindAnime, strconv.FormatInt(tvID, 10))
 	if err != nil {
 		return false, err
@@ -425,23 +430,23 @@ func (r *run) importShow(ctx context.Context, e entry, m *mappings.Mapping) (boo
 		seasons[int(s.Number)] = int(s.EpisodeCount)
 	}
 	if _, ok := seasons[start.Season]; !ok {
-		slog.InfoContext(ctx, "anilist: TMDB show has no such season", "tmdb", tvID, "season", start.Season, "title", e.title())
+		slog.InfoContext(ctx, "anilist: TVDB series has no such season", "tvdb", tvID, "season", start.Season, "title", e.title())
 		return false, nil
 	}
 	claimed := map[int]bool{}
-	others, err := r.im.Mappings.ByTMDBTV(ctx, tvID)
+	others, err := r.im.Mappings.ByTVDB(ctx, tvID)
 	if err != nil {
 		return false, err
 	}
 	for _, o := range others {
-		if o.ID != m.ID && o.TmdbSeason.Valid && int(o.TmdbSeason.Int64) != start.Season {
-			claimed[int(o.TmdbSeason.Int64)] = true
+		if o.ID != m.ID && o.TvdbSeason.Valid && int(o.TvdbSeason.Int64) != start.Season {
+			claimed[int(o.TvdbSeason.Int64)] = true
 		}
 	}
 	count := watchedCount(e)
 	slots := episodeSlots(start, seasons, count, claimed)
 	if count > 0 && len(slots) == 0 {
-		slog.InfoContext(ctx, "anilist: no TMDB episodes for entry", "tmdb", tvID, "title", e.title())
+		slog.InfoContext(ctx, "anilist: no TVDB episodes for entry", "tvdb", tvID, "title", e.title())
 		return false, nil
 	}
 	add(r.placed, tvID, e.Status)

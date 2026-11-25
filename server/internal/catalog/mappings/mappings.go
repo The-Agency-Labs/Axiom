@@ -39,10 +39,13 @@ const (
 // Mapping is one row of the dataset.
 type Mapping = db.AnimeMapping
 
-// TMDBIDs are the TMDB ids that are anime, as decimal strings.
+// TMDBIDs are the TMDB ids that are anime, as decimal strings (plus the TVDB
+// series ids that are anime: shows are told apart by those).
 type TMDBIDs struct {
 	Shows map[string]struct{}
 	Films map[string]struct{}
+	// TVDBShows are the anime TVDB series ids.
+	TVDBShows map[string]struct{}
 }
 
 // Store reads and refreshes the mapping table. Safe for concurrent use.
@@ -143,6 +146,10 @@ type row struct {
 	TmdbSeason *int64 `json:"tmdb_season"`
 	TmdbOffset int64  `json:"tmdb_offset"`
 	TvdbID     *int64 `json:"tvdb_id"`
+	// TvdbSeason is the season of the TVDB series the cour is (0 = specials);
+	// TvdbOffset the episodes of that season before it.
+	TvdbSeason *int64 `json:"tvdb_season"`
+	TvdbOffset int64  `json:"tvdb_offset"`
 }
 
 // toRow converts a dataset entry; ok is false for entries with neither id.
@@ -156,6 +163,7 @@ func toRow(e entry) (row, bool) {
 	}
 	var season, offset struct {
 		TMDB flexInt `json:"tmdb"`
+		TVDB flexInt `json:"tvdb"`
 	}
 	// A themoviedb_id that is not an object just means "no TMDB ids".
 	_ = json.Unmarshal(e.TMDB, &tmdb)
@@ -169,7 +177,7 @@ func toRow(e entry) (row, bool) {
 		MalID: e.MalID.ptr(), AnilistID: e.AnilistID.ptr(), Kind: kind,
 		TmdbTv: tmdb.TV.ptr(), TmdbMovie: tmdb.Movie.ptr(),
 		TmdbSeason: season.TMDB.ptr(), TmdbOffset: offset.TMDB.Val,
-		TvdbID: e.TVDB.ptr(),
+		TvdbID: e.TVDB.ptr(), TvdbSeason: season.TVDB.ptr(), TvdbOffset: offset.TVDB.Val,
 	}, true
 }
 
@@ -371,6 +379,22 @@ func (s *Store) ByTVDB(ctx context.Context, id int64) ([]Mapping, error) {
 	return s.q.ListAnimeMappingsByTVDB(ctx, nullInt(id))
 }
 
+// OtherTVDB returns the mappings of a TVDB series except the row exceptID:
+// the other cours that claim seasons of the same series.
+func (s *Store) OtherTVDB(ctx context.Context, tvdbID, exceptID int64) ([]Mapping, error) {
+	all, err := s.ByTVDB(ctx, tvdbID)
+	if err != nil {
+		return nil, err
+	}
+	out := all[:0]
+	for _, m := range all {
+		if m.ID != exceptID {
+			out = append(out, m)
+		}
+	}
+	return out, nil
+}
+
 // OtherTMDBTV returns the mappings of a TMDB show except the row exceptID:
 // the other cours that claim seasons of the same show.
 func (s *Store) OtherTMDBTV(ctx context.Context, tmdbTV, exceptID int64) ([]Mapping, error) {
@@ -403,7 +427,14 @@ func (s *Store) AnimeTMDBIDs(ctx context.Context) (TMDBIDs, error) {
 	if err != nil {
 		return TMDBIDs{}, err
 	}
-	ids := TMDBIDs{Shows: map[string]struct{}{}, Films: map[string]struct{}{}}
+	ids := TMDBIDs{Shows: map[string]struct{}{}, Films: map[string]struct{}{}, TVDBShows: map[string]struct{}{}}
+	tvdb, err := s.q.ListAnimeTVDBIDs(ctx)
+	if err != nil {
+		return TMDBIDs{}, err
+	}
+	for _, id := range tvdb {
+		ids.TVDBShows[strconv.FormatInt(id.Int64, 10)] = struct{}{}
+	}
 	for _, r := range rows {
 		if r.TmdbTv.Valid && r.TmdbTv.Int64 != 0 {
 			ids.Shows[strconv.FormatInt(r.TmdbTv.Int64, 10)] = struct{}{}

@@ -9,8 +9,9 @@ Licensed AGPL-3.0.
 ## Features
 
 - **Library:** status, score, progress, rewatches/rereads, dates and notes for
-  every media type. Anime and anime films are tracked as whole TMDB shows and
-  films, with seasons and specials.
+  every media type. Shows, anime included, come from TheTVDB (its aired
+  seasons and specials, which is also how Jellyfin numbers them); movies and
+  anime films come from TMDB. Shows need `TVDB_API`.
 - **Now:** one-tap "watched next episode" and +1 steppers for what you're in
   the middle of.
 - **Imports and sync (additive, never lowers progress):**
@@ -55,6 +56,11 @@ Settings come from `.env`:
 Coming from the old Django version of Encompass:
 `encompass migrate-django --from <old db.sqlite3> --timezone <zone>`
 (`--dry-run` first).
+
+Shows tracked from TMDB (before shows moved to TheTVDB) are converted in place
+with `encompass shows-to-tvdb --dry-run`, then without `--dry-run`: back up the
+database first; it needs `TVDB_API` and `TMDB_API`, is safe to repeat and reports
+every watch it had to place on the closest episode.
 
 ## Development
 

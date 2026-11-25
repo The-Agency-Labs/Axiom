@@ -101,7 +101,7 @@ func TestImportHistoryAdditiveIncrementalAndTolerant(t *testing.T) {
 	f.friends()
 	f.env.TMDB.AddMovie("603", "The Matrix", "1999-03-31")
 	j := &fakeJellyfin{
-		series: []map[string]any{{"Id": "s1", "Type": "Series", "ProviderIds": map[string]string{"Tmdb": "1668"}}},
+		series: []map[string]any{{"Id": "s1", "Type": "Series", "ProviderIds": map[string]string{"Tvdb": "7000"}}},
 		played: []map[string]any{
 			// Scrambled: the import must replay oldest first.
 			jfMovie("m1", "The Matrix", "603", "2024-05-03T20:00:00.0000000Z"),
@@ -120,7 +120,7 @@ func TestImportHistoryAdditiveIncrementalAndTolerant(t *testing.T) {
 	if j.badAuth != 0 || j.isPlayed == 0 {
 		t.Errorf("auth failures %d, IsPlayed requests %d", j.badAuth, j.isPlayed)
 	}
-	show := f.entry("tmdb", "1668")
+	show := f.entry("tvdb", "7000")
 	ws := f.jfWatches(show)
 	if len(ws) != 2 || ws[0].Episode.Int64 != 1 || ws[0].WatchedAt != "2024-05-01T20:00:00Z" || ws[1].WatchedAt != "2024-05-02T20:00:00Z" {
 		t.Fatalf("episode watches (real dates, oldest first) = %+v", ws)
@@ -161,7 +161,7 @@ func TestImportHistoryAdditiveIncrementalAndTolerant(t *testing.T) {
 	if st.Counts["Episode"] != 1 || st.Counts["Movie"] != 0 || len(st.Failures) != 1 {
 		t.Errorf("incremental status = %+v", st)
 	}
-	show = f.entry("tmdb", "1668")
+	show = f.entry("tvdb", "7000")
 	if got := len(f.jfWatches(show)); got != 3 {
 		t.Errorf("watches after incremental = %d", got)
 	}
@@ -174,7 +174,7 @@ func TestImportHistoryAdditiveIncrementalAndTolerant(t *testing.T) {
 	if _, err := f.svc.SyncUser(ctx, f.user, true); err != nil {
 		t.Fatal(err)
 	}
-	show = f.entry("tmdb", "1668")
+	show = f.entry("tvdb", "7000")
 	if len(f.watches(show)) != before || f.seasonStatus(show, 1) != library.Completed || len(f.watches(f.entry("tmdb", "603"))) != 1 {
 		t.Errorf("full replay changed state: %d -> %d watches", before, len(f.watches(show)))
 	}
@@ -218,7 +218,7 @@ func TestSyncAllMapsUsersFromConfigAndSettings(t *testing.T) {
 	f := newFixture(t)
 	f.friends()
 	j := &fakeJellyfin{
-		series: []map[string]any{{"Id": "s1", "ProviderIds": map[string]string{"Tmdb": "1668"}}},
+		series: []map[string]any{{"Id": "s1", "ProviderIds": map[string]string{"Tvdb": "7000"}}},
 		played: []map[string]any{jfEpisode("e1", 1, 1, true, "2024-05-01T20:00:00Z")},
 	}
 	f.syncSetup(t, j)

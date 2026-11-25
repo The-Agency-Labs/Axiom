@@ -30,6 +30,9 @@ func validKind(kind string) bool {
 // a TMDB title is a tv/anime show or a movie/anime_movie film, whichever the
 // classification (or the user) decided.
 func lookupKinds(kind, source string) []string {
+	if source == SourceTVDB {
+		return []string{KindTV, KindAnime}
+	}
 	if source == SourceTMDB {
 		switch kind {
 		case KindTV, KindAnime:
@@ -45,6 +48,15 @@ func lookupKinds(kind, source string) []string {
 // mapping decides, unless the caller explicitly asked for anime on a title
 // the mapping doesn't know, which is kept as anime and marked overridden.
 func (c *Catalog) classify(ctx context.Context, kind, source, id string) (resolved string, override bool) {
+	if source == SourceTVDB && IsShow(kind) {
+		switch anime := c.Reg.IsAnimeTVDB(ctx, id); {
+		case anime:
+			return KindAnime, false
+		case kind == KindAnime:
+			return kind, true
+		}
+		return KindTV, false
+	}
 	if source != SourceTMDB || !(IsShow(kind) || IsMovie(kind)) {
 		return kind, false
 	}
@@ -77,6 +89,9 @@ func (c *Catalog) EnsureItem(ctx context.Context, kind, source, externalID strin
 	if externalID == "" {
 		return Item{}, errors.New("catalog: empty external id")
 	}
+	if IsShow(kind) {
+		source, externalID = c.ResolveShowRef(ctx, source, externalID)
+	}
 	for _, k := range lookupKinds(kind, source) {
 		item, err := c.Q.GetItemByKey(ctx, db.GetItemByKeyParams{Source: source, ExternalID: externalID, Kind: k})
 		if errors.Is(err, sql.ErrNoRows) {
@@ -85,7 +100,7 @@ func (c *Catalog) EnsureItem(ctx context.Context, kind, source, externalID strin
 		if err != nil {
 			return Item{}, err
 		}
-		if item.KindOverride == 0 && source == SourceTMDB {
+		if item.KindOverride == 0 && (source == SourceTMDB || source == SourceTVDB) {
 			if want, _ := c.classify(ctx, item.Kind, source, externalID); want != item.Kind {
 				if err := c.Q.UpdateItemKindAuto(ctx, db.UpdateItemKindAutoParams{Kind: want, ID: item.ID}); err != nil {
 					slog.WarnContext(ctx, "catalog: reclassify failed", "item", item.ID, "to", want, "err", err)
@@ -172,7 +187,7 @@ func (c *Catalog) FindByExternalID(ctx context.Context, source, id string, kinds
 	return Item{}, ErrNotFound
 }
 
-// Reclassify moves a TMDB title between tv and anime (or movie and
+// Reclassify moves a TVDB or TMDB title between tv and anime (or movie and
 // anime_movie) and pins the choice (kind_override), so the mapping never
 // changes it again. Entries keep pointing at the item.
 func (c *Catalog) Reclassify(ctx context.Context, itemID int64, kind string) (Item, error) {
@@ -181,7 +196,7 @@ func (c *Catalog) Reclassify(ctx context.Context, itemID int64, kind string) (It
 		return Item{}, err
 	}
 	ok := (IsShow(item.Kind) && IsShow(kind)) || (IsMovie(item.Kind) && IsMovie(kind))
-	if !ok || item.Source != SourceTMDB {
+	if !ok || (item.Source != SourceTMDB && item.Source != SourceTVDB) {
 		return Item{}, fmt.Errorf("%w: cannot make a %s from %s (%s)", ErrUnsupported, kind, item.Kind, item.Source)
 	}
 	if err := c.Q.UpdateItemKind(ctx, db.UpdateItemKindParams{Kind: kind, ID: itemID}); err != nil {
@@ -212,6 +227,13 @@ func (c *Catalog) storeIDs(ctx context.Context, q *db.Queries, item Item, meta M
 			ids[[2]string{source, s}] = true
 		}
 	}
+	if item.Source == SourceTVDB {
+		// Cross ids are for matching (Jellyfin, AniList, old links) only.
+		remote := asMap(meta["remote_ids"])
+		add("tmdb", remote["tmdb"])
+		add("imdb", remote["imdb"])
+		add("tvdb", item.ExternalID)
+	}
 	if item.Source == SourceTMDB {
 		add("tvdb", meta["tvdb_id"])
 		links := asMap(meta["external_links"])
@@ -225,6 +247,15 @@ func (c *Catalog) storeIDs(ctx context.Context, q *db.Queries, item Item, meta M
 	if c.Reg.Mappings != nil && (IsShow(item.Kind) || IsMovie(item.Kind)) {
 		n, _ := strconv.ParseInt(item.ExternalID, 10, 64)
 		switch {
+		case item.Source == SourceTVDB && n != 0:
+			rows, err := c.Reg.Mappings.ByTVDB(ctx, n)
+			if err != nil {
+				return err
+			}
+			for _, m := range rows {
+				add("mal", nullID(m.MalID))
+				add("anilist", nullID(m.AnilistID))
+			}
 		case item.Source == SourceTMDB && n != 0:
 			var err error
 			var rows []mappingRow
@@ -401,4 +432,39 @@ func metaJSON(meta Metadata) string {
 		return "{}"
 	}
 	return string(b)
+}
+
+// ResolveShowRef maps a reference to a show to where shows live now: a TMDB id
+// (an old link, an old client) becomes the TVDB series of the item that
+// carries that TMDB id, or of the TMDB title's own TVDB cross id; anything
+// else, and shows with no TVDB match, come back unchanged. The cross id only
+// finds the series: the show itself is read from TVDB.
+func (c *Catalog) ResolveShowRef(ctx context.Context, source, id string) (string, string) {
+	if source != SourceTMDB || c.Reg == nil || c.Reg.P.TVDB == nil {
+		return source, id
+	}
+	items, err := c.Q.FindItemsByExternalID(ctx, db.FindItemsByExternalIDParams{Source: SourceTMDB, ExternalID: id})
+	if err == nil {
+		legacy := false
+		for _, it := range items {
+			if !IsShow(it.Kind) {
+				continue
+			}
+			if it.Source == SourceTVDB {
+				return SourceTVDB, it.ExternalID
+			}
+			legacy = legacy || it.Source == SourceTMDB
+		}
+		if legacy {
+			return source, id // a show with no TVDB match stays as it is
+		}
+	}
+	if c.Reg.P.TMDB != nil {
+		if meta, err := c.Reg.P.TMDB.TV(ctx, id); err == nil {
+			if tvdbID := idString(meta["tvdb_id"]); tvdbID != "" && tvdbID != "0" {
+				return SourceTVDB, tvdbID
+			}
+		}
+	}
+	return source, id
 }

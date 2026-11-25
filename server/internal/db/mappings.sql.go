@@ -31,7 +31,7 @@ func (q *Queries) DeleteAnimeMappings(ctx context.Context) error {
 }
 
 const getAnimeMappingByAniList = `-- name: GetAnimeMappingByAniList :one
-SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id FROM anime_mappings WHERE anilist_id = ? ORDER BY id LIMIT 1
+SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset FROM anime_mappings WHERE anilist_id = ? ORDER BY id LIMIT 1
 `
 
 func (q *Queries) GetAnimeMappingByAniList(ctx context.Context, anilistID sql.NullInt64) (AnimeMapping, error) {
@@ -47,12 +47,14 @@ func (q *Queries) GetAnimeMappingByAniList(ctx context.Context, anilistID sql.Nu
 		&i.TmdbSeason,
 		&i.TmdbOffset,
 		&i.TvdbID,
+		&i.TvdbSeason,
+		&i.TvdbOffset,
 	)
 	return i, err
 }
 
 const getAnimeMappingByMAL = `-- name: GetAnimeMappingByMAL :one
-SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id FROM anime_mappings WHERE mal_id = ? ORDER BY id LIMIT 1
+SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset FROM anime_mappings WHERE mal_id = ? ORDER BY id LIMIT 1
 `
 
 func (q *Queries) GetAnimeMappingByMAL(ctx context.Context, malID sql.NullInt64) (AnimeMapping, error) {
@@ -68,12 +70,14 @@ func (q *Queries) GetAnimeMappingByMAL(ctx context.Context, malID sql.NullInt64)
 		&i.TmdbSeason,
 		&i.TmdbOffset,
 		&i.TvdbID,
+		&i.TvdbSeason,
+		&i.TvdbOffset,
 	)
 	return i, err
 }
 
 const insertAnimeMappingBatch = `-- name: InsertAnimeMappingBatch :exec
-INSERT INTO anime_mappings (mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id)
+INSERT INTO anime_mappings (mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset)
 SELECT
     json_extract(j.value, '$.mal_id'),
     json_extract(j.value, '$.anilist_id'),
@@ -82,7 +86,9 @@ SELECT
     json_extract(j.value, '$.tmdb_movie'),
     json_extract(j.value, '$.tmdb_season'),
     COALESCE(json_extract(j.value, '$.tmdb_offset'), 0),
-    json_extract(j.value, '$.tvdb_id')
+    json_extract(j.value, '$.tvdb_id'),
+    json_extract(j.value, '$.tvdb_season'),
+    COALESCE(json_extract(j.value, '$.tvdb_offset'), 0)
 FROM json_each(CAST(?1 AS TEXT)) AS j
 `
 
@@ -93,7 +99,7 @@ func (q *Queries) InsertAnimeMappingBatch(ctx context.Context, rows string) erro
 }
 
 const listAnimeMappingsByTMDBMovie = `-- name: ListAnimeMappingsByTMDBMovie :many
-SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id FROM anime_mappings WHERE tmdb_movie = ? ORDER BY id
+SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset FROM anime_mappings WHERE tmdb_movie = ? ORDER BY id
 `
 
 func (q *Queries) ListAnimeMappingsByTMDBMovie(ctx context.Context, tmdbMovie sql.NullInt64) ([]AnimeMapping, error) {
@@ -115,6 +121,8 @@ func (q *Queries) ListAnimeMappingsByTMDBMovie(ctx context.Context, tmdbMovie sq
 			&i.TmdbSeason,
 			&i.TmdbOffset,
 			&i.TvdbID,
+			&i.TvdbSeason,
+			&i.TvdbOffset,
 		); err != nil {
 			return nil, err
 		}
@@ -130,7 +138,7 @@ func (q *Queries) ListAnimeMappingsByTMDBMovie(ctx context.Context, tmdbMovie sq
 }
 
 const listAnimeMappingsByTMDBTV = `-- name: ListAnimeMappingsByTMDBTV :many
-SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id FROM anime_mappings WHERE tmdb_tv = ? ORDER BY id
+SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset FROM anime_mappings WHERE tmdb_tv = ? ORDER BY id
 `
 
 func (q *Queries) ListAnimeMappingsByTMDBTV(ctx context.Context, tmdbTv sql.NullInt64) ([]AnimeMapping, error) {
@@ -152,6 +160,8 @@ func (q *Queries) ListAnimeMappingsByTMDBTV(ctx context.Context, tmdbTv sql.Null
 			&i.TmdbSeason,
 			&i.TmdbOffset,
 			&i.TvdbID,
+			&i.TvdbSeason,
+			&i.TvdbOffset,
 		); err != nil {
 			return nil, err
 		}
@@ -167,7 +177,7 @@ func (q *Queries) ListAnimeMappingsByTMDBTV(ctx context.Context, tmdbTv sql.Null
 }
 
 const listAnimeMappingsByTVDB = `-- name: ListAnimeMappingsByTVDB :many
-SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id FROM anime_mappings WHERE tvdb_id = ? ORDER BY id
+SELECT id, mal_id, anilist_id, kind, tmdb_tv, tmdb_movie, tmdb_season, tmdb_offset, tvdb_id, tvdb_season, tvdb_offset FROM anime_mappings WHERE tvdb_id = ? ORDER BY id
 `
 
 func (q *Queries) ListAnimeMappingsByTVDB(ctx context.Context, tvdbID sql.NullInt64) ([]AnimeMapping, error) {
@@ -189,6 +199,8 @@ func (q *Queries) ListAnimeMappingsByTVDB(ctx context.Context, tvdbID sql.NullIn
 			&i.TmdbSeason,
 			&i.TmdbOffset,
 			&i.TvdbID,
+			&i.TvdbSeason,
+			&i.TvdbOffset,
 		); err != nil {
 			return nil, err
 		}
@@ -225,6 +237,33 @@ func (q *Queries) ListAnimeTMDBIDs(ctx context.Context) ([]ListAnimeTMDBIDsRow, 
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAnimeTVDBIDs = `-- name: ListAnimeTVDBIDs :many
+SELECT DISTINCT tvdb_id FROM anime_mappings WHERE tvdb_id IS NOT NULL AND tvdb_id != 0
+`
+
+func (q *Queries) ListAnimeTVDBIDs(ctx context.Context) ([]sql.NullInt64, error) {
+	rows, err := q.db.QueryContext(ctx, listAnimeTVDBIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []sql.NullInt64
+	for rows.Next() {
+		var tvdb_id sql.NullInt64
+		if err := rows.Scan(&tvdb_id); err != nil {
+			return nil, err
+		}
+		items = append(items, tvdb_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

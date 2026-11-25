@@ -27,7 +27,7 @@ func (s *Server) libraryAnimeItem(ctx context.Context, source, mediaID string) (
 		return db.Item{}, libraryError(err, source)
 	}
 	if catalog.HasEpisodes(item) {
-		return db.Item{}, Errorf(http.StatusBadRequest, "This anime is tracked with TMDB seasons; use /shows/tmdb/{id}")
+		return db.Item{}, Errorf(http.StatusBadRequest, "This anime is tracked with TVDB seasons; use /shows/tvdb/{id}")
 	}
 	return item, nil
 }
