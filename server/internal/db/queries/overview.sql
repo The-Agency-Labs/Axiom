@@ -23,6 +23,6 @@ SELECT w.entry_id, w.watched_at, CAST(COALESCE(ep.runtime, 0) AS INTEGER) AS run
 FROM watches w
 JOIN entries e ON e.id = w.entry_id
 LEFT JOIN item_episodes ep ON ep.item_id = e.item_id AND ep.season = w.season AND ep.number = w.episode
-WHERE e.user_id = sqlc.arg(user_id) AND w.season IS NOT NULL
+WHERE e.user_id = sqlc.arg(user_id) AND w.season IS NOT NULL AND w.source != 'assumed'
   AND w.watched_at >= sqlc.arg(from_at) AND w.watched_at < sqlc.arg(to_at)
 ORDER BY w.watched_at, w.id;
