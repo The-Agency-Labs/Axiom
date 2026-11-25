@@ -1,0 +1,11 @@
+{
+  "data": {
+    "Page": {
+      "pageInfo": {"hasNextPage": true},
+      "media": [
+        {"id": 154587, "type": "ANIME", "title": {"userPreferred": "Sousou no Frieren"}, "coverImage": {"large": "https://s4.anilist.co/f.jpg"}},
+        {"id": 182255, "type": "ANIME", "title": {"userPreferred": "Sousou no Frieren 2nd Season"}, "coverImage": {"large": null}}
+      ]
+    }
+  }
+}

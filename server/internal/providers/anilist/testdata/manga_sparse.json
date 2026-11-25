@@ -1,0 +1,29 @@
+{
+  "data": {
+    "Media": {
+      "id": 30002,
+      "idMal": null,
+      "siteUrl": "https://anilist.co/manga/30002",
+      "title": {"userPreferred": "Berserk"},
+      "coverImage": {"extraLarge": null, "large": null},
+      "description": null,
+      "format": "ONE_SHOT",
+      "status": "NOT_YET_RELEASED",
+      "startDate": {"year": 2026, "month": null, "day": null},
+      "endDate": {"year": null, "month": null, "day": null},
+      "season": null,
+      "seasonYear": null,
+      "episodes": null,
+      "duration": null,
+      "chapters": null,
+      "source": null,
+      "genres": [],
+      "averageScore": null,
+      "stats": {"scoreDistribution": []},
+      "studios": {"nodes": []},
+      "nextAiringEpisode": null,
+      "relations": {"edges": []},
+      "recommendations": {"nodes": []}
+    }
+  }
+}
