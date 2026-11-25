@@ -5,7 +5,7 @@
 	import EpisodeItem from './EpisodeItem.svelte';
 	import type { ShowState } from './show.svelte.ts';
 
-	/** Season tabs + episode list for a TMDB show or anime. Specials (season 0) come last. */
+	/** Season tabs + episode list for a show or anime. Specials (season 0) come last. */
 	let { state: s, accent }: { state: ShowState; accent: string } = $props();
 
 	const season = $derived(s.current);
@@ -15,7 +15,7 @@
 </script>
 
 {#if s.error}
-	<EmptyState title={s.error} description="Episode details come from TMDB; try again in a moment." />
+	<EmptyState title={s.error} description="Episode details come from TheTVDB; try again in a moment." />
 {:else if !s.show}
 	<Skeleton class="h-20 w-full" />
 	<Skeleton class="mt-3 h-11 w-full" />

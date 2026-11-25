@@ -1,4 +1,4 @@
-// Season/episode state of one show (TMDB tv or anime), shared by the episode list and the title page's
+// Season/episode state of one show (TVDB tv or anime), shared by the episode list and the title page's
 // action bar so "mark next episode" and the list always agree. Every write goes through mutate():
 // the UI flips first, the request is queued when offline, and a failure rolls the flip back.
 
