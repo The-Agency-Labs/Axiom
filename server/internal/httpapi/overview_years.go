@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"sort"
 	"strconv"
@@ -150,6 +151,10 @@ func (s *Server) overviewSnapshot(ctx context.Context, u db.User, year int) (map
 		}
 	}
 	episodic := func(row library.LibraryRow) bool { return catalog.HasEpisodes(row.Item) }
+	// Count-based entries only count for a year they were active in (the
+	// Django view's active_in_year), so history written long after the dates
+	// of the entry (a migrated or imported list) does not land in this year.
+	active := func(e db.Entry) bool { return overviewActiveInYear(e, year, now, loc) }
 
 	sections := map[string]*overviewSection{}
 	section := func(kind string) *overviewSection {
@@ -196,7 +201,7 @@ func (s *Server) overviewSnapshot(ctx context.Context, u db.User, year int) (map
 		delta := n - prev
 		prev = n
 		row, ok := byEntry[ev.EntryID]
-		if !ok || episodic(row) || catalog.IsMovie(row.Item.Kind) || delta <= 0 {
+		if !ok || episodic(row) || catalog.IsMovie(row.Item.Kind) || delta <= 0 || !active(row.Entry) {
 			continue
 		}
 		if t, ok := inYear(ev.At); ok {
@@ -225,6 +230,9 @@ func (s *Server) overviewSnapshot(ctx context.Context, u db.User, year int) (map
 			continue
 		}
 		e := row.Entry
+		if !episodic(row) && !catalog.IsMovie(kind) && !active(e) {
+			continue
+		}
 		if _, ok := inYear(e.StartedAt.String); ok && e.StartedAt.Valid {
 			section(kind).started++
 		}
@@ -404,4 +412,40 @@ func (s *Server) overviewSnapshotHandler(r *http.Request) (any, error) {
 		return nil, Errorf(http.StatusUnprocessableEntity, "year out of range")
 	}
 	return s.overviewSnapshot(r.Context(), overviewUser(r.Context()), year)
+}
+
+// overviewActiveInYear ports api/years.py active_in_year: an entry is active
+// in a year when it started on or before the year's last day and ended (was
+// finished, last progressed, or is still going) on or after its first day. An
+// entry that ends before it starts (its dates predate the row's creation) is
+// active in no year.
+func overviewActiveInYear(e db.Entry, year int, now time.Time, loc *time.Location) bool {
+	day := func(s sql.NullString) (time.Time, bool) {
+		if !s.Valid {
+			return time.Time{}, false
+		}
+		t, ok := overviewTime(s.String, loc)
+		if !ok {
+			return time.Time{}, false
+		}
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc), true
+	}
+	start, ok := day(e.StartedAt)
+	if !ok {
+		if start, ok = day(sql.NullString{String: e.CreatedAt, Valid: true}); !ok {
+			return false
+		}
+	}
+	end, ok := day(e.FinishedAt)
+	if !ok {
+		end, ok = day(e.ProgressedAt)
+	}
+	if !ok {
+		end = start
+		if e.Status == library.InProgress {
+			end = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+		}
+	}
+	first, last := time.Date(year, 1, 1, 0, 0, 0, 0, loc), time.Date(year, 12, 31, 0, 0, 0, 0, loc)
+	return !start.After(last) && !end.Before(first)
 }

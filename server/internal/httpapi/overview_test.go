@@ -544,3 +544,26 @@ func TestOverviewChangeDescriptions(t *testing.T) {
 		}
 	}
 }
+
+// A count-based entry only counts for years it was active in (Django's
+// active_in_year): a list imported or migrated with old dates has its progress
+// history written long after, and that history must not land in this year.
+func TestOverviewYearCountedEntryMustBeActive(t *testing.T) {
+	f := newOverviewFx(t)
+	old := f.countItem("manga", "mal", "8", 100)
+	live := f.countItem("manga", "mal", "9", 100)
+	f.progress(old, 40, time.Date(2024, 2, 10, 0, 0, 0, 0, time.UTC))
+	f.progress(live, 5, time.Date(2024, 2, 11, 0, 0, 0, 0, time.UTC))
+	// The entry says it ended in 2021, before the row was even created.
+	if _, err := f.env.Conn.Exec(`UPDATE entries SET status = 'Completed', finished_at = '2021-10-29T04:00:00Z' WHERE item_id = ?`, old.ID); err != nil {
+		t.Fatal(err)
+	}
+	y := getObj(t, f.c, "/api/v1/years/2024", nil)
+	mg := y["sections"].(map[string]any)["manga"].(map[string]any)
+	if num(mg["units"]) != 5 || num(mg["titles"]) != 1 || num(mg["finished"]) != 0 {
+		t.Errorf("manga = %v, want only the live entry's 5 units", mg)
+	}
+	if num(y["totals"].(map[string]any)["finished"]) != 0 {
+		t.Errorf("totals = %v", y["totals"])
+	}
+}
