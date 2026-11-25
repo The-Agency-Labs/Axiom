@@ -16,7 +16,7 @@
 	<a href={bookHref(book)} class="flex min-w-0 flex-1 items-center gap-3" aria-label="Book {book.position}: {book.title}">
 		<Cover src={book.image} title={book.title} type="book" class="aspect-[2/3] w-11 shrink-0 !rounded-md" />
 		<span class="min-w-0">
-			<span class="block text-[11px] font-semibold tracking-wide text-faint tabular-nums uppercase">Book {book.position}{#if book.year} · {book.year}{/if}</span>
+			<span class="block text-[11px] font-semibold tracking-wide text-faint tabular-nums uppercase">Book {book.position}{book.year ? ` · ${book.year}` : ''}</span>
 			<span class="line-clamp-2 text-[14px] leading-snug font-medium">{book.title}</span>
 			{#if book.entry}<StatusBadge status={book.entry.status} compact class="mt-0.5" />{/if}
 		</span>

@@ -110,7 +110,7 @@
 		{/if}
 
 		{#if !data}
-			<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
+			<div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
 				{#each Array(6) as _, i (i)}<Skeleton class="h-32 w-full" />{/each}
 			</div>
 		{:else if data.results.length === 0}
@@ -120,11 +120,11 @@
 				description={data.pending ? undefined : 'People who appear in two or more of your titles will show up here.'}
 			/>
 		{:else}
-			<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+			<div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
 				{#each data.results as row (row.person.id)}
 					<a
 						href="/people/{row.person.id}"
-						class="flex gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3 transition hover:border-line-strong hover:bg-raised"
+						class="flex min-w-0 gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3 transition hover:border-line-strong hover:bg-raised"
 					>
 						{#if row.person.image}
 							<img src={row.person.image} alt="" loading="lazy" class="h-24 w-16 shrink-0 rounded-lg object-cover" />

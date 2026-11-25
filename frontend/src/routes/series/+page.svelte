@@ -102,9 +102,7 @@
 								<span class="min-w-0 flex-1">
 									<span class="block truncate text-[15px] font-medium">{h.name}</span>
 									<span class="block text-[13px] text-muted">
-										{h.books_count} {h.books_count === 1 ? 'book' : 'books'}
-										{#if h.tracked}· {h.tracked} tracked{/if}
-										{#if h.id == null}· {SOURCE_NAMES[h.source] ?? h.source}{/if}
+										{h.books_count} {h.books_count === 1 ? 'book' : 'books'}{h.tracked ? ` · ${h.tracked} tracked` : ''}{h.id == null ? ` · ${SOURCE_NAMES[h.source] ?? h.source}` : ''}
 									</span>
 								</span>
 							</a>
@@ -124,7 +122,7 @@
 			description="Track a book that belongs to a series and it shows up here. You can also search for a series above."
 		/>
 	{:else}
-		<ul class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+		<ul class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
 			{#each list as s (s.id)}
 				<li class="rounded-[var(--radius-card)] border border-line bg-surface p-3">
 					<a href="/series/{s.id}" class="flex items-center gap-3">
@@ -132,7 +130,7 @@
 						<span class="min-w-0 flex-1">
 							<span class="line-clamp-2 text-[16px] leading-snug font-semibold">{s.name}</span>
 							<span class="mt-1 block text-[13px] text-muted tabular-nums">
-								{s.completed} of {s.total} read{#if s.tracked > s.completed} · {s.tracked - s.completed} in your library{/if}
+								{s.completed} of {s.total} read{s.tracked > s.completed ? ` · ${s.tracked - s.completed} in your library` : ''}
 							</span>
 							<ProgressBar percent={s.total ? (s.completed / s.total) * 100 : 0} accent="var(--color-type-book)" label="{s.name} read" class="mt-2" />
 						</span>
@@ -142,7 +140,7 @@
 							<div class="min-w-0 flex-1">
 								<p class="text-[11px] font-semibold tracking-wide text-faint uppercase">Next up</p>
 								<p class="truncate text-[14px] font-medium">{s.next.title}</p>
-								<p class="text-[12px] text-faint">Book {s.next.position}{#if s.next.status} · {s.next.status}{/if}</p>
+								<p class="text-[12px] text-faint">Book {s.next.position}{s.next.status ? ` · ${s.next.status}` : ''}</p>
 							</div>
 							{#if s.next.status === null}
 								<Button size="sm" variant="secondary" onclick={() => start(s, 'Planning')}>Track</Button>

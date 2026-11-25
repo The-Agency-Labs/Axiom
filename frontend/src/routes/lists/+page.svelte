@@ -93,13 +93,13 @@
 		</EmptyState>
 	{:else}
 		{#if owned.length}
-			<ul class="grid gap-2 md:grid-cols-2 xl:grid-cols-3" aria-label="Your lists">
+			<ul class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3" aria-label="Your lists">
 				{#each owned as l (l.id)}{@render card(l)}{/each}
 			</ul>
 		{/if}
 		{#if shared.length}
 			<h2 class="mt-8 mb-2 flex items-center gap-1.5 px-1 text-[13px] font-semibold tracking-wide text-faint uppercase"><Users class="size-3.5" />Shared with you</h2>
-			<ul class="grid gap-2 md:grid-cols-2 xl:grid-cols-3" aria-label="Shared lists">
+			<ul class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3" aria-label="Shared lists">
 				{#each shared as l (l.id)}{@render card(l)}{/each}
 			</ul>
 		{/if}

@@ -108,7 +108,7 @@
 		<Cover src={e.image} title={e.title} type={e.media_type} class="aspect-[2/3] w-9 shrink-0 !rounded-md" />
 		<div class="min-w-0 flex-1">
 			<p class="line-clamp-2 text-[14px] leading-snug font-medium">{e.title}</p>
-			<p class="flex items-center gap-1 text-[12px] text-faint"><meta.icon class="size-3" style="color: {meta.accent}" />{meta.label}{#if timeOf(e)} · {timeOf(e)}{/if}</p>
+			<p class="flex items-center gap-1 text-[12px] text-faint"><meta.icon class="size-3" style="color: {meta.accent}" />{meta.label}{timeOf(e) ? ` · ${timeOf(e)}` : ''}</p>
 		</div>
 	</li>
 {/snippet}

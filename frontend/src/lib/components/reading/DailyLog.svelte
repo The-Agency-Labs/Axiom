@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { BookOpen } from '@lucide/svelte';
+	import { untrack } from 'svelte';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import { minutesLabel } from '#lib/media.ts';
@@ -46,14 +47,16 @@
 
 	$effect(() => {
 		void version;
-		generation++;
-		days = [];
-		offset = 0;
-		emptyRun = 0;
-		exhausted = false;
-		loaded = false;
-		loading = false;
-		more();
+		untrack(() => {
+			generation++;
+			days = [];
+			offset = 0;
+			emptyRun = 0;
+			exhausted = false;
+			loaded = false;
+			loading = false;
+			more();
+		});
 	});
 
 	// Infinite scroll: load the next range when the sentinel nears the viewport.

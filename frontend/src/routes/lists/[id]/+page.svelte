@@ -171,14 +171,14 @@
 				{ value: 'position', label: 'Manual', disabled: !list.can_edit }
 			]}
 		/>
-		<Tabs
+		{#if !manual}<Tabs
 			label="Layout"
 			bind:value={view}
 			options={[
 				{ value: 'grid', label: 'Grid' },
 				{ value: 'list', label: 'List' }
 			]}
-		/>
+		/>{/if}
 	</div>
 
 	{#if !manual}

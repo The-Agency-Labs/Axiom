@@ -165,6 +165,7 @@
 							{#if section.minutes}<p>{minutesLabel(section.minutes)}</p>{/if}
 						</div>
 					</div>
+					{#if section.by_month.some((v) => v > 0)}
 					<div class="mt-5">
 						<BarChart
 							bars={monthBars(section.by_month)}
@@ -174,6 +175,7 @@
 							height={96}
 						/>
 					</div>
+					{/if}
 					{#if section.top.length}
 						<ol class="mt-5 space-y-1">
 							{#each section.top.slice(0, 3) as top, i (top.id)}

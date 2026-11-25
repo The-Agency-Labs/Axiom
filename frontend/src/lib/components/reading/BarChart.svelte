@@ -61,7 +61,7 @@
 		</div>
 		<div class="mt-1.5 flex gap-[3px] text-[10px] text-faint">
 			{#each bars as bar, i (i)}
-				<span class="min-w-0 flex-1 truncate text-center {i === peak && bar.value ? 'font-semibold text-muted' : ''}">
+				<span class="flex min-w-0 flex-1 justify-center whitespace-nowrap {i === peak && bar.value ? 'font-semibold text-muted' : ''}">
 					{i % tickEvery === 0 ? bar.tick : ''}
 				</span>
 			{/each}

@@ -13,14 +13,22 @@
 	let linkable = $state<KindleDocument[]>([]); // linked documents: merge targets
 	let autoBusy = $state(false);
 
+	let loadingSuggestions = $state(false);
 	async function load() {
 		try {
-			docs = await get<KindleDocument[]>('/reading/documents' + qs({ unlinked: true }));
-			// Merge targets: every other document that is not itself ignored or merged away.
+			// Cards first (fast), then the provider suggestions (slow) fill in.
+			docs = await get<KindleDocument[]>('/reading/documents' + qs({ unlinked: true, suggestions: false }));
 			const all = await get<KindleDocument[]>('/reading/documents' + qs({ suggestions: false }));
+			// Merge targets: every other document that is not itself ignored or merged away.
 			linkable = all.filter((d) => !d.ignored && d.merged_into == null);
+			loadingSuggestions = true;
+			const withSug = await get<KindleDocument[]>('/reading/documents' + qs({ unlinked: true }));
+			const byId = new Map(withSug.map((d) => [d.id, d.suggestions ?? []]));
+			docs = docs?.map((d) => ({ ...d, suggestions: byId.get(d.id) ?? d.suggestions })) ?? null;
 		} catch {
 			docs ??= [];
+		} finally {
+			loadingSuggestions = false;
 		}
 	}
 	$effect(() => {
@@ -118,9 +126,7 @@
 	icon={CheckCheck}
 	accent="var(--color-type-book)"
 >
-	{#snippet action()}
-		<Button size="sm" variant="secondary" icon={Wand2} loading={autoBusy} onclick={autoLink}>Try auto-link again</Button>
-	{/snippet}
+	<Button size="sm" variant="secondary" icon={Wand2} loading={autoBusy} onclick={autoLink} class="mb-4">Try auto-link again</Button>
 	{#if docs === null}
 		<div class="space-y-3" aria-hidden="true"><Skeleton class="h-28 w-full" /><Skeleton class="h-28 w-full" /></div>
 	{:else if docs.length === 0}
@@ -158,11 +164,13 @@
 								</li>
 							{/each}
 						</ul>
+					{:else if loadingSuggestions}
+						<Skeleton class="mt-3 h-14 w-full" />
 					{:else}
 						<p class="mt-3 text-[13px] text-muted">No close matches found.</p>
 					{/if}
 					<div class="mt-2 flex flex-wrap gap-2">
-						<Button size="sm" variant="secondary" icon={Search} onclick={() => openSearch(doc)}>Other matches</Button>
+						<Button size="sm" variant="secondary" icon={Search} onclick={() => openSearch(doc)}>Search</Button>
 						<Button size="sm" variant="secondary" icon={Merge} onclick={() => ((mergeDoc = doc), (mergeOpen = true))}>Merge</Button>
 						<Button size="sm" variant="ghost" icon={EyeOff} onclick={() => ignore(doc)}>Ignore</Button>
 					</div>
