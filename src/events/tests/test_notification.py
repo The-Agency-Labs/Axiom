@@ -1183,13 +1183,13 @@ class NotificationTests(TestCase):
             notification_sent=False,
         ).select_related("item")
 
-        title = gettext_lazy("📆 YamTrack: Today's Releases 📆")
+        title = gettext_lazy("📆 Encompass: Today's Releases 📆")
         send_notifications(recent_events, users, title)
 
         with translation.override("it-it"):
             expected_title = str(title)
             expected_closing = translation.gettext("Enjoy your media!")
-        self.assertNotEqual(expected_title, "📆 YamTrack: Today's Releases 📆")
+        self.assertNotEqual(expected_title, "📆 Encompass: Today's Releases 📆")
         self.assertNotEqual(expected_closing, "Enjoy your media!")
 
         mock_instance.notify.assert_called_once()

@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-TOKEN_PREFIX = "ytk_"  # noqa: S105 public prefix, not a secret
+TOKEN_PREFIX = "enc_"  # noqa: S105 public prefix, not a secret
 
 
 def sha256_hex(value):

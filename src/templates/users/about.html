@@ -5,12 +5,12 @@
 {% load i18n %}
 
 {% block title %}
-  {% trans "About" %} - Yamtrack
+  {% trans "About" %} - Encompass
 {% endblock title %}
 
 {% block settings_content %}
   <div class="bg-[#2a2f35] rounded-lg p-6">
-    <h2 class="text-2xl font-bold mb-6">{% trans "About Yamtrack" %}</h2>
+    <h2 class="text-2xl font-bold mb-6">{% trans "About Encompass" %}</h2>
 
     <div class="space-y-6">
       <div class="space-y-2">
@@ -19,7 +19,10 @@
           <h3>{% trans "Description" %}</h3>
         </div>
         <p class="text-gray-300 pl-7">
-          {% trans "Yamtrack is an open-source media tracker that helps you organize and track your media." %}
+          {% trans "Encompass is a self-hosted media tracker by Agency Labs for shows, movies, anime, manga and books." %}
+          {% trans "It is built on" %}
+          <a href="https://github.com/FuzzyGrim/Yamtrack" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:text-indigo-300 transition-colors">Yamtrack</a>
+          {% trans "by FuzzyGrim." %}
         </p>
       </div>
 
@@ -29,7 +32,7 @@
           <h3>{% trans "Links" %}</h3>
         </div>
         <div class="grid gap-3 pl-7">
-          <a href="https://github.com/FuzzyGrim/Yamtrack"
+          <a href="https://github.com/The-Agency-Labs/Encompass"
              target="_blank"
              rel="noopener noreferrer"
              class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
@@ -43,11 +46,11 @@
              rel="noopener noreferrer"
              class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
             {% include "app/icons/book-open.svg" with classes="w-4 h-4" %}
-            <span>{% trans "Documentation" %}</span>
+            <span>{% trans "Yamtrack documentation" %}</span>
             {% include "app/icons/external-link.svg" with classes="w-3 h-3 ml-1" %}
           </a>
 
-          <a href="https://github.com/FuzzyGrim/Yamtrack/issues"
+          <a href="https://github.com/The-Agency-Labs/Encompass/issues"
              target="_blank"
              rel="noopener noreferrer"
              class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
@@ -64,9 +67,9 @@
           <h3>{% trans "License" %}</h3>
         </div>
         <p class="text-gray-300 pl-7">
-          {% trans "Yamtrack is licensed under the" %}
+          {% trans "Encompass is licensed under the" %}
 
-          <a href="https://github.com/FuzzyGrim/Yamtrack/blob/dev/LICENSE"
+          <a href="https://github.com/The-Agency-Labs/Encompass/blob/main/LICENSE"
              target="_blank"
              rel="noopener noreferrer"
              class="text-indigo-400 hover:text-indigo-300 transition-colors">GNU Affero General Public License v3.0 (AGPL-3.0)</a>

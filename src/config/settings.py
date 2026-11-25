@@ -1,4 +1,4 @@
-"""Django settings for Yamtrack project."""
+"""Django settings for Encompass."""
 
 import json
 import sys

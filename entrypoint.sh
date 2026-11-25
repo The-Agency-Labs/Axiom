@@ -35,7 +35,7 @@ sed -i \
     -e "s/listen \[::\]:[0-9]\{1,5\};/listen [::]:${YAMTRACK_INTERNAL_PORT};/" \
     /etc/nginx/nginx.conf /etc/nginx/nginx.ipv6.conf
 
-chown abc:abc /yamtrack
+chown abc:abc /encompass
 chown -R abc:abc db
 chown -R abc:abc staticfiles
 chown -R abc:abc /var/log/nginx

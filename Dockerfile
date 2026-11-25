@@ -13,7 +13,7 @@ ENV UV_COMPILE_BYTECODE=1
 # Copy from cache instead of symlinking (cache is discarded with the builder)
 ENV UV_LINK_MODE=copy
 
-WORKDIR /yamtrack
+WORKDIR /encompass
 
 COPY ./pyproject.toml ./pyproject.toml
 COPY ./uv.lock ./uv.lock
@@ -31,9 +31,9 @@ ARG VERSION=dev
 # Set it as an environment variable
 ENV VERSION=$VERSION
 # Put the virtualenv on PATH so python/gunicorn/celery/supervisord resolve directly
-ENV PATH="/yamtrack/.venv/bin:$PATH"
+ENV PATH="/encompass/.venv/bin:$PATH"
 
-WORKDIR /yamtrack
+WORKDIR /encompass
 
 COPY --chmod=755 ./entrypoint.sh /entrypoint.sh
 COPY ./supervisord.conf /etc/supervisord.conf
@@ -49,7 +49,7 @@ RUN apk add --no-cache nginx shadow gettext \
     && mkdir -p /var/lib/nginx/body
 
 # Copy the pre-built virtualenv from the builder stage
-COPY --from=builder /yamtrack/.venv /yamtrack/.venv
+COPY --from=builder /encompass/.venv /encompass/.venv
 
 # Django app
 COPY src ./

@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block title %}
-  {% trans "Bad Request" %} - Yamtrack
+  {% trans "Bad Request" %} - Encompass
 {% endblock title %}
 
 {% block body %}
@@ -20,7 +20,7 @@
           {# Translators: In "If you believe this was a bug, please report the issue.", this is the linked text. #}
           {% trans "report the issue." as issue_link_label %}
           {% with html_class="text-indigo-400 hover:underline" %}
-            {% inline_link "https://github.com/fuzzygrim/yamtrack/issues" html_class issue_link_label new_tab=True as issue_link %}
+            {% inline_link "https://github.com/The-Agency-Labs/Encompass/issues" html_class issue_link_label new_tab=True as issue_link %}
             {% blocktrans trimmed %}
               If you believe this was a bug, please {{ issue_link }}
             {% endblocktrans %}

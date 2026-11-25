@@ -1,110 +1,124 @@
 <!-- --8<-- [start:docs-index-intro] -->
 
-# Yamtrack
+# Encompass
 
-![App Tests](https://github.com/FuzzyGrim/Yamtrack/actions/workflows/app-tests.yml/badge.svg)
-![Docker Image](https://github.com/FuzzyGrim/Yamtrack/actions/workflows/docker-image.yml/badge.svg)
-![CodeFactor](https://www.codefactor.io/repository/github/fuzzygrim/yamtrack/badge)
-![Codecov](https://codecov.io/github/FuzzyGrim/Yamtrack/branch/dev/graph/badge.svg?token=PWUG660120)
-![GitHub](https://img.shields.io/badge/license-AGPL--3.0-blue)
+A self-hosted tracker for everything you watch and read: shows, movies, anime,
+manga, books, comics and games. Built by Agency Labs on top of
+[Yamtrack](https://github.com/FuzzyGrim/Yamtrack) by FuzzyGrim.
 
-Yamtrack is a self hosted media tracker for movies, tv shows, anime, manga, video games, books, comics, and board games.
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue)
 
 <!-- --8<-- [end:docs-index-intro] -->
 
-## 📚 Documentation
-
-The full documentation is available at [fuzzygrim.github.io/Yamtrack](https://fuzzygrim.github.io/Yamtrack/).
-
 <!-- --8<-- [start:docs-index-body] -->
 
-## 🚀 Demo
+## What's in it
 
-You can try the app at [yamtrack.fuzzygrim.com](https://yamtrack.fuzzygrim.com) using the username `demo` and password `demo`.
+Everything from Yamtrack:
 
-## ✨ Features
+- Track movies, TV (per season and episode), anime, manga, games, books, comics
+  and board games, with score, status, progress, rewatches, dates and notes.
+- A full tracking history, custom entries, personal and shared lists, a release
+  calendar (iCal) and Apprise notifications.
+- Metadata from TMDB, TVDB, AniList, MyAnimeList, MangaUpdates, Hardcover,
+  Open Library, IGDB, Comic Vine and BoardGameGeek.
+- Jellyfin, Plex and Emby webhooks; imports from Trakt, Simkl, MyAnimeList,
+  AniList, Kitsu, Goodreads, IMDb, HowLongToBeat and Steam; CSV export.
+- Multi-user, OIDC and social login, SQLite or PostgreSQL.
 
-- 🎬 Track movies, tv shows, anime, manga, games, books, comics, and board games.
-- 📺 Track each season of a tv show individually and episodes watched.
-- ⭐ Save score, status, progress, repeats (rewatches, rereads...), start and end dates, or write a note.
-- 📈 Keep a tracking history with each action with a media, such as when you added it, when you started it, when you started watching it again, etc.
-- ✏️ Create custom media entries, for niche media that cannot be found by the supported APIs.
-- 📂 Create personal lists to organize your media for any purpose, add other members to collaborate on your lists.
-- 📅 Keep up with your upcoming media with a calendar, which can be subscribed to in external applications using a iCalendar (.ics) URL.
-- 🔔 Receive notifications of upcoming releases via Apprise (supports Discord, Telegram, ntfy, Slack, email, and many more).
-- 🐳 Easy deployment with Docker via docker-compose with SQLite or PostgreSQL.
-- 👥 Multi-users functionality allowing individual accounts with personalized tracking.
-- 🔑 Flexible authentication options including OIDC and 100+ social providers (Google, GitHub, Discord, etc.) via django-allauth.
-- 🦀 Integration with [Jellyfin](https://jellyfin.org/), [Plex](https://plex.tv/) and [Emby](https://emby.media/) to automatically track new media watched.
-- 📥 Import from [Trakt](https://trakt.tv/), [Simkl](https://simkl.com/), [MyAnimeList](https://myanimelist.net/), [AniList](https://anilist.co/) and [Kitsu](https://kitsu.app/) with support for periodic automatic imports.
-- 📊 Export all your tracked media to a CSV file and import it back.
+Added in Encompass:
 
-## 📱 Screenshots
+- **JSON API** at `/api/v1` (OpenAPI schema at `/api/v1/openapi.json`, docs at
+  `/api/v1/docs`) with named, revocable read-only or read-write tokens.
+- **Media Now** (`/api/v1/now`): what you're currently on in each media type,
+  with totals and the next episode or chapter.
+- **Reading sessions**: pages and minutes per session and per day, streaks.
+- **KOReader sync**: a KOSync-compatible server at `/kosync` and a KOReader
+  plugin that uploads reading statistics from a Kindle.
+- **Assistant endpoints**: a summary, an activity feed and full per-title detail
+  (synopsis, your notes, history, episodes watched) for a personal assistant.
 
-| Homepage                                                                                       | Calendar                                                                                    |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/homepage.png?v2" alt="Homepage" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/calendar.png" alt="calendar" /> |
+## Run it
 
-| Media List Grid                                                                                    | Media List Table                                                                                     |
-| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/medialist_grid.png" alt="List Grid" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/medialist_table.png" alt="List Table" /> |
-
-| Media Details                                                                                         | Tracking                                                                                    |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/media_details.png" alt="Media Details" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/tracking.png" alt="Tracking" /> |
-
-| Season Details                                                                                          | Tracking Episodes                                                                                            |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/season_details.png" alt="Season Details" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/tracking_episode.png" alt="Tracking Episodes" /> |
-
-| Lists                                                                                 | Statistics                                                                                      |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/lists.png" alt="Lists" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/statistics.png" alt="Statistics" /> |
-
-| Create Manual Entries                                                                                         | Import Data                                                                                       |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/create_custom.png" alt="Create Manual Entries" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/import_data.png" alt="Import Data" /> |
-
-## 🐳 Installing with Docker
-
-Download the default `docker-compose.yml` file from the repository, update the environment values, and start Yamtrack:
-
-```bash
-docker compose up -d
+```sh
+docker compose up -d        # SQLite
+# or: docker compose -f docker-compose.postgres.yml up -d
 ```
 
-The default Compose file uses SQLite, which is enough for most personal installs. For full SQLite, PostgreSQL, and reverse proxy setup instructions, see the [Setup documentation](https://fuzzygrim.github.io/Yamtrack/release/setup/).
+Set `SECRET` to a long random string and `URLS` to the address you reach it on.
+Keep hosts, keys and passwords in a `.env` file, not in the compose file. The
+environment variables are the same as
+[Yamtrack's](https://fuzzygrim.github.io/Yamtrack/) (some still carry the
+`YAMTRACK_` prefix).
 
-## 💻 Development
+### Local preview without Redis
 
-Development instructions are available in the [Development documentation](https://fuzzygrim.github.io/Yamtrack/release/development/).
+```sh
+uv sync
+cd src
+export DJANGO_SETTINGS_MODULE=config.preview_settings SECRET=dev
+python manage.py migrate
+python manage.py seed_demo          # demo / demo-password, real titles
+python manage.py runserver
+```
 
-## 💪 Support the Project
+## API tokens
 
-There are many ways you can support Yamtrack's development:
+```sh
+python manage.py create_api_token <username> kindle --scope write
+python manage.py create_api_token <username> assistant            # read-only
+```
 
-### ⭐ Star the Project
+Or `POST /api/v1/tokens` from a logged-in browser. Send the key as
+`Authorization: Bearer <key>`. Only hashes are stored; the key is shown once.
 
-The simplest way to show your support is to star the repository on GitHub. It helps increase visibility and shows appreciation for the work.
+## Personal assistant
 
-### 🐛 Bug Reports
+Give the assistant a **read-only** token and the OpenAPI schema.
 
-Found a bug? Open an [issue](https://github.com/FuzzyGrim/Yamtrack/issues) on GitHub with detailed steps to reproduce it. Quality bug reports are incredibly valuable for improving stability.
+| Question | Endpoint |
+|---|---|
+| What am I on right now? | `GET /api/v1/now` |
+| Did I read today? Streak? Pages this week? | `GET /api/v1/reading/stats?start=YYYY-MM-DD&end=YYYY-MM-DD` |
+| Overview: in progress, recently finished, reading habits | `GET /api/v1/summary` |
+| What did I do last week? | `GET /api/v1/activity?start=…&end=…` (page with `next_cursor`) |
+| Quiz material for one title | `GET /api/v1/library/{media_type}/{id}` |
+| Find a title | `GET /api/v1/library?search=frieren` |
+| Reading sessions | `GET /api/v1/reading/sessions` |
 
-### 💡 Feature Suggestions
+## Kindle (jailbroken, KOReader)
 
-Have ideas for new features? Share them through [GitHub issues](https://github.com/FuzzyGrim/Yamtrack/issues). Your feedback helps shape the future of Yamtrack.
+1. Run **Tailscale** on the Kindle (KUAL extension, userspace networking) so it
+   can reach Encompass over the tailnet.
+2. **Position sync:** KOReader → Tools → Progress sync → Custom sync server:
+   `https://<server>/kosync`. Log in with your username and a **write** token as
+   the password. Registering from the device is disabled on purpose.
+3. **Session stats:** copy `clients/koreader/encompass.koplugin` to
+   `koreader/plugins/` on the Kindle, restart KOReader, then
+   Tools → Encompass sync → set the server URL and token. KOReader's Reading
+   statistics plugin must be enabled.
 
-### 🧪 Contributing
+   The plugin uploads on suspend, book close and exit when Wi-Fi is up, and
+   again on wake and Wi-Fi connect, so nothing is lost if Wi-Fi was already off.
+   The server ignores duplicates and starts a new session after a 10-minute
+   pause.
+4. **Link each new book once:** KOReader identifies files by hash, not ISBN.
+   Unlinked books are listed at `GET /api/v1/reading/documents?unlinked=true`;
+   pick a match from `…/documents/{id}/suggestions` and
+   `POST …/documents/{id}/link` with `{"source": "hardcover", "media_id": "…"}`.
+   From then on each sync updates the book's progress (scaled to the edition's
+   page count) and status.
 
-Pull requests are welcome! Whether it's fixing typos, improving documentation, or adding new features, your contributions help make Yamtrack better for everyone.
+## Jellyfin
 
-### 🌍 Translations
+Install Jellyfin's **Webhook** plugin and add a Generic destination pointing at
+`https://<server>/webhook/jellyfin/<token>` (token from Settings → Integrations).
 
-Help translate Yamtrack into your language on [Crowdin](https://crowdin.com/project/yamtrack), no coding required. See the [localization guide](https://fuzzygrim.github.io/Yamtrack/dev/localization/) for how translations work and how to request a new language.
+## License and credit
 
-### ☕ Donate
+AGPL-3.0, like Yamtrack. Encompass is a modified version of
+[Yamtrack](https://github.com/FuzzyGrim/Yamtrack) © FuzzyGrim and contributors;
+see [LICENSE](LICENSE). If you run a modified copy for others, the AGPL requires
+offering them its source.
 
-If you'd like to support the project financially:
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/fuzzygrim)
+<!-- --8<-- [end:docs-index-body] -->

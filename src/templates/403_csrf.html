@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block title %}
-  {% trans "Forbidden" %} - Yamtrack
+  {% trans "Forbidden" %} - Encompass
 {% endblock title %}
 
 {% block body %}
@@ -21,19 +21,19 @@
           <p class="text-sm text-gray-400">
             {% inline_code "URLS" "bg-[#39404b] px-1 py-0.5 rounded" as urls_code %}
             {% blocktrans trimmed %}
-              If you're accessing YamTrack through a reverse proxy, you need to set the {{ urls_code }} environment variable to your application URL.
+              If you're accessing Encompass through a reverse proxy, you need to set the {{ urls_code }} environment variable to your application URL.
             {% endblocktrans %}
           </p>
 
           <p class="text-sm text-gray-400 mt-2">
-            {% trans "For example " %}, <code class="bg-[#39404b] px-1 py-0.5 rounded">https://yamtrack.mydomain.com</code>.
+            {% trans "For example " %}, <code class="bg-[#39404b] px-1 py-0.5 rounded">https://encompass.mydomain.com</code>.
           </p>
         </div>
         <p class="text-sm text-gray-500 mb-6">
           {# Translators: In "If you believe this was a bug, please report the issue.", this is the linked text. #}
           {% trans "report the issue." as issue_link_label %}
           {% with html_class="text-indigo-400 hover:underline" %}
-            {% inline_link "https://github.com/fuzzygrim/yamtrack/issues" html_class issue_link_label new_tab=True as issue_link %}
+            {% inline_link "https://github.com/The-Agency-Labs/Encompass/issues" html_class issue_link_label new_tab=True as issue_link %}
             {% blocktrans trimmed %}
               If you believe this was a bug, please {{ issue_link }}
             {% endblocktrans %}

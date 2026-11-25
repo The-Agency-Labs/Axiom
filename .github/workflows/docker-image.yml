@@ -35,7 +35,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: yamtrack:test
+          tags: encompass:test
           # Separate scope, otherwise this amd64-only cache replaces the
           # multi-platform one and arm64 never gets a cache hit
           cache-from: type=gha,scope=test
@@ -47,25 +47,25 @@ jobs:
 
       - name: Start container
         run: |
-          docker network create yamtrack-test
-          docker run -d --name yamtrack-redis --network yamtrack-test redis:8-alpine
-          docker run -d --name yamtrack --network yamtrack-test \
+          docker network create encompass-test
+          docker run -d --name encompass-redis --network encompass-test redis:8-alpine
+          docker run -d --name encompass --network encompass-test \
             -e TZ=UTC \
             -e SECRET=github-actions-testing-secret \
-            -e REDIS_URL=redis://yamtrack-redis:6379 \
+            -e REDIS_URL=redis://encompass-redis:6379 \
             -p 8000:8000 \
-            yamtrack:test
+            encompass:test
 
       # The image HEALTHCHECK covers database, cache, redis and celery
       - name: Wait for container to become healthy
         run: |
           for _ in $(seq 1 60); do
-            STATUS=$(docker inspect --format '{{.State.Health.Status}}' yamtrack)
+            STATUS=$(docker inspect --format '{{.State.Health.Status}}' encompass)
             if [ "$STATUS" = "healthy" ]; then
               echo "Container is healthy"
               exit 0
             fi
-            if [ "$(docker inspect --format '{{.State.Running}}' yamtrack)" != "true" ]; then
+            if [ "$(docker inspect --format '{{.State.Running}}' encompass)" != "true" ]; then
               echo "::error::Container exited before becoming healthy"
               exit 1
             fi
@@ -81,7 +81,7 @@ jobs:
       - name: Check login page is served
         run: |
           curl --fail --silent --show-error http://127.0.0.1:8000/accounts/login/ \
-            | grep -q "Yamtrack"
+            | grep -q "Encompass"
 
       - name: Check static files are served
         run: |
@@ -90,13 +90,13 @@ jobs:
 
       - name: Check version was baked into the image
         run: |
-          test "$(docker exec yamtrack printenv VERSION)" = "test"
+          test "$(docker exec encompass printenv VERSION)" = "test"
 
       - name: Dump container logs
         if: failure()
         run: |
-          docker logs yamtrack
-          docker logs yamtrack-redis
+          docker logs encompass
+          docker logs encompass-redis
 
   build:
     needs: test

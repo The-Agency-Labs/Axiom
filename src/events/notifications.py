@@ -49,7 +49,7 @@ def send_releases():
     result = send_notifications(
         events=events,
         users=users,
-        title=gettext_lazy("🔔 YamTrack: New Releases Available! 🔔"),
+        title=gettext_lazy("🔔 Encompass: New Releases Available! 🔔"),
     )
 
     # Mark events as notified
@@ -104,7 +104,7 @@ def send_daily_digest():
     if not events.exists():
         return "No releases scheduled for today"
 
-    title = gettext_lazy("📆 YamTrack: Today's Releases 📆")
+    title = gettext_lazy("📆 Encompass: Today's Releases 📆")
 
     result = send_notifications(
         events=events,

@@ -1,5 +1,5 @@
 --[[--
-Media tracker sync for KOReader.
+Encompass sync for KOReader.
 
 Reads KOReader's own statistics database (statistics.sqlite3) and uploads new
 page views to POST /api/v1/reading/koreader. The server groups them into
@@ -25,28 +25,28 @@ local json = require("json")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
-local SETTINGS_KEY = "mediatracker"
+local SETTINGS_KEY = "encompass"
 -- Resend this much history each time, in case the statistics plugin flushed
 -- rows after our last upload. The server ignores duplicates.
 local OVERLAP_SECONDS = 6 * 3600
 local MAX_ROWS_PER_REQUEST = 4000
 local TIMEOUT_SECONDS = 8
 
-local MediaTracker = WidgetContainer:extend{
-    name = "mediatracker",
+local Encompass = WidgetContainer:extend{
+    name = "encompass",
     is_doc_only = false,
 }
 
-function MediaTracker:init()
+function Encompass:init()
     self.settings = G_reader_settings:readSetting(SETTINGS_KEY) or {}
     self.ui.menu:registerToMainMenu(self)
 end
 
-function MediaTracker:save()
+function Encompass:save()
     G_reader_settings:saveSetting(SETTINGS_KEY, self.settings)
 end
 
-function MediaTracker:isConfigured()
+function Encompass:isConfigured()
     return self.settings.server and self.settings.server ~= ""
         and self.settings.token and self.settings.token ~= ""
 end
@@ -60,20 +60,20 @@ local function isOnline()
 end
 
 -- Make sure the statistics plugin has written its in-memory page views.
-function MediaTracker:flushStatistics()
+function Encompass:flushStatistics()
     local stats = self.ui and self.ui.statistics
     if stats and stats.insertDB then
         local ok, err = pcall(stats.insertDB, stats)
-        if not ok then logger.warn("mediatracker: statistics flush failed", err) end
+        if not ok then logger.warn("encompass: statistics flush failed", err) end
     end
 end
 
-function MediaTracker:readRows(since)
+function Encompass:readRows(since)
     local SQ3 = require("lua-ljsqlite3/init")
     local db_path = DataStorage:getSettingsDir() .. "/statistics.sqlite3"
     local ok, conn = pcall(SQ3.open, db_path)
     if not ok or not conn then
-        logger.warn("mediatracker: cannot open", db_path)
+        logger.warn("encompass: cannot open", db_path)
         return nil
     end
 
@@ -121,7 +121,7 @@ function MediaTracker:readRows(since)
     return order, max_time, count
 end
 
-function MediaTracker:post(path, body)
+function Encompass:post(path, body)
     local url = self.settings.server:gsub("/+$", "") .. path
     local http = url:match("^https://") and require("ssl.https") or require("socket.http")
     local socketutil = require("socketutil")
@@ -143,7 +143,7 @@ function MediaTracker:post(path, body)
 end
 
 -- Upload everything newer than the last successful sync. Returns rows sent.
-function MediaTracker:sync(reason, interactive)
+function Encompass:sync(reason, interactive)
     if self.syncing then return 0 end
     if not self:isConfigured() then
         if interactive then
@@ -152,7 +152,7 @@ function MediaTracker:sync(reason, interactive)
         return 0
     end
     if not isOnline() then
-        logger.dbg("mediatracker: offline, will retry later (" .. reason .. ")")
+        logger.dbg("encompass: offline, will retry later (" .. reason .. ")")
         if interactive then
             UIManager:show(InfoMessage:new{ text = _("Not connected to Wi-Fi.") })
         end
@@ -173,7 +173,7 @@ function MediaTracker:sync(reason, interactive)
         local ok, code, body = pcall(self.post, self, "/api/v1/reading/koreader",
             json.encode({ device = device, books = books }))
         if not ok or code ~= 200 then
-            logger.warn("mediatracker: upload failed", code, body)
+            logger.warn("encompass: upload failed", code, body)
             self.settings.last_error = T(_("HTTP %1 at %2"), tostring(code), os.date("%Y-%m-%d %H:%M"))
             self:save()
             if interactive then
@@ -194,7 +194,7 @@ function MediaTracker:sync(reason, interactive)
     self.settings.last_error = nil
     self:save()
     self.syncing = false
-    logger.info("mediatracker: synced", total, "rows (" .. reason .. ")")
+    logger.info("encompass: synced", total, "rows (" .. reason .. ")")
     if interactive then
         UIManager:show(InfoMessage:new{ text = T(_("Synced %1 page views."), total) })
     end
@@ -203,20 +203,20 @@ end
 
 -- Events --------------------------------------------------------------------
 
-function MediaTracker:onSuspend() self:sync("suspend") end
-function MediaTracker:onCloseDocument() self:sync("close") end
-function MediaTracker:onExit() self:sync("exit") end
-function MediaTracker:onResume()
+function Encompass:onSuspend() self:sync("suspend") end
+function Encompass:onCloseDocument() self:sync("close") end
+function Encompass:onExit() self:sync("exit") end
+function Encompass:onResume()
     -- Wi-Fi usually needs a few seconds after wake.
     UIManager:scheduleIn(15, function() self:sync("resume") end)
 end
-function MediaTracker:onNetworkConnected()
+function Encompass:onNetworkConnected()
     UIManager:scheduleIn(2, function() self:sync("network") end)
 end
 
 -- Menu ----------------------------------------------------------------------
 
-function MediaTracker:editSetting(key, title, hint)
+function Encompass:editSetting(key, title, hint)
     local dialog
     dialog = InputDialog:new{
         title = title,
@@ -235,9 +235,9 @@ function MediaTracker:editSetting(key, title, hint)
     dialog:onShowKeyboard()
 end
 
-function MediaTracker:addToMainMenu(menu_items)
-    menu_items.mediatracker = {
-        text = _("Media tracker sync"),
+function Encompass:addToMainMenu(menu_items)
+    menu_items.encompass = {
+        text = _("Encompass sync"),
         sorting_hint = "tools",
         sub_item_table = {
             {
@@ -248,14 +248,14 @@ function MediaTracker:addToMainMenu(menu_items)
                 text = _("Server URL"),
                 keep_menu_open = true,
                 callback = function()
-                    self:editSetting("server", _("Server URL"), "https://tracker.your-tailnet.ts.net")
+                    self:editSetting("server", _("Server URL"), "https://encompass.your-tailnet.ts.net")
                 end,
             },
             {
                 text = _("API token (write)"),
                 keep_menu_open = true,
                 callback = function()
-                    self:editSetting("token", _("API token"), "ytk_…")
+                    self:editSetting("token", _("API token"), "enc_…")
                 end,
             },
             {
@@ -286,4 +286,4 @@ function MediaTracker:addToMainMenu(menu_items)
     }
 end
 
-return MediaTracker
+return Encompass

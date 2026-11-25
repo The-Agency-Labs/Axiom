@@ -3,11 +3,11 @@
 from django.urls import path
 from ninja import NinjaAPI
 
-from api import assistant, library, reading, tokens
+from api import assistant, library, now, reading, session, tokens
 from api.auth import AUTH
 
 api = NinjaAPI(
-    title="Media tracker API",
+    title="Encompass API",
     version="1",
     auth=AUTH,
     urls_namespace="api",
@@ -16,6 +16,8 @@ api = NinjaAPI(
         "can call every GET endpoint; write tokens can also change data."
     ),
 )
+api.add_router("", session.router)
+api.add_router("", now.router)
 api.add_router("", assistant.router)
 api.add_router("", library.router)
 api.add_router("", reading.router)

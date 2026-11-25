@@ -1199,12 +1199,12 @@ msgid "No users with release notifications enabled"
 msgstr "Nessun utente con le notifiche di rilascio abilitate"
 
 #: events/notifications.py:52
-msgid "🔔 YamTrack: New Releases Available! 🔔"
-msgstr "🔔 YamTrack: nuove uscite disponibili! 🔔"
+msgid "🔔 Encompass: New Releases Available! 🔔"
+msgstr "🔔 Encompass: nuove uscite disponibili! 🔔"
 
 #: events/notifications.py:107 events/tests/test_notification.py:1186
-msgid "📆 YamTrack: Today's Releases 📆"
-msgstr "📆 YamTrack: uscite di oggi 📆"
+msgid "📆 Encompass: Today's Releases 📆"
+msgstr "📆 Encompass: uscite di oggi 📆"
 
 #: events/notifications.py:457 events/tests/test_notification.py:1191
 msgid "Enjoy your media!"
