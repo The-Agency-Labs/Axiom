@@ -25,6 +25,7 @@ type Config struct {
 	MALKey       string
 	IGDBID       string
 	IGDBSecret   string
+	IGDBNSFW     bool // include adult-themed games in IGDB search
 	BGGToken     string
 	SteamKey     string
 	HardcoverKey string
@@ -54,6 +55,7 @@ func Load() (Config, error) {
 		MALKey:                 secret("MAL_API"),
 		IGDBID:                 secret("IGDB_ID"),
 		IGDBSecret:             secret("IGDB_SECRET"),
+		IGDBNSFW:               boolean("IGDB_NSFW", false),
 		BGGToken:               secret("BGG_API_TOKEN"),
 		SteamKey:               secret("STEAM_API_KEY"),
 		HardcoverKey:           strings.TrimPrefix(secret("HARDCOVER_API"), "Bearer "),

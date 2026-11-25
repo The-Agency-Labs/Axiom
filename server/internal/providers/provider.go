@@ -94,7 +94,7 @@ type Request struct {
 	Method   string // default GET
 	URL      string
 	Header   http.Header
-	Body     any // JSON-encoded when set
+	Body     any // JSON-encoded when set; a string or []byte is sent as-is
 }
 
 // Do performs the request, waiting for the host's rate limit, retrying
@@ -106,7 +106,14 @@ func (c *Client) Do(ctx context.Context, req Request) ([]byte, error) {
 		method = http.MethodGet
 	}
 	var payload []byte
-	if req.Body != nil {
+	rawBody := false
+	switch b := req.Body.(type) {
+	case nil:
+	case string:
+		payload, rawBody = []byte(b), true
+	case []byte:
+		payload, rawBody = b, true
+	default:
 		var err error
 		if payload, err = json.Marshal(req.Body); err != nil {
 			return nil, err
@@ -121,7 +128,7 @@ func (c *Client) Do(ctx context.Context, req Request) ([]byte, error) {
 		for k, v := range req.Header {
 			httpReq.Header[k] = v
 		}
-		if payload != nil && httpReq.Header.Get("Content-Type") == "" {
+		if payload != nil && !rawBody && httpReq.Header.Get("Content-Type") == "" {
 			httpReq.Header.Set("Content-Type", "application/json")
 		}
 		if httpReq.Header.Get("User-Agent") == "" {

@@ -1,0 +1,15 @@
+[
+ {"name": "GameData", "result": [{
+  "id": 14593, "name": "Hollow Knight", "url": "https://www.igdb.com/games/hollow-knight",
+  "summary": "A 2D action-adventure.", "game_type": 0, "first_release_date": 1487894400,
+  "total_rating": 89.55, "total_rating_count": 1500,
+  "cover": {"id": 1, "image_id": "co1rgi"},
+  "genres": [{"id": 1, "name": "Platform"}, {"id": 2, "name": "Adventure"}],
+  "themes": [{"id": 17, "name": "Fantasy"}],
+  "platforms": [{"id": 6, "name": "PC (Microsoft Windows)"}],
+  "involved_companies": [{"id": 9, "company": {"id": 3, "name": "Team Cherry"}}],
+  "dlcs": [{"id": 5, "name": "Godmaster", "cover": {"image_id": "co5"}}],
+  "similar_games": [{"id": 7, "name": "Ori"}]
+ }]},
+ {"name": "TTBData", "result": [{"id": 1, "hastily": 20000, "normally": 90000, "completely": null}]}
+]
