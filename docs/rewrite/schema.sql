@@ -61,7 +61,7 @@ CREATE TABLE items (
     id            INTEGER PRIMARY KEY,
     kind          TEXT NOT NULL CHECK (kind IN
                     ('tv', 'anime', 'movie', 'anime_movie', 'manga', 'comic', 'book', 'game', 'boardgame')),
-    source        TEXT NOT NULL,              -- primary metadata source: tmdb, mal, anilist, mangaupdates, comicvine, hardcover, openlibrary, igdb, bgg, manual
+    source        TEXT NOT NULL,              -- primary metadata source: tvdb (all shows), tmdb (movies; legacy shows with no TVDB match), mal, anilist, mangaupdates, comicvine, hardcover, openlibrary, igdb, bgg, manual
     external_id   TEXT NOT NULL,              -- id at the primary source
     title         TEXT NOT NULL,
     native_title  TEXT NOT NULL DEFAULT '',
@@ -97,13 +97,14 @@ CREATE TABLE item_seasons (
 CREATE TABLE item_episodes (
     item_id  INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
     season   INTEGER NOT NULL,
-    number   INTEGER NOT NULL,                -- TMDB number (may be continuous across seasons)
+    number   INTEGER NOT NULL,                -- TVDB aired-order number (TMDB number for a legacy TMDB show)
     position INTEGER NOT NULL,                -- 1-based position within the season
     title    TEXT NOT NULL DEFAULT '',
     air_date TEXT,
     runtime  INTEGER,                         -- minutes
     image    TEXT NOT NULL DEFAULT '',
     overview TEXT NOT NULL DEFAULT '',
+    ext_id   TEXT NOT NULL DEFAULT '',        -- migration 00007: TVDB episode id ('' for TMDB shows); indexed where non-empty
     PRIMARY KEY (item_id, season, number)
 );
 
@@ -117,12 +118,15 @@ CREATE TABLE anime_mappings (
     tmdb_movie  INTEGER,
     tmdb_season INTEGER,
     tmdb_offset INTEGER NOT NULL DEFAULT 0,
-    tvdb_id     INTEGER
+    tvdb_id     INTEGER,
+    tvdb_season INTEGER,                      -- migration 00007: season of the TVDB series (0 = specials), NULL when the dataset omits it
+    tvdb_offset INTEGER NOT NULL DEFAULT 0    -- migration 00007: episodes of that season before this cour
 );
 CREATE INDEX anime_mappings_mal ON anime_mappings(mal_id);
 CREATE INDEX anime_mappings_anilist ON anime_mappings(anilist_id);
 CREATE INDEX anime_mappings_tmdb_tv ON anime_mappings(tmdb_tv);
 CREATE INDEX anime_mappings_tmdb_movie ON anime_mappings(tmdb_movie);
+CREATE INDEX anime_mappings_tvdb ON anime_mappings(tvdb_id);
 
 CREATE TABLE people (
     id          INTEGER PRIMARY KEY,
@@ -204,7 +208,7 @@ CREATE TABLE watches (
     id         INTEGER PRIMARY KEY,
     entry_id   INTEGER NOT NULL REFERENCES entries(id) ON DELETE CASCADE,
     season     INTEGER,                       -- NULL for movies
-    episode    INTEGER,                       -- TMDB episode number
+    episode    INTEGER,                       -- episode number as the show's item numbers it (TVDB aired order)
     watched_at TEXT NOT NULL,
     source     TEXT NOT NULL DEFAULT 'manual' -- manual, jellyfin, anilist, import
 );
