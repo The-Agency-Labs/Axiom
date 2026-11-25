@@ -457,6 +457,7 @@ FROM watches w
 JOIN entries e ON e.id = w.entry_id
 JOIN items i ON i.id = e.item_id
 WHERE e.user_id = ?1
+  AND w.source != 'assumed'
   AND w.watched_at >= ?2 AND w.watched_at < ?3
   AND (w.watched_at < ?4 OR (w.watched_at = ?4 AND w.id < ?5))
 ORDER BY w.watched_at DESC, w.id DESC
@@ -1045,7 +1046,7 @@ func (q *Queries) ListUserEntries(ctx context.Context, userID int64) ([]ListUser
 const listUserWatchesBetween = `-- name: ListUserWatchesBetween :many
 SELECT w.id, w.entry_id, w.season, w.episode, w.watched_at, w.source, w.notes
 FROM watches w JOIN entries e ON e.id = w.entry_id
-WHERE e.user_id = ? AND w.watched_at >= ? AND w.watched_at < ?
+WHERE e.user_id = ? AND w.watched_at >= ? AND w.watched_at < ? AND w.source != 'assumed'
 ORDER BY w.watched_at, w.id
 `
 
@@ -1159,7 +1160,7 @@ func (q *Queries) UpsertEntrySeason(ctx context.Context, arg UpsertEntrySeasonPa
 
 const watchBounds = `-- name: WatchBounds :one
 SELECT MIN(watched_at) AS first_at, MAX(watched_at) AS last_at
-FROM watches WHERE entry_id = ? AND season > 0
+FROM watches WHERE entry_id = ? AND season > 0 AND source != 'assumed'
 `
 
 type WatchBoundsRow struct {

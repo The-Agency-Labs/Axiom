@@ -119,7 +119,7 @@ WHERE e.user_id = ? AND e.status = 'In progress' AND s.status = 'In progress' AN
 -- name: ListUserWatchesBetween :many
 SELECT w.id, w.entry_id, w.season, w.episode, w.watched_at, w.source, w.notes
 FROM watches w JOIN entries e ON e.id = w.entry_id
-WHERE e.user_id = ? AND w.watched_at >= ? AND w.watched_at < ?
+WHERE e.user_id = ? AND w.watched_at >= ? AND w.watched_at < ? AND w.source != 'assumed'
 ORDER BY w.watched_at, w.id;
 
 -- Activity feed: change events and plays of one user, newest first, pageable by (at, id).
@@ -140,6 +140,7 @@ FROM watches w
 JOIN entries e ON e.id = w.entry_id
 JOIN items i ON i.id = e.item_id
 WHERE e.user_id = sqlc.arg(user_id)
+  AND w.source != 'assumed'
   AND w.watched_at >= sqlc.arg(from_at) AND w.watched_at < sqlc.arg(to_at)
   AND (w.watched_at < sqlc.arg(cursor_at) OR (w.watched_at = sqlc.arg(cursor_at) AND w.id < sqlc.arg(cursor_id)))
 ORDER BY w.watched_at DESC, w.id DESC
@@ -153,4 +154,4 @@ SELECT COUNT(*) FROM (
 
 -- name: WatchBounds :one
 SELECT MIN(watched_at) AS first_at, MAX(watched_at) AS last_at
-FROM watches WHERE entry_id = ? AND season > 0;
+FROM watches WHERE entry_id = ? AND season > 0 AND source != 'assumed';

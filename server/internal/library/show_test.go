@@ -1,6 +1,7 @@
 package library
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -154,13 +155,9 @@ func TestDuplicateWebhookPlaysAreOnePlay(t *testing.T) {
 // Owner rule: a show first seen at season N does not create an empty season 1.
 // Ported from test_webhooks_jellyfin.LaterSeasonFirstTests.
 func TestShowFirstSeenAtLaterSeasonHasNoEmptySeasonOne(t *testing.T) {
-	f := newFixture(t)
-	item := f.show("100", "Show", season(1, "2020-01-01", 1, 3), season(2, "2021-01-01", 1, 3))
-	f.watch(item, 2, 1, "jellyfin")
-	eq(t, "show", f.entry(item).Status, InProgress)
-	eqSeasons(t, f.seasonStatuses(item), map[int64]string{2: InProgress})
-
-	// Same through the manual path and through a status change.
+	// An automated first sighting at season 2 assumes season 1 was watched
+	// (see TestAssumedEarlierSeasons); it never leaves an empty season 1.
+	// Through the manual path nothing is assumed.
 	f2 := newFixture(t)
 	item2 := f2.show("100", "Show", season(1, "2020-01-01", 1, 3), season(2, "2021-01-01", 1, 3))
 	f2.watch(item2, 2, 1, SourceManual)
@@ -419,4 +416,64 @@ func TestAutomatedSeasonStatusOnlyMovesForward(t *testing.T) {
 		eq(t, "season after "+s.to, f.seasonStatuses(item)[1], s.want)
 	}
 	eq(t, "no episodes were created by an automated completion", f.watchCount(item), 0)
+}
+
+// Owner rule: a show first seen by Jellyfin (or its history import) at
+// season N was watched up to N-1 before Encompass existed. Earlier regular
+// seasons are filled in as "assumed" watches dated by air date (never after
+// the first real play), and those seasons are Completed. Specials are not
+// assumed, a show already tracked is never back-filled, and assumed watches
+// stay out of activity and the entry's dates.
+func TestAssumedEarlierSeasons(t *testing.T) {
+	f := newFixture(t)
+	item := f.show("100", "Show",
+		season(0, "2019-06-01", 1, 2),
+		season(1, "2020-01-01", 1, 3),
+		season(2, "2021-01-01", 1, 2),
+		season(3, "2022-01-01", 1, 2))
+	f.watch(item, 3, 1, "jellyfin", WatchOptions{Import: true})
+	eqSeasons(t, f.seasonStatuses(item), map[int64]string{1: Completed, 2: Completed, 3: InProgress})
+	eq(t, "show", f.entry(item).Status, InProgress)
+
+	var assumed, real int
+	var latestAssumed string
+	rows, err := f.env.Conn.Query(`SELECT source, watched_at FROM watches`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var src, at string
+		if err := rows.Scan(&src, &at); err != nil {
+			t.Fatal(err)
+		}
+		if src == SourceAssumed {
+			assumed++
+			if at > latestAssumed {
+				latestAssumed = at
+			}
+		} else {
+			real++
+		}
+	}
+	rows.Close()
+	if assumed != 5 || real != 1 {
+		t.Fatalf("assumed=%d real=%d, want 5 and 1", assumed, real)
+	}
+	if !strings.HasPrefix(latestAssumed, "2021-01-0") {
+		t.Fatalf("latest assumed watch %s, want season 2 air dates", latestAssumed)
+	}
+	if e := f.entry(item); e.StartedAt.Valid && !strings.HasPrefix(e.StartedAt.String, t0.Format("2006-01-02")) {
+		t.Fatalf("started_at %s should come from the real play, not assumed ones", e.StartedAt.String)
+	}
+
+	// Finishing season 3 completes the show: every aired season is done.
+	f.watch(item, 3, 2, "jellyfin")
+	eq(t, "show", f.entry(item).Status, Completed)
+
+	// A show already tracked is never back-filled.
+	f2 := newFixture(t)
+	item2 := f2.show("200", "Other", season(1, "2020-01-01", 1, 2), season(2, "2021-01-01", 1, 2))
+	f2.watch(item2, 2, 1, SourceManual)
+	f2.watch(item2, 2, 2, "jellyfin")
+	eqSeasons(t, f2.seasonStatuses(item2), map[int64]string{2: Completed})
 }

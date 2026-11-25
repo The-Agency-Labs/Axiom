@@ -261,6 +261,13 @@ func (s *Service) WatchEpisode(ctx context.Context, userID, itemID int64, season
 		if err != nil {
 			return err
 		}
+		if res.EntryCreated && o.source == SourceJellyfin && sn > 1 {
+			// First seen mid-series by Jellyfin: the earlier seasons were
+			// watched before Encompass (see assumed.go).
+			if err := o.assumeEarlierSeasons(sn); err != nil {
+				return err
+			}
+		}
 		if !hadSeason {
 			if err := o.putSeason(sn, InProgress); err != nil {
 				return err
