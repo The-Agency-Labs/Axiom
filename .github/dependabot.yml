@@ -3,66 +3,25 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     groups:
-      # Group all GitHub Actions together
       actions:
-        patterns:
-          - "*"
-      security:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  - package-ecosystem: "uv"
-    directory: "/"
+        patterns: ["*"]
+  - package-ecosystem: "gomod"
+    directory: "/server"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 30
+      interval: "weekly"
     groups:
-      # General group for all minor and patch updates
-      minor-and-patch:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-      security:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
+      go:
+        patterns: ["*"]
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      frontend:
+        patterns: ["*"]
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/server"
     schedule:
-      interval: "daily"
-    groups:
-      minor-and-patch:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-      security:
-        applies-to: security-updates
-        patterns:
-          - "*"
-
-  - package-ecosystem: "docker-compose"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    groups:
-      minor-and-patch:
-        applies-to: version-updates
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
-      security:
-        applies-to: security-updates
-        patterns:
-          - "*"
+      interval: "weekly"
