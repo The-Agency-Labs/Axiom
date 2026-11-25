@@ -252,7 +252,7 @@ class AniListShowImporter:
 
     @staticmethod
     def _episode_slots(start, seasons, count, claimed=frozenset()):
-        """(season, episode) pairs for `count` episodes from `start`.
+        """(season, position in season) pairs for `count` episodes from `start`.
 
         `start` is (season, offset) and `seasons` maps TMDB season numbers to
         their episode counts. Long runners are one AniList entry but several
@@ -343,7 +343,20 @@ class AniListShowImporter:
             self._mark_episodes(entry, tv, tv_meta, season_meta, numbers)
         return True
 
-    def _mark_episodes(self, entry, tv, tv_meta, season_meta, numbers):
+    def _mark_episodes(self, entry, tv, tv_meta, season_meta, positions):
+        """Mark episodes watched by their position (1 = first) in the season.
+
+        Positions, not episode numbers: TMDB numbers some long runners'
+        seasons continuously (Naruto Shippuden season 2 starts at 33).
+        """
+        ordered = sorted(season_meta["episodes"], key=lambda e: e["episode_number"])
+        numbers = [
+            ordered[position - 1]["episode_number"]
+            for position in positions
+            if 0 < position <= len(ordered)
+        ]
+        if not numbers:
+            return
         season_number = season_meta["season_number"]
         season_item, _ = Item.objects.get_or_create(
             media_id=tv.item.media_id,
@@ -367,7 +380,7 @@ class AniListShowImporter:
         )
         new_episodes = []
         for number in numbers:
-            if number in watched or number not in air_dates:
+            if number in watched:
                 continue
             new_episodes.append(
                 Episode(

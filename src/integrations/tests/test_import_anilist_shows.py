@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
+from app.models import TV, Item, Season, Status
 from integrations.imports.anilist_shows import OLD_SERIES_DATE, AniListShowImporter
 
 
@@ -108,3 +109,31 @@ class WatchDateTests(TestCase):
         future = timezone.localdate() + datetime.timedelta(days=30)
         when = self.importer._watch_date(_entry(start=2026), future)
         self.assertLessEqual(when, timezone.now())
+
+
+class ContinuousNumberingTests(TestCase):
+    """Seasons numbered on from the previous one are marked by position."""
+
+    def test_second_season_numbered_from_33(self):
+        """Position 1 of a season whose episodes are 33..35 marks episode 33."""
+        user = get_user_model().objects.create_user(username="al")
+        importer = AniListShowImporter(user, "someone")
+        tv_item = Item.objects.create(
+            media_id="31910", source="tmdb", media_type="tv", title="Show"
+        )
+        tv = TV.objects.create(item=tv_item, user=user, status=Status.PLANNING.value)
+        season_meta = {
+            "season_number": 2,
+            "image": "",
+            "episodes": [
+                {"episode_number": n, "air_date": "2008-01-01"} for n in (33, 34, 35)
+            ],
+        }
+        entry = _entry(start=2007)
+        importer._mark_episodes(entry, tv, {"title": "Show"}, season_meta, [1, 2])
+        season = Season.objects.get(user=user, item__season_number=2)
+        self.assertEqual(
+            sorted(season.episodes.values_list("item__episode_number", flat=True)),
+            [33, 34],
+        )
+        self.assertEqual(season.status, Status.IN_PROGRESS.value)
