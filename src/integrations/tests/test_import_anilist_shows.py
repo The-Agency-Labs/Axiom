@@ -32,24 +32,32 @@ class EpisodeSlotTests(TestCase):
 
     def test_part_two_starts_after_offset(self):
         """A second cour inside one TMDB season starts after the offset."""
-        mapping = SimpleNamespace(tmdb_season=3, tmdb_offset=12)
-        slots = self.importer._episode_slots(mapping, {1: 25, 2: 12, 3: 24}, 12)
+        slots = self.importer._episode_slots((3, 12), {1: 25, 2: 12, 3: 24}, 12)
         self.assertEqual(slots[0], (3, 13))
         self.assertEqual(slots[-1], (3, 24))
 
     def test_long_runner_spills_into_next_seasons(self):
         """One 60 episode entry fills TMDB seasons of 25, 25 and 10+."""
-        mapping = SimpleNamespace(tmdb_season=1, tmdb_offset=0)
-        slots = self.importer._episode_slots(mapping, {0: 4, 1: 25, 2: 25, 3: 30}, 60)
+        slots = self.importer._episode_slots((1, 0), {0: 4, 1: 25, 2: 25, 3: 30}, 60)
         self.assertEqual(len(slots), 60)
         self.assertEqual(slots[25], (2, 1))
         self.assertEqual(slots[-1], (3, 10))
 
     def test_specials_never_spill(self):
         """Season 0 entries stay in season 0."""
-        mapping = SimpleNamespace(tmdb_season=0, tmdb_offset=2)
-        slots = self.importer._episode_slots(mapping, {0: 3, 1: 12}, 4)
+        slots = self.importer._episode_slots((0, 2), {0: 3, 1: 12}, 4)
         self.assertEqual(slots, [(0, 3)])
+
+    def test_spill_stops_at_a_season_of_another_entry(self):
+        """A 13 episode first cour doesn't run into a separately listed S2."""
+        slots = self.importer._episode_slots((1, 0), {1: 12, 2: 13}, 13, {2})
+        self.assertEqual(len(slots), 12)
+
+    def test_long_runner_without_season_starts_at_one(self):
+        """Mapping rows without a season are single-entry long runners."""
+        mapping = SimpleNamespace(tmdb_season=None, tmdb_offset=0)
+        self.assertEqual(self.importer._start(mapping, {"format": "TV"}), (1, 0))
+        self.assertIsNone(self.importer._start(mapping, {"format": "MOVIE"}))
 
 
 class WatchDateTests(TestCase):

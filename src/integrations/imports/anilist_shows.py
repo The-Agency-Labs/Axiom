@@ -199,16 +199,25 @@ class AniListShowImporter:
         if media["format"] == "MOVIE" and mapping.tmdb_movie:
             self._import_movie(entry, mapping.tmdb_movie)
             return True
-        if (
-            mapping.tmdb_tv
-            and mapping.tmdb_season is not None
-            and self._import_show(entry, mapping)
-        ):
+        if mapping.tmdb_tv and self._import_show(entry, mapping):
             return True
         if mapping.tmdb_movie:
             self._import_movie(entry, mapping.tmdb_movie)
             return True
         return False
+
+    @staticmethod
+    def _start(mapping, media):
+        """TMDB (season, offset) where the entry starts, or None if unknown.
+
+        The mapping leaves the season out for long runners that are a single
+        AniList entry (Naruto, Hunter x Hunter); those start at season 1.
+        """
+        if mapping.tmdb_season is not None:
+            return mapping.tmdb_season, mapping.tmdb_offset
+        if media["format"] in {"TV", "TV_SHORT", "ONA"}:
+            return 1, 0
+        return None
 
     def _watched_count(self, entry):
         progress = entry["progress"] or 0
@@ -241,20 +250,29 @@ class AniListShowImporter:
             day = OLD_SERIES_DATE
         return min(_at_noon(day), self.now)
 
-    def _episode_slots(self, mapping, seasons, count):
-        """(season, episode) pairs for `count` episodes from the mapped start.
+    @staticmethod
+    def _episode_slots(start, seasons, count, claimed=frozenset()):
+        """(season, episode) pairs for `count` episodes from `start`.
 
-        Long runners are one AniList entry but several TMDB seasons, so
-        episodes past the end of a season continue in the next one. Specials
-        (season 0) never spill over.
+        `start` is (season, offset) and `seasons` maps TMDB season numbers to
+        their episode counts. Long runners are one AniList entry but several
+        TMDB seasons, so episodes past the end of a season continue in the
+        next one, unless another AniList entry is mapped to that season
+        (`claimed`). Specials (season 0) never spill over.
         """
+        season, offset = start
         slots = []
-        season = mapping.tmdb_season
-        episode = mapping.tmdb_offset + 1
-        order = sorted(n for n in seasons if n >= season and (n > 0 or season == 0))
-        if season not in order:
-            order.insert(0, season)
-        for number in order if season != 0 else [season]:
+        episode = offset + 1
+        if season == 0:
+            order = [0]
+        else:
+            later = sorted(n for n in seasons if n > season)
+            order = [season]
+            for number in later:
+                if number in claimed:
+                    break
+                order.append(number)
+        for number in order:
             length = seasons.get(number) or 0
             while len(slots) < count and (not length or episode <= length):
                 slots.append((number, episode))
@@ -270,22 +288,31 @@ class AniListShowImporter:
         The mapping sometimes names a season TMDB has since merged or
         renumbered; such entries are better kept as plain anime than misplaced.
         """
+        start = self._start(mapping, entry["media"])
+        if start is None:
+            return False
         media_id = str(mapping.tmdb_tv)
         tv_meta = app.providers.tmdb.tv(media_id)
         seasons = {
             season["season_number"]: season.get("max_progress") or 0
             for season in tv_meta.get("related", {}).get("seasons", [])
         }
-        if mapping.tmdb_season not in seasons:
-            logger.info(
-                "TMDB %s has no season %s for %s",
-                media_id,
-                mapping.tmdb_season,
-                entry["media"]["title"]["userPreferred"],
-            )
+        title = entry["media"]["title"]["userPreferred"]
+        if start[0] not in seasons:
+            logger.info("TMDB %s has no season %s for %s", media_id, start[0], title)
+            return False
+        claimed = set(
+            AnimeMapping.objects.filter(tmdb_tv=mapping.tmdb_tv)
+            .exclude(pk=mapping.pk)
+            .exclude(tmdb_season=None)
+            .values_list("tmdb_season", flat=True),
+        )
+        count = self._watched_count(entry)
+        slots = self._episode_slots(start, seasons, count, claimed - {start[0]})
+        if count and not slots:
+            logger.info("No TMDB episodes in %s for %s", media_id, title)
             return False
         self.show_statuses[media_id].add(entry["status"])
-        slots = self._episode_slots(mapping, seasons, self._watched_count(entry))
 
         tv_item, _ = Item.objects.get_or_create(
             media_id=media_id,
