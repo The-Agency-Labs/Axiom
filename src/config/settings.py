@@ -692,6 +692,10 @@ REGISTRATION = config("REGISTRATION", default=True, cast=bool)
 # watched, even if Jellyfin itself didn't mark it played.
 JELLYFIN_WATCHED_PERCENT = config("JELLYFIN_WATCHED_PERCENT", default=75, cast=int)
 
+# Track anime as shows (TMDB seasons + specials, like Jellyfin) instead of
+# one MyAnimeList entry per season. Turn off for upstream Yamtrack behaviour.
+ANIME_AS_TV = config("ANIME_AS_TV", default=True, cast=bool)
+
 # Jellyfin history import/sync (read-only API key from the Jellyfin dashboard).
 JELLYFIN_URL = config("JELLYFIN_URL", default="")
 JELLYFIN_API_KEY = config(

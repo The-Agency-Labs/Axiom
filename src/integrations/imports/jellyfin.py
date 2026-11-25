@@ -1,8 +1,9 @@
 """Import watch history from a Jellyfin server.
 
 Every played movie and episode is replayed through the Jellyfin webhook
-processor, so matching (TVDB/IMDb/TMDB, anime via MAL mappings) is identical
-to live tracking, with the real watch date from Jellyfin.
+processor, so matching (TVDB/IMDb/TMDB; anime as whole shows unless
+ANIME_AS_TV is off) is identical to live tracking, with the real watch date
+from Jellyfin.
 
 The import is additive only: it never deletes or lowers anything in Encompass.
 Removing media from Jellyfin (to free space, say) changes nothing here.

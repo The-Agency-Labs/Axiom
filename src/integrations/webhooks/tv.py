@@ -15,7 +15,7 @@ class TVWebhookMixin:
     def _process_tv(self, payload, user, ids):
         anidb_id = ids.get("anidb_id")
         if (
-            user.anime_enabled
+            self._route_anime_to_mal(user)
             and anidb_id
             and self._process_anidb_episode(anidb_id, payload, user)
         ):
@@ -95,7 +95,7 @@ class TVWebhookMixin:
 
     def _process_tvdb_episode(self, tvdb_episode, tvdb_episode_id, payload, user):
         """Process a TV episode using TVDB metadata."""
-        if user.anime_enabled:
+        if self._route_anime_to_mal(user):
             mapping_data = anime_mappings.fetch_mapping_data()
             mal_id, episode_offset = anime_mappings.get_mal_id_from_tvdb(
                 mapping_data,

@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from app.models import TV, Anime, Episode, Item, MediaTypes, Movie, Season, Status
@@ -77,6 +77,7 @@ class EmbyWebhookTests(TestCase):
         )
         self.assertIsNotNone(episode.end_date)
 
+    @override_settings(ANIME_AS_TV=False)
     def test_anime_episode_mark_played(self):
         """Test webhook handles anime episode mark played event."""
         payload = {
@@ -159,6 +160,7 @@ class EmbyWebhookTests(TestCase):
         self.assertEqual(movie.status, Status.COMPLETED.value)
         self.assertEqual(movie.progress, 1)
 
+    @override_settings(ANIME_AS_TV=False)
     def test_anime_movie_mark_played(self):
         """Test webhook handles movie mark played event."""
         payload = {

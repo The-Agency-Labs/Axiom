@@ -2,7 +2,7 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from app.models import TV, Anime, Episode, Item, MediaTypes, Movie, Season, Status
@@ -131,6 +131,7 @@ class PlexWebhookTests(TestCase):
         self.assertEqual(movie.status, Status.COMPLETED.value)
         self.assertEqual(movie.progress, 1)
 
+    @override_settings(ANIME_AS_TV=False)
     def test_anime_movie_mark_played(self):
         """Test webhook handles movie mark played event."""
         payload = {
@@ -175,6 +176,7 @@ class PlexWebhookTests(TestCase):
         self.assertEqual(movie.status, Status.COMPLETED.value)
         self.assertEqual(movie.progress, 1)
 
+    @override_settings(ANIME_AS_TV=False)
     def test_anime_episode_mark_played(self):
         """Test webhook handles anime episode mark played event."""
         payload = {
@@ -379,6 +381,7 @@ class PlexWebhookTests(TestCase):
                     self.assertEqual(response.status_code, 200)
                     self.assertEqual(Movie.objects.count(), 0)
 
+    @override_settings(ANIME_AS_TV=False)
     @patch("integrations.webhooks.base.BaseWebhookProcessor._handle_anime")
     def test_anime_episode_anidb_guid_mark_played(self, mock_handle_anime):
         """Test webhook handles anime episode with anidb guid."""

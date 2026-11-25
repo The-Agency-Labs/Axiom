@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.utils import timezone
 
 from app.models import MediaTypes
@@ -31,6 +32,15 @@ class BaseWebhookProcessor(TVWebhookMixin, MovieWebhookMixin, AnimeWebhookMixin)
         """
         self.watched_at = watched_at
         self.import_mode = import_mode
+
+    @staticmethod
+    def _route_anime_to_mal(user):
+        """Whether anime plays become MyAnimeList entries.
+
+        Encompass tracks anime as shows (TMDB seasons and specials, the same
+        structure Jellyfin uses) unless ANIME_AS_TV is turned off.
+        """
+        return user.anime_enabled and not settings.ANIME_AS_TV
 
     def _now(self):
         moment = self.watched_at or timezone.now()

@@ -15,7 +15,7 @@ class MovieWebhookMixin:
         tmdb_id = ids["tmdb_id"]
         imdb_id = ids["imdb_id"]
 
-        if user.anime_enabled:
+        if self._route_anime_to_mal(user):
             mapping_data = anime_mappings.fetch_mapping_data()
             mal_id = None
             source = None

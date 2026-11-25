@@ -2,7 +2,7 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -656,6 +656,7 @@ class JellyfinWebhookTests(TestCase):
         self.assertEqual(movie.status, Status.COMPLETED.value)
         self.assertEqual(movie.progress, 1)
 
+    @override_settings(ANIME_AS_TV=False)
     def test_anime_movie_mark_played(self):
         """Test webhook handles movie mark played event."""
         payload = {
@@ -685,6 +686,7 @@ class JellyfinWebhookTests(TestCase):
         self.assertEqual(movie.status, Status.COMPLETED.value)
         self.assertEqual(movie.progress, 1)
 
+    @override_settings(ANIME_AS_TV=False)
     def test_anime_episode_mark_played(self):
         """Test webhook handles anime episode mark played event."""
         payload = {
@@ -1106,3 +1108,15 @@ class JellyfinPluginTemplateTests(TestCase):
             content_type="application/json",
         )
         mock_process.assert_not_called()
+
+
+class AnimeRoutingTests(TestCase):
+    """Anime is tracked as shows unless ANIME_AS_TV is off."""
+
+    def test_anime_goes_to_shows_by_default(self):
+        """With the default, anime plays never become MyAnimeList entries."""
+        user = get_user_model().objects.create_user(username="routing")
+        self.assertTrue(user.anime_enabled)
+        self.assertFalse(JellyfinWebhookProcessor._route_anime_to_mal(user))
+        with self.settings(ANIME_AS_TV=False):
+            self.assertTrue(JellyfinWebhookProcessor._route_anime_to_mal(user))
