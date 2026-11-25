@@ -221,6 +221,8 @@ type ReadingDocument struct {
 	ProgressUpdatedAt sql.NullString  `json:"progress_updated_at"`
 	CreatedAt         string          `json:"created_at"`
 	UpdatedAt         string          `json:"updated_at"`
+	Ignored           int64           `json:"ignored"`
+	LinkCheckedAt     sql.NullString  `json:"link_checked_at"`
 }
 
 type ReadingSession struct {
