@@ -80,21 +80,29 @@ func libraryItemJSON(it db.Item, season *int) map[string]any {
 	if season != nil {
 		sn = *season
 	}
-	return map[string]any{
+	out := map[string]any{
 		"id": it.ID, "media_id": it.ExternalID, "source": it.Source, "media_type": it.Kind,
 		"title": it.Title, "image": it.Image, "season_number": sn, "episode_number": nil,
 	}
+	if it.Kind == catalog.KindBook {
+		out["series"] = seriesRefJSON(it.Meta) // series_json.go
+	}
+	return out
 }
 
 // libraryEntryJSON is serializers.media_dict plus is_anime.
 func libraryEntryJSON(e db.Entry, it db.Item) map[string]any {
-	return map[string]any{
+	out := map[string]any{
 		"id": e.ID, "media_type": it.Kind, "item": libraryItemJSON(it, nil),
 		"status": e.Status, "score": libraryNullFloat(e.Score), "progress": e.Progress,
 		"progressed_at": libraryNullStr(e.ProgressedAt), "start_date": libraryNullStr(e.StartedAt),
 		"end_date": libraryNullStr(e.FinishedAt), "notes": e.Notes, "created_at": e.CreatedAt,
 		"is_anime": libraryIsAnime(it.Kind),
 	}
+	if it.Kind == catalog.KindBook {
+		out["series"] = seriesRefJSON(it.Meta)
+	}
+	return out
 }
 
 // libraryHistoryJSON is api.library._history. Shows have no progress count,

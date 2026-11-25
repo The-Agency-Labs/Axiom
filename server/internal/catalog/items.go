@@ -124,7 +124,7 @@ func (c *Catalog) EnsureItem(ctx context.Context, kind, source, externalID strin
 		}
 		return Item{}, err
 	}
-	return item, nil
+	return c.syncBookSeries(ctx, item), nil
 }
 
 // RefreshItem re-reads the provider metadata of an item and updates its row
@@ -147,6 +147,7 @@ func (c *Catalog) RefreshItem(ctx context.Context, item Item) (Item, error) {
 	if err != nil {
 		return item, err
 	}
+	item = c.syncBookSeries(ctx, item)
 	return c.GetItem(ctx, item.ID)
 }
 

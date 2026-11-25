@@ -1,0 +1,6 @@
+{"data":{"books_by_pk":{"id":102,"book_series":[
+{"position":2,"series":{"id":55,"name":"The Red Rising Trilogy","slug":"red-rising","books_count":4,"book_series":[
+{"position":1,"book":{"id":101,"title":"Red Rising","cached_image":"https://assets.example/rr.jpg","release_year":2014}},
+{"position":2,"book":{"id":102,"title":"Golden Son","cached_image":null,"release_year":null}},
+{"position":null,"book":{"id":999,"title":"Box Set","cached_image":"","release_year":2016}}]}},
+{"position":null,"series":null}]}}}
