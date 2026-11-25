@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
+  <item type="boardgame" id="266192">
+    <thumbnail>https://example.test/wingspan_t.jpg</thumbnail>
+    <image>https://example.test/wingspan.jpg</image>
+    <name type="primary" sortindex="1" value="Wingspan"/>
+    <name type="alternate" sortindex="1" value="Flügelschlag"/>
+    <description>Attract a beautiful and diverse collection of birds.&#10;&#10;Second paragraph &amp; more.</description>
+    <yearpublished value="2019"/>
+    <minplayers value="1"/>
+    <maxplayers value="5"/>
+    <playingtime value="70"/>
+    <minage value="10"/>
+    <link type="boardgamecategory" id="1089" value="Animals"/>
+    <link type="boardgamecategory" id="1002" value="Card Game"/>
+    <link type="boardgamedesigner" id="1" value="Elizabeth Hargrave"/>
+    <link type="boardgamedesigner" id="2" value="Second Designer"/>
+    <link type="boardgamepublisher" id="10" value="Stonemaier Games"/>
+    <link type="boardgamepublisher" id="11" value="999 Games"/>
+    <link type="boardgamepublisher" id="12" value="Angry Lion Games"/>
+    <link type="boardgamepublisher" id="13" value="Fourth Publisher"/>
+    <statistics page="1">
+      <ratings>
+        <usersrated value="102000"/>
+        <average value="8.04949"/>
+      </ratings>
+    </statistics>
+  </item>
+</items>

@@ -1,0 +1,10 @@
+{"status_code": 1, "error": "OK", "results": {
+ "name": "Saga", "site_detail_url": "https://comicvine.gamespot.com/saga/4050-46568/",
+ "start_year": "2012", "count_of_issues": 72, "date_last_updated": "2026-07-15 10:11:12",
+ "description": "<p>Saga is a <b>space&nbsp;opera</b> &amp; more.</p><!-- hidden --><script>x()</script><h4>Collected</h4><ul><li>Vol&nbsp;1</li></ul>",
+ "image": {"medium_url": "https://example.test/saga.jpg"},
+ "publisher": {"id": 513, "name": "Image"},
+ "last_issue": {"id": 1000, "name": "Chapter Seventy-Two", "issue_number": "72"},
+ "concepts": [{"name": "a"}, {"name": "b"}, {"name": "c"}, {"name": "d"}, {"name": "e"}, {"name": "f"}],
+ "people": [{"name": "Brian K. Vaughan"}, {"name": "Fiona Staples"}]
+}}
