@@ -143,6 +143,11 @@ type ItemSeason struct {
 	EpisodeCount int64          `json:"episode_count"`
 }
 
+type ItemSeriesCheck struct {
+	ItemID    int64  `json:"item_id"`
+	CheckedAt string `json:"checked_at"`
+}
+
 type Job struct {
 	ID         int64          `json:"id"`
 	Kind       string         `json:"kind"`
@@ -248,6 +253,29 @@ type Release struct {
 	Season sql.NullInt64 `json:"season"`
 	Number sql.NullInt64 `json:"number"`
 	At     string        `json:"at"`
+}
+
+type Series struct {
+	ID          int64  `json:"id"`
+	Source      string `json:"source"`
+	ExternalID  string `json:"external_id"`
+	Name        string `json:"name"`
+	NameKey     string `json:"name_key"`
+	Slug        string `json:"slug"`
+	BooksCount  int64  `json:"books_count"`
+	RefreshedAt string `json:"refreshed_at"`
+}
+
+type SeriesBook struct {
+	SeriesID   int64         `json:"series_id"`
+	Position   float64       `json:"position"`
+	ItemID     sql.NullInt64 `json:"item_id"`
+	Source     string        `json:"source"`
+	ExternalID string        `json:"external_id"`
+	Title      string        `json:"title"`
+	Image      string        `json:"image"`
+	Year       sql.NullInt64 `json:"year"`
+	IsPrimary  int64         `json:"is_primary"`
 }
 
 type Session struct {
