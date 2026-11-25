@@ -43,6 +43,10 @@ func (s *Server) Routes() http.Handler {
 	s.readingRoutes(mux)  // routes_reading.go: reading, KOSync, KOReader, book linking, Triple P
 	s.peopleRoutes(mux)   // routes_people.go: people, credits
 	s.overviewRoutes(mux) // routes_overview.go: me, summary, now, activity, years
+	s.jellyfinRoutes(mux) // routes_jellyfin.go: /webhook/jellyfin/{token}, Jellyfin import/sync
+	s.importRoutes(mux)   // routes_imports.go: AniList, Goodreads CSV, Steam imports, /sources status
+	s.calendarRoutes(mux) // routes_calendar.go: /calendar/{token}.ics
+	s.listsRoutes(mux)    // routes_lists.go: custom lists
 	mux.Handle("/api/", JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
 		return nil, Errorf(http.StatusNotFound, "Not Found")
 	}))
