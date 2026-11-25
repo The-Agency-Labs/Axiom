@@ -54,7 +54,7 @@
 		<button
 			onclick={() => (filter = f.key)}
 			class="shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition {filter === f.key
-				? 'border-line-strong bg-white/8 text-ink'
+				? 'border-line-strong bg-ink/8 text-ink'
 				: 'border-transparent text-muted hover:text-ink'}"
 		>
 			{f.label}
@@ -72,7 +72,7 @@
 
 {#if !data}
 	<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-		{#each Array(6) as _, i (i)}<div class="h-36 animate-pulse rounded-2xl bg-white/[0.03]"></div>{/each}
+		{#each Array(6) as _, i (i)}<div class="h-36 animate-pulse rounded-2xl bg-ink/[0.03]"></div>{/each}
 	</div>
 {:else if data.results.length === 0}
 	<div class="rounded-2xl border border-dashed border-line-strong p-10 text-center text-sm text-muted">
@@ -88,7 +88,7 @@
 				{#if row.person.image}
 					<img src={row.person.image} alt="" loading="lazy" class="h-24 w-16 shrink-0 rounded-lg object-cover" />
 				{:else}
-					<span class="grid h-24 w-16 shrink-0 place-items-center rounded-lg bg-white/5 text-faint"><UserRound class="size-6" /></span>
+					<span class="grid h-24 w-16 shrink-0 place-items-center rounded-lg bg-ink/5 text-faint"><UserRound class="size-6" /></span>
 				{/if}
 				<div class="min-w-0 flex-1">
 					<p class="truncate font-medium">{row.person.name}</p>

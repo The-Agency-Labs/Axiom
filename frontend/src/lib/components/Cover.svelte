@@ -10,6 +10,7 @@
 	}: { src?: string | null; title: string; type: MediaType; class?: string } = $props();
 
 	let failed = $state(false);
+	let loaded = $state(false);
 	const meta = $derived(MEDIA[type]);
 	const usable = $derived(!!src && !failed && !src.includes('none.svg'));
 </script>
@@ -24,7 +25,8 @@
 			alt=""
 			loading="lazy"
 			decoding="async"
-			class="h-full w-full object-cover"
+			class="h-full w-full object-cover transition-opacity duration-300 {loaded ? 'opacity-100' : 'opacity-0'}"
+			onload={() => (loaded = true)}
 			onerror={() => (failed = true)}
 		/>
 	{:else}

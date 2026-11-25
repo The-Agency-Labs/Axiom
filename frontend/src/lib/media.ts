@@ -2,6 +2,7 @@ import {
 	BookOpen,
 	BookOpenText,
 	Clapperboard,
+	Film,
 	Dices,
 	Gamepad2,
 	Layers,
@@ -23,29 +24,30 @@ export interface MediaMeta {
 }
 
 export const MEDIA: Record<MediaType, MediaMeta> = {
-	tv: { label: 'TV', plural: 'TV Shows', icon: Tv, accent: '#38bdf8', unit: 'episode', units: 'ep', steppable: false },
-	season: { label: 'Season', plural: 'Seasons', icon: Tv, accent: '#38bdf8', unit: 'episode', units: 'ep', steppable: true },
-	episode: { label: 'Episode', plural: 'Episodes', icon: Tv, accent: '#38bdf8', unit: 'episode', units: 'ep', steppable: false },
-	movie: { label: 'Movie', plural: 'Movies', icon: Clapperboard, accent: '#fb7185', unit: '', units: '', steppable: false },
-	anime: { label: 'Anime', plural: 'Anime', icon: Sparkles, accent: '#a78bfa', unit: 'episode', units: 'ep', steppable: true },
-	manga: { label: 'Manga', plural: 'Manga', icon: BookOpenText, accent: '#fbbf24', unit: 'chapter', units: 'ch', steppable: true },
-	book: { label: 'Book', plural: 'Books', icon: BookOpen, accent: '#34d399', unit: 'page', units: 'p', steppable: true },
-	comic: { label: 'Comic', plural: 'Comics', icon: Layers, accent: '#fb923c', unit: 'issue', units: 'iss', steppable: true },
-	game: { label: 'Game', plural: 'Games', icon: Gamepad2, accent: '#a3e635', unit: '30 min', units: 'min', steppable: true },
-	boardgame: { label: 'Board game', plural: 'Board games', icon: Dices, accent: '#f472b6', unit: 'play', units: 'plays', steppable: true }
+	tv: { label: 'TV', plural: 'TV Shows', icon: Tv, accent: 'var(--color-type-tv)', unit: 'episode', units: 'ep', steppable: false },
+	season: { label: 'Season', plural: 'Seasons', icon: Tv, accent: 'var(--color-type-tv)', unit: 'episode', units: 'ep', steppable: true },
+	episode: { label: 'Episode', plural: 'Episodes', icon: Tv, accent: 'var(--color-type-tv)', unit: 'episode', units: 'ep', steppable: false },
+	movie: { label: 'Movie', plural: 'Movies', icon: Clapperboard, accent: 'var(--color-type-movie)', unit: '', units: '', steppable: false },
+	anime: { label: 'Anime', plural: 'Anime', icon: Sparkles, accent: 'var(--color-type-anime)', unit: 'episode', units: 'ep', steppable: true },
+	anime_movie: { label: 'Anime movie', plural: 'Anime Movies', icon: Film, accent: 'var(--color-type-anime-movie)', unit: '', units: '', steppable: false },
+	manga: { label: 'Manga', plural: 'Manga', icon: BookOpenText, accent: 'var(--color-type-manga)', unit: 'chapter', units: 'ch', steppable: true },
+	book: { label: 'Book', plural: 'Books', icon: BookOpen, accent: 'var(--color-type-book)', unit: 'page', units: 'p', steppable: true },
+	comic: { label: 'Comic', plural: 'Comics', icon: Layers, accent: 'var(--color-type-comic)', unit: 'issue', units: 'iss', steppable: true },
+	game: { label: 'Game', plural: 'Games', icon: Gamepad2, accent: 'var(--color-type-game)', unit: '30 min', units: 'min', steppable: true },
+	boardgame: { label: 'Board game', plural: 'Board games', icon: Dices, accent: 'var(--color-type-boardgame)', unit: 'play', units: 'plays', steppable: true }
 };
 
 /** Sections in the navigation, in order. */
-export const LIBRARY_TYPES: MediaType[] = ['tv', 'movie', 'anime', 'manga', 'book', 'game'];
+export const LIBRARY_TYPES: MediaType[] = ['tv', 'anime', 'movie', 'anime_movie', 'book', 'manga', 'comic', 'game', 'boardgame'];
 
 export const STATUSES: Status[] = ['In progress', 'Planning', 'Completed', 'Paused', 'Dropped'];
 
 export const STATUS_COLOR: Record<Status, string> = {
-	'In progress': '#38bdf8',
-	Planning: '#a1a1aa',
-	Completed: '#34d399',
-	Paused: '#fbbf24',
-	Dropped: '#fb7185'
+	'In progress': 'var(--color-status-progress)',
+	Planning: 'var(--color-status-planning)',
+	Completed: 'var(--color-status-done)',
+	Paused: 'var(--color-status-paused)',
+	Dropped: 'var(--color-status-dropped)'
 };
 
 export function isMediaType(value: string): value is MediaType {

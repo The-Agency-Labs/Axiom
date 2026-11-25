@@ -86,10 +86,10 @@
 	<p class="text-muted">{error}</p>
 {:else if !md}
 	<div class="flex gap-8">
-		<div class="aspect-[2/3] w-48 animate-pulse rounded-2xl bg-white/5"></div>
+		<div class="aspect-[2/3] w-48 animate-pulse rounded-2xl bg-ink/5"></div>
 		<div class="flex-1 space-y-3">
-			<div class="h-8 w-2/3 animate-pulse rounded bg-white/5"></div>
-			<div class="h-4 w-1/3 animate-pulse rounded bg-white/5"></div>
+			<div class="h-8 w-2/3 animate-pulse rounded bg-ink/5"></div>
+			<div class="h-4 w-1/3 animate-pulse rounded bg-ink/5"></div>
 		</div>
 	</div>
 {:else}

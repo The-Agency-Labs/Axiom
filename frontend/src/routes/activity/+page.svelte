@@ -79,7 +79,7 @@
 			<ol class="space-y-1">
 				{#each items as entry, i (i)}
 					{@const meta = MEDIA[entry.media_type]}
-					<li class="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-white/[0.03]">
+					<li class="flex items-center gap-3 rounded-xl px-2 py-2 transition hover:bg-ink/[0.03]">
 						<Cover src={entry.item.image} title={entry.item.title} type={entry.media_type} class="aspect-[2/3] w-9 shrink-0 rounded-md" />
 						<div class="min-w-0 flex-1">
 							<p class="truncate text-sm font-medium">{entry.item.title}</p>

@@ -58,7 +58,7 @@
 	{#if person.image}
 		<img src={person.image} alt="" loading="lazy" class="{size} shrink-0 rounded-full object-cover" />
 	{:else}
-		<span class="{size} grid shrink-0 place-items-center rounded-full bg-white/5 text-faint"><UserRound class="size-1/2" /></span>
+		<span class="{size} grid shrink-0 place-items-center rounded-full bg-ink/5 text-faint"><UserRound class="size-1/2" /></span>
 	{/if}
 {/snippet}
 
@@ -71,7 +71,7 @@
 					{#each data.languages ?? [] as lang (lang)}
 						<button
 							onclick={() => (language = lang)}
-							class="rounded-full px-2.5 py-1 capitalize transition {language === lang ? 'bg-white/10 text-ink' : 'text-muted hover:text-ink'}"
+							class="rounded-full px-2.5 py-1 capitalize transition {language === lang ? 'bg-ink/10 text-ink' : 'text-muted hover:text-ink'}"
 						>
 							{lang === 'japanese' ? 'Japanese' : lang}
 						</button>
@@ -95,7 +95,7 @@
 						{#if c.image}
 							<img src={c.image} alt="" loading="lazy" class="h-14 w-10 shrink-0 rounded-md object-cover" />
 						{:else}
-							<span class="h-14 w-10 shrink-0 rounded-md bg-white/5"></span>
+							<span class="h-14 w-10 shrink-0 rounded-md bg-ink/5"></span>
 						{/if}
 						<div class="min-w-0 flex-1">
 							<p class="truncate text-sm font-medium">{c.character}</p>
@@ -137,7 +137,7 @@
 									class="aspect-[2/3] w-full rounded-xl object-cover ring-1 ring-line transition group-hover:ring-line-strong"
 								/>
 							{:else}
-								<span class="grid aspect-[2/3] w-full place-items-center rounded-xl bg-white/5 text-faint ring-1 ring-line">
+								<span class="grid aspect-[2/3] w-full place-items-center rounded-xl bg-ink/5 text-faint ring-1 ring-line">
 									<UserRound class="size-8" />
 								</span>
 							{/if}

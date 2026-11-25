@@ -3,7 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
-// The Django backend. In dev, Vite proxies API calls to it so the session
+// The Encompass Go server. In dev, Vite proxies API calls to it so the session
 // cookie and CSRF token stay same-origin.
 const backend = process.env.ENCOMPASS_BACKEND ?? 'http://127.0.0.1:8765';
 
@@ -16,8 +16,12 @@ export default defineConfig({
 	],
 	server: {
 		port: 5173,
+		// Dev only: the production build is served by the Go server itself.
 		proxy: {
-			'/api': { target: backend, changeOrigin: false }
+			'/api': { target: backend, changeOrigin: false },
+			'/kosync': { target: backend, changeOrigin: false },
+			'/webhook': { target: backend, changeOrigin: false },
+			'/calendar/': { target: backend, changeOrigin: false }
 		}
 	}
 });

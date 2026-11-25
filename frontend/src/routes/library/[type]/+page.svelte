@@ -107,7 +107,7 @@
 				onclick={() => (form = option as typeof form)}
 				aria-pressed={form === option}
 				class="flex items-center gap-2 rounded-lg px-3 py-1 font-medium transition {form === option
-					? 'bg-white/8 text-ink'
+					? 'bg-ink/8 text-ink'
 					: 'text-muted hover:text-ink'}"
 			>
 				{option}
@@ -122,7 +122,7 @@
 		<button
 			onclick={() => (tab = status as Status | 'All')}
 			class="flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition {tab === status
-				? 'border-line-strong bg-white/8 text-ink'
+				? 'border-line-strong bg-ink/8 text-ink'
 				: 'border-transparent text-muted hover:text-ink'}"
 		>
 			{#if status !== 'All'}
@@ -137,7 +137,7 @@
 {#if !entries}
 	<div class="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7">
 		{#each Array(10) as _, i (i)}
-			<div class="aspect-[2/3] animate-pulse rounded-xl bg-white/[0.04]"></div>
+			<div class="aspect-[2/3] animate-pulse rounded-xl bg-ink/[0.04]"></div>
 		{/each}
 	</div>
 {:else if visible.length === 0}
@@ -157,7 +157,7 @@
 					/>
 					{#if entry.score}
 						<span
-							class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold backdrop-blur"
+							class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur"
 						>
 							<Star class="size-3 fill-amber-300 text-amber-300" />{entry.score}
 						</span>

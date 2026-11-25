@@ -4,7 +4,8 @@
 	import { page } from '$app/state';
 	import { get, post, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
-	import { isMediaType, LIBRARY_TYPES, MEDIA, SOURCE_NAMES } from '#lib/media.ts';
+	import { isMediaType, MEDIA, SOURCE_NAMES } from '#lib/media.ts';
+	import { enabledTypes } from '#lib/settings.svelte.ts';
 	import type { Entry, MediaType, SearchResult } from '#lib/types.ts';
 
 	const initial = page.url.searchParams.get('type') ?? 'tv';
@@ -68,7 +69,7 @@
 
 <form onsubmit={run} class="space-y-4">
 	<div class="shelf -mx-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-		{#each LIBRARY_TYPES as t (t)}
+		{#each enabledTypes() as t (t)}
 			{@const meta = MEDIA[t]}
 			<button
 				type="button"
@@ -77,7 +78,7 @@
 					if (query) run();
 				}}
 				class="flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition {type === t
-					? 'border-line-strong bg-white/8 text-ink'
+					? 'border-line-strong bg-ink/8 text-ink'
 					: 'border-transparent text-muted hover:text-ink'}"
 			>
 				<meta.icon class="size-4" style="color: {meta.accent}" />
@@ -92,7 +93,7 @@
 			bind:this={input}
 			bind:value={query}
 			placeholder="Search {MEDIA[type].plural.toLowerCase()}…"
-			class="w-full rounded-2xl border border-line bg-surface py-3.5 pr-4 pl-12 text-base outline-none transition focus:border-line-strong focus:ring-4 focus:ring-white/5"
+			class="w-full rounded-2xl border border-line bg-surface py-3.5 pr-4 pl-12 text-base outline-none transition focus:border-line-strong focus:ring-4 focus:ring-ink/5"
 		/>
 		{#if loading}
 			<LoaderCircle class="absolute top-1/2 right-4 size-5 -translate-y-1/2 animate-spin text-faint" />
@@ -140,7 +141,7 @@
 								<button
 									onclick={() => track(result, 'Planning')}
 									disabled={adding === k}
-									class="rounded-lg bg-black/70 px-2.5 py-1.5 text-xs font-semibold backdrop-blur transition hover:bg-black/90"
+									class="rounded-lg bg-black/70 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur transition hover:bg-black/90"
 								>
 									Plan
 								</button>

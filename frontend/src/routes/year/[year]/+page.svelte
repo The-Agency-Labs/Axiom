@@ -138,9 +138,9 @@
 	<p class="text-muted">{error}</p>
 {:else if !data}
 	<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-		{#each [0, 1, 2, 3] as i (i)}<div class="h-28 animate-pulse rounded-2xl bg-white/[0.03]"></div>{/each}
+		{#each [0, 1, 2, 3] as i (i)}<div class="h-28 animate-pulse rounded-2xl bg-ink/[0.03]"></div>{/each}
 	</div>
-	<div class="mt-8 h-64 animate-pulse rounded-2xl bg-white/[0.03]"></div>
+	<div class="mt-8 h-64 animate-pulse rounded-2xl bg-ink/[0.03]"></div>
 {:else if !sections.length && !data.reading?.pages}
 	<div class="rounded-2xl border border-dashed border-line-strong p-10 text-center text-sm text-muted">
 		Nothing tracked in {year}.
@@ -191,7 +191,7 @@
 					<ol class="mt-5 space-y-2">
 						{#each section.top.slice(0, 3) as top, i (top.id)}
 							<li>
-								<a href="/item/{top.media_type}/{top.id}" class="flex items-center gap-3 rounded-lg transition hover:bg-white/[0.03]">
+								<a href="/item/{top.media_type}/{top.id}" class="flex items-center gap-3 rounded-lg transition hover:bg-ink/[0.03]">
 									<span class="w-3 text-xs text-faint tabular-nums">{i + 1}</span>
 									<Cover src={top.item.image} title={top.item.title} type={top.media_type} class="aspect-[2/3] w-8 shrink-0 rounded" />
 									<span class="min-w-0 flex-1 truncate text-sm">{top.item.title}</span>
@@ -272,7 +272,7 @@
 					{#each data.genres.slice(0, 6) as genre (genre.name)}
 						<li class="text-sm">
 							<div class="flex justify-between"><span>{genre.name}</span><span class="text-xs text-faint tabular-nums">{genre.count}</span></div>
-							<div class="mt-1 h-1.5 rounded-full bg-white/8">
+							<div class="mt-1 h-1.5 rounded-full bg-ink/8">
 								<div class="h-full rounded-full bg-brand" style="width: {(genre.count / top) * 100}%"></div>
 							</div>
 						</li>

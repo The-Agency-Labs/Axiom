@@ -67,8 +67,8 @@
 	<p class="text-muted">{error}</p>
 {:else if !data}
 	<div class="flex items-center gap-5">
-		<div class="size-28 animate-pulse rounded-full bg-white/5"></div>
-		<div class="h-8 w-48 animate-pulse rounded bg-white/5"></div>
+		<div class="size-28 animate-pulse rounded-full bg-ink/5"></div>
+		<div class="h-8 w-48 animate-pulse rounded bg-ink/5"></div>
 	</div>
 {:else}
 	<header class="mb-10 flex items-center gap-5">
@@ -77,7 +77,7 @@
 				<img src={data.person.image} alt="" class="h-full w-full object-cover" />
 			</div>
 		{:else}
-			<span class="grid size-28 shrink-0 place-items-center rounded-full bg-white/5 text-faint"><UserRound class="size-10" /></span>
+			<span class="grid size-28 shrink-0 place-items-center rounded-full bg-ink/5 text-faint"><UserRound class="size-10" /></span>
 		{/if}
 		<div class="min-w-0">
 			<h1 class="text-3xl font-semibold tracking-tight">{data.person.name}</h1>

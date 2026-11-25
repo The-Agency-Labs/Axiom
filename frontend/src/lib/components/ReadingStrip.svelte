@@ -47,7 +47,7 @@
 		{#each week as day (day.date)}
 			{@const value = day.pages + day.chapters}
 			<div class="flex flex-col items-center gap-1" title="{day.date}: {day.pages} pages, {minutesLabel(day.minutes)}">
-				<div class="flex h-10 w-6 items-end overflow-hidden rounded-md bg-white/5">
+				<div class="flex h-10 w-6 items-end overflow-hidden rounded-md bg-ink/5">
 					<div
 						class="w-full rounded-md bg-emerald-400/85"
 						style="height: {value ? Math.max(12, (value / peak) * 100) : 0}%"

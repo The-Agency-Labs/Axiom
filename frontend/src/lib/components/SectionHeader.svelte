@@ -29,7 +29,7 @@
 		{/if}
 		<h2 class="text-[15px] font-semibold tracking-tight">{title}</h2>
 		{#if count !== undefined}
-			<span class="rounded-full bg-white/6 px-2 py-0.5 text-xs text-muted tabular-nums">{count}</span>
+			<span class="rounded-full bg-ink/6 px-2 py-0.5 text-xs text-muted tabular-nums">{count}</span>
 		{/if}
 	</div>
 	{#if href}
