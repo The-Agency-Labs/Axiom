@@ -11,6 +11,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -25,10 +26,22 @@ import (
 
 	"github.com/the-agency-labs/encompass/server/internal/auth"
 	"github.com/the-agency-labs/encompass/server/internal/cache"
+	"github.com/the-agency-labs/encompass/server/internal/catalog"
+	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
 	"github.com/the-agency-labs/encompass/server/internal/config"
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/httpapi"
 	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
+	"github.com/the-agency-labs/encompass/server/internal/providers/bgg"
+	"github.com/the-agency-labs/encompass/server/internal/providers/comicvine"
+	"github.com/the-agency-labs/encompass/server/internal/providers/hardcover"
+	"github.com/the-agency-labs/encompass/server/internal/providers/igdb"
+	"github.com/the-agency-labs/encompass/server/internal/providers/mal"
+	"github.com/the-agency-labs/encompass/server/internal/providers/mangaupdates"
+	"github.com/the-agency-labs/encompass/server/internal/providers/openlibrary"
+	"github.com/the-agency-labs/encompass/server/internal/providers/tmdb"
 	"github.com/the-agency-labs/encompass/server/web"
 )
 
@@ -79,6 +92,7 @@ func serve() error {
 	jobMgr := jobs.New(conn, queries, loc)
 	providerCache := cache.New(queries, cache.DefaultEntries)
 	providerCache.RegisterJobs(jobMgr)
+	newCatalog(cfg, conn, queries, providerCache, jobMgr)
 	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
 		_, err := authSvc.CleanupSessions(ctx)
 		return err
@@ -127,6 +141,34 @@ func serve() error {
 		slog.Warn("jobs did not stop in time")
 	}
 	return serveErr
+}
+
+// newCatalog builds the provider clients and the catalog on them, and
+// registers the periodic jobs: the anime mapping refresh, the credits
+// backfill and the release refresh. The HTTP layer gets the same catalog once
+// its routes need it.
+func newCatalog(cfg config.Config, conn *sql.DB, queries *db.Queries, providerCache *cache.Cache, jobMgr *jobs.Manager) *catalog.Catalog {
+	base := providers.NewClient(providerCache)
+	mapStore := mappings.New(conn, queries, base)
+	reg := catalog.NewRegistry(catalog.Providers{
+		TMDB:         tmdb.New(base, cfg),
+		AniList:      anilist.New(base, cfg),
+		MAL:          mal.New(base, cfg),
+		MangaUpdates: mangaupdates.New(base, cfg),
+		Hardcover:    hardcover.New(base, cfg),
+		OpenLibrary:  openlibrary.New(base, cfg),
+		ComicVine:    comicvine.New(base, cfg),
+		IGDB:         igdb.New(base, cfg),
+		BGG:          bgg.New(base, cfg),
+	}, mapStore)
+	cat := catalog.New(conn, queries, reg)
+	cat.TMDBCredits = catalog.NewTMDBCredits(base, cfg)
+	if loc, err := time.LoadLocation(cfg.TimeZone); err == nil {
+		cat.Loc = loc
+	}
+	mapStore.RegisterJobs(jobMgr)
+	cat.RegisterJobs(jobMgr)
+	return cat
 }
 
 // createUser implements `encompass createuser <username> [--admin]`.
