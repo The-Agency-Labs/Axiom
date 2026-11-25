@@ -124,3 +124,34 @@ def media_now(request):
         reverse=True,
     )
     return {"groups": groups}
+
+
+@router.get("/now/finished")
+def recently_finished(request, limit: int = 12):
+    """Most recently completed entries across media types."""
+    finished = []
+    for media_type in NOW_TYPES:
+        if media_type == MediaTypes.SEASON.value:
+            continue
+        model = apps.get_model(app_label="app", model_name=media_type)
+        finished.extend(
+            (entry, media_type)
+            for entry in model.objects.filter(
+                user=request.user,
+                status=Status.COMPLETED.value,
+                end_date__isnull=False,
+            )
+            .select_related("item")
+            .order_by("-end_date")[:limit]
+        )
+    finished.sort(key=lambda pair: pair[0].end_date, reverse=True)
+    return [
+        {
+            "id": entry.id,
+            "media_type": media_type,
+            "item": item_dict(entry.item),
+            "score": jsonable(entry.score),
+            "end_date": jsonable(entry.end_date),
+        }
+        for entry, media_type in finished[: max(1, min(limit, 50))]
+    ]

@@ -1,0 +1,11 @@
+{
+	"name": "Encompass",
+	"short_name": "Encompass",
+	"description": "Everything you watch and read, in one place.",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"background_color": "#09090b",
+	"theme_color": "#09090b",
+	"icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

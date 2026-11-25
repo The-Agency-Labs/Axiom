@@ -255,3 +255,28 @@ def delete_entry(request, media_type: MediaType, instance_id: int):
     entry = get_object_or_404(_model(media_type), id=instance_id, user=request.user)
     entry.delete()
     return {"deleted": True}
+
+
+class StepIn(Schema):
+    """Move progress one step (episode, chapter, page or 30 minutes)."""
+
+    direction: Literal["up", "down"] = "up"
+
+
+@router.post("/library/{media_type}/{instance_id}/step")
+def step_progress(request, media_type: MediaType, instance_id: int, payload: StepIn):
+    """Advance or rewind progress by one unit, using the model's own rules."""
+    require_write(request)
+    if media_type in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
+        raise HttpError(400, "Step a season, not a show or movie")
+    entry = get_object_or_404(
+        _model(media_type).objects.select_related("item"),
+        id=instance_id,
+        user=request.user,
+    )
+    if payload.direction == "up":
+        entry.increase_progress()
+    else:
+        entry.decrease_progress()
+    entry.refresh_from_db()
+    return media_dict(entry, media_type)

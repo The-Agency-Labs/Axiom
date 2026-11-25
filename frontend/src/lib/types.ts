@@ -1,0 +1,158 @@
+export type MediaType =
+	| 'tv'
+	| 'season'
+	| 'episode'
+	| 'movie'
+	| 'anime'
+	| 'manga'
+	| 'game'
+	| 'book'
+	| 'comic'
+	| 'boardgame';
+
+export type Status = 'In progress' | 'Planning' | 'Completed' | 'Paused' | 'Dropped';
+
+export interface Item {
+	id: number;
+	media_id: string;
+	source: string;
+	media_type: MediaType;
+	title: string;
+	image: string;
+	season_number: number | null;
+	episode_number: number | null;
+}
+
+export interface Entry {
+	id: number;
+	media_type: MediaType;
+	item: Item;
+	status: Status;
+	score: number | null;
+	progress: number;
+	progressed_at: string | null;
+	start_date: string | null;
+	end_date: string | null;
+	notes: string;
+	created_at: string;
+}
+
+export interface Episode {
+	episode_number: number;
+	title: string;
+	watched_at: string | null;
+}
+
+export interface HistoryRow {
+	date: string;
+	type: string;
+	status: string | null;
+	progress: number | null;
+	score: number | null;
+}
+
+export interface EntryDetail extends Entry {
+	history: HistoryRow[];
+	seasons?: (Entry & { episodes: Episode[] })[];
+	episodes?: Episode[];
+	metadata: Record<string, any> | null;
+}
+
+export interface NowEntry {
+	id: number;
+	media_type: MediaType;
+	item: Item;
+	title: string;
+	image: string;
+	progress: number;
+	total: number | null;
+	percent: number | null;
+	score: number | null;
+	progressed_at: string | null;
+	genres: string[];
+	synopsis: string | null;
+	season_number?: number;
+	next: { number: number; title: string | null; air_date?: string } | null;
+	last_session?: { started_at: string; pages_read: number; minutes: number };
+}
+
+export interface NowGroup {
+	media_type: MediaType;
+	entries: NowEntry[];
+}
+
+export interface Finished {
+	id: number;
+	media_type: MediaType;
+	item: Item;
+	score: number | null;
+	end_date: string;
+}
+
+export interface ReadingDay {
+	date: string;
+	pages: number;
+	chapters: number;
+	minutes: number;
+	sessions: number;
+}
+
+export interface ReadingStats {
+	start: string;
+	end: string;
+	read_today: boolean;
+	today: ReadingDay | null;
+	current_streak: number;
+	longest_streak: number;
+	totals: {
+		pages: number;
+		chapters: number;
+		minutes: number;
+		sessions: number;
+		days_read: number;
+		days_in_range: number;
+	};
+	days: ReadingDay[];
+}
+
+export interface ReadingSession {
+	id: number;
+	source: string;
+	title: string;
+	item: Item | null;
+	started_at: string;
+	ended_at: string;
+	minutes: number;
+	pages_read: number;
+	chapters_read: number;
+	start_page: number | null;
+	end_page: number | null;
+	device: string;
+}
+
+export interface ReadingDocument {
+	id: number;
+	title: string;
+	authors: string;
+	percentage: number | null;
+	device: string;
+	item: Item | null;
+	pages_read: number;
+	minutes: number;
+	sessions: number;
+}
+
+export interface SearchResult {
+	media_id: string | number;
+	source: string;
+	media_type: MediaType;
+	title: string;
+	image: string;
+}
+
+export interface ActivityEntry {
+	date: string;
+	media_type: MediaType;
+	item: Item & { display_title?: string };
+	changes: { description: string; field?: string }[];
+}
