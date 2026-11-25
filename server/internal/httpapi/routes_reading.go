@@ -15,6 +15,7 @@ func (s *Server) readingRoutes(mux *http.ServeMux) {
 
 	mux.Handle("POST /api/v1/reading/koreader", w(s.readingUploadKOReader))
 	mux.Handle("GET /api/v1/reading/stats", r(s.readingStats))
+	mux.Handle("GET /api/v1/reading/days", r(s.readingDays))
 	mux.Handle("GET /api/v1/reading/sessions", r(s.readingListSessions))
 	mux.Handle("POST /api/v1/reading/sessions", w(s.readingCreateSession))
 	mux.Handle("GET /api/v1/reading/documents", r(s.readingListDocuments))

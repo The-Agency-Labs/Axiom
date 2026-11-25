@@ -429,3 +429,14 @@ func (s *Server) readingPutNotes(w http.ResponseWriter, r *http.Request) (any, e
 	}
 	return n, nil
 }
+
+// readingDays is the daily reading log: per local day, time and pages,
+// merged per book (GET /api/v1/reading/days?start=&end=, default 30 days).
+func (s *Server) readingDays(w http.ResponseWriter, r *http.Request) (any, error) {
+	svc := s.readingService()
+	start, end, err := s.readingDateRange(r, svc)
+	if err != nil {
+		return nil, readingErr(err)
+	}
+	return svc.Journal(r.Context(), auth.User(r.Context()).ID, start, end)
+}
