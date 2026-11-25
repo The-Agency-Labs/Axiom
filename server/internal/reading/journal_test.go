@@ -9,7 +9,7 @@ import (
 )
 
 // The daily log merges every session of a day per book, newest day first,
-// books ordered by time spent; merged duplicate documents count as one book.
+// books in the order they were first read; merged duplicates count as one book.
 func TestJournalMergesPerDayAndBook(t *testing.T) {
 	env := readingtest.NewEnv(t, t0)
 	day1 := time.Date(2026, 11, 23, 8, 0, 0, 0, time.UTC)
@@ -55,5 +55,32 @@ func TestJournalMergesPerDayAndBook(t *testing.T) {
 	}
 	if d1.Books[1].Title != "Red Rising 4: Iron Gold" || d1.Books[1].Minutes != 2 {
 		t.Errorf("Iron Gold = %+v", d1.Books[1])
+	}
+}
+
+// Within a day, books are listed in reading order, not by time spent: a book
+// finished in the morning comes before the sequel started that evening.
+func TestJournalOrdersBooksByFirstRead(t *testing.T) {
+	env := readingtest.NewEnv(t, t0)
+	day := time.Date(2026, 11, 3, 9, 0, 0, 0, time.UTC)
+	for _, b := range []struct {
+		md5, title string
+		at         time.Time
+		secs       int64
+	}{
+		{"messiah", "Dune Messiah", day.Add(10 * time.Hour), 3600},
+		{"dune", "Dune", day, 900},
+	} {
+		if _, err := env.Reading.IngestKOReader(ctx, env.User, reading.KOBook{MD5: b.md5, Title: b.title, Authors: "Frank Herbert", TotalPages: ptr(int64(500)),
+			PageStats: []reading.PageStat{stat(1, b.at, b.secs)}}, ""); err != nil {
+			t.Fatal(err)
+		}
+	}
+	days, err := env.Reading.Journal(ctx, env.User, day, day)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(days) != 1 || len(days[0].Books) != 2 || days[0].Books[0].Title != "Dune" || days[0].Books[1].Title != "Dune Messiah" {
+		t.Fatalf("order: %+v", days)
 	}
 }

@@ -25,6 +25,7 @@ type JournalBook struct {
 	FromPage     *int64   `json:"from_page"`
 	ToPage       *int64   `json:"to_page"`
 	seconds      int64
+	firstRead    time.Time // earliest session start that day, for ordering
 }
 
 // JournalDay is everything read on one local day, merged per book.
@@ -40,8 +41,8 @@ type JournalDay struct {
 // newest day first: sessions merged per day (in the service's zone) and per
 // book. A book is its linked item, else its document (merged duplicates
 // roll up to the document they were merged into), else the session title.
-// Days without reading are left out; within a day books are ordered by time
-// spent.
+// Days without reading are left out; within a day books are listed in the
+// order they were first picked up that day.
 func (s *Service) Journal(ctx context.Context, userID int64, start, end time.Time) ([]JournalDay, error) {
 	from, to := bounds(start, end)
 	rows, err := s.Q.ListReadingSessions(ctx, db.ListReadingSessionsParams{UserID: userID, FromTs: from, ToTs: to, MaxRows: 1_000_000})
@@ -118,6 +119,9 @@ func (s *Service) Journal(ctx context.Context, userID int64, start, end time.Tim
 			}
 			books[k] = b
 		}
+		if t := parseStamp(ss.StartedAt); !t.IsZero() && (b.firstRead.IsZero() || t.Before(b.firstRead)) {
+			b.firstRead = t
+		}
 		b.seconds += ss.DurationSeconds
 		b.Pages += ss.PagesRead
 		b.Chapters += ss.ChaptersRead
@@ -151,8 +155,8 @@ func (s *Service) Journal(ctx context.Context, userID int64, start, end time.Tim
 		}
 		d.Minutes = int64(math.RoundToEven(float64(secs) / 60))
 		sort.Slice(d.Books, func(i, j int) bool {
-			if d.Books[i].seconds != d.Books[j].seconds {
-				return d.Books[i].seconds > d.Books[j].seconds
+			if !d.Books[i].firstRead.Equal(d.Books[j].firstRead) {
+				return d.Books[i].firstRead.Before(d.Books[j].firstRead)
 			}
 			return d.Books[i].Title < d.Books[j].Title
 		})
