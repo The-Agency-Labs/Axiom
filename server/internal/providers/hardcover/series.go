@@ -10,7 +10,9 @@ import (
 )
 
 // seriesBooksFragment lists the books of a series in reading order. Books
-// without a position (box sets, omnibuses) are left out.
+// without a position (box sets, omnibuses) are left out. Hardcover lists
+// every translation and split edition as its own book; info() keeps one
+// book per position (see there).
 const seriesBooksFragment = `
             id
             name
@@ -18,11 +20,15 @@ const seriesBooksFragment = `
             books_count
             book_series(where: {position: {_is_null: false}}, order_by: {position: asc}) {
               position
+              featured
+              compilation
               book {
                 id
                 title
                 cached_image(path: "url")
                 release_year
+                canonical_id
+                users_count
               }
             }`
 
@@ -30,8 +36,9 @@ const bookSeriesQuery = `
         query GetBookSeries($book_id: Int!) {
           books_by_pk(id: $book_id) {
             id
-            book_series(order_by: {position: asc}) {
+            book_series(order_by: [{featured: desc}, {position: asc}]) {
               position
+              featured
               series {` + seriesBooksFragment + `
               }
             }
@@ -65,12 +72,17 @@ type seriesData struct {
 	Slug       string `json:"slug"`
 	BooksCount int    `json:"books_count"`
 	BookSeries []struct {
-		Position *float64 `json:"position"`
-		Book     *struct {
+		Position    *float64 `json:"position"`
+		Featured    *bool    `json:"featured"`
+		Compilation bool     `json:"compilation"`
+		Book        *struct {
 			ID          int    `json:"id"`
 			Title       string `json:"title"`
 			CachedImage string `json:"cached_image"`
 			ReleaseYear *int   `json:"release_year"`
+			CanonicalID *int   `json:"canonical_id"`
+			UsersCount  int    `json:"users_count"`
+			Compilation bool   `json:"compilation"`
 		} `json:"book"`
 	} `json:"book_series"`
 }
@@ -79,8 +91,17 @@ func (d *seriesData) info() providers.SeriesInfo {
 	out := providers.SeriesInfo{
 		ExternalID: strconv.Itoa(d.ID), Name: d.Name, Slug: d.Slug, BooksCount: d.BooksCount,
 	}
+	// Hardcover lists translations (canonical_id set), split editions ("Iron
+	// Gold - Partie 1", not featured) and compilations as books of the
+	// series. Keep the canonical, featured, single books, and of those the
+	// most-read one per position: "Red Rising Saga" is 7 books, not 31.
+	best := map[float64]int{} // position -> index in out.Books
+	users := map[float64]int{}
 	for _, bs := range d.BookSeries {
 		if bs.Book == nil || bs.Position == nil {
+			continue
+		}
+		if (bs.Featured != nil && !*bs.Featured) || bs.Compilation || bs.Book.Compilation || bs.Book.CanonicalID != nil {
 			continue
 		}
 		b := providers.SeriesBook{
@@ -89,6 +110,13 @@ func (d *seriesData) info() providers.SeriesInfo {
 		if bs.Book.ReleaseYear != nil {
 			b.Year = *bs.Book.ReleaseYear
 		}
+		if i, ok := best[b.Position]; ok {
+			if bs.Book.UsersCount > users[b.Position] {
+				out.Books[i], users[b.Position] = b, bs.Book.UsersCount
+			}
+			continue
+		}
+		best[b.Position], users[b.Position] = len(out.Books), bs.Book.UsersCount
 		out.Books = append(out.Books, b)
 	}
 	return out

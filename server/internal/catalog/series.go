@@ -256,7 +256,16 @@ func (c *Catalog) syncHardcoverItemSeries(ctx context.Context, item Item) error 
 		return err
 	}
 	var primary int64
+	seen := map[string]bool{}
 	for i, bs := range list {
+		// Hardcover often has a saga and a sub-series with the same name
+		// once normalised ("Red Rising Saga", "Red Rising"): keep the first
+		// (featured) one so the series shows once.
+		key := SeriesKey(bs.Series.Name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
 		s, err := c.storeSeries(ctx, bs.Series)
 		if err != nil {
 			return err
