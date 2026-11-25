@@ -621,7 +621,7 @@ func TestDryRunWritesNothing(t *testing.T) {
 func TestNotADjangoDatabase(t *testing.T) {
 	f := newFixture(t)
 	f.exec(`DROP TABLE app_item`)
-	if _, err := f.run(Options{}); err == nil || !strings.Contains(err.Error(), "not a Django") {
+	if _, err := f.run(Options{}); err == nil || !strings.Contains(err.Error(), "not an old Django") {
 		t.Errorf("err = %v", err)
 	}
 }
