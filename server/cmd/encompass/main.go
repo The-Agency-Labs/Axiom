@@ -31,6 +31,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/config"
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/httpapi"
+	"github.com/the-agency-labs/encompass/server/internal/integrations/jellyfin"
 	"github.com/the-agency-labs/encompass/server/internal/jobs"
 	"github.com/the-agency-labs/encompass/server/internal/library"
 	"github.com/the-agency-labs/encompass/server/internal/providers"
@@ -96,6 +97,7 @@ func serve() error {
 	cat := newCatalog(cfg, conn, queries, providerCache, jobMgr)
 	lib := library.New(conn, queries, cat)
 	lib.Loc = loc // "today", released episodes and reading days use TZ
+	jellyfin.NewService(conn, queries, cfg, cat, lib, providerCache, jobMgr).RegisterJobs(jobMgr)
 	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
 		_, err := authSvc.CleanupSessions(ctx)
 		return err
