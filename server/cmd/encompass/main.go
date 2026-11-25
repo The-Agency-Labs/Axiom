@@ -48,6 +48,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/providers/openlibrary"
 	"github.com/the-agency-labs/encompass/server/internal/providers/tmdb"
 	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/encompass/server/internal/reading"
 	"github.com/the-agency-labs/encompass/server/web"
 )
 
@@ -111,6 +112,9 @@ func serve() error {
 	jellyfin.NewService(conn, queries, cfg, cat, lib, providerCache, jobMgr).RegisterJobs(jobMgr)
 	// Importers: AniList poll, Goodreads upload and Steam sync jobs.
 	integrations.New(integrations.Deps{Config: cfg, Queries: queries, Catalog: cat, Library: lib, Cache: providerCache}).RegisterJobs(jobMgr)
+	// Kindle documents never tried against the book providers get linked in the background.
+	readingSvc := reading.New(conn, queries, cat, lib)
+	readingSvc.RegisterJobs(jobMgr)
 	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
 		_, err := authSvc.CleanupSessions(ctx)
 		return err

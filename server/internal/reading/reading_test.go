@@ -446,3 +446,15 @@ func TestCreateSession(t *testing.T) {
 		t.Errorf("missing item: %v", err)
 	}
 }
+
+func TestAutoLinkAllUsersLinksUntriedDocuments(t *testing.T) {
+	env := readingtest.NewEnv(t, t0)
+	env.HC.Add(readingtest.Book{ID: "7", Title: "Project Hail Mary", Author: "Andy Weir", Pages: 480})
+	d, _, _ := env.Reading.GetOrCreateDocument(ctx, env.User, "phm", reading.DocFields{Title: "Project Hail Mary", Authors: "Andy Weir"})
+	if err := env.Reading.AutoLinkAllUsers(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if d, _ = env.Reading.Get(ctx, env.User, d.ID); !d.ItemID.Valid {
+		t.Fatalf("document not linked: %+v", d)
+	}
+}
