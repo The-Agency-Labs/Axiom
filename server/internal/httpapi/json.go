@@ -14,6 +14,9 @@ import (
 type Error struct {
 	Status int
 	Detail string
+	// Code names an error the client acts on; Sources goes with "linked".
+	Code    string
+	Sources []string
 }
 
 func (e *Error) Error() string { return e.Detail }
@@ -34,7 +37,11 @@ func JSON(h HandlerFunc) http.Handler {
 				slog.ErrorContext(r.Context(), "handler failed", "path", r.URL.Path, "err", err)
 				apiErr = Errorf(http.StatusInternalServerError, "Internal server error")
 			}
-			WriteJSON(w, apiErr.Status, map[string]string{"detail": apiErr.Detail})
+			body := map[string]any{"detail": apiErr.Detail}
+			if apiErr.Code != "" {
+				body["code"], body["sources"] = apiErr.Code, apiErr.Sources
+			}
+			WriteJSON(w, apiErr.Status, body)
 			return
 		}
 		if value == nil {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, Clock } from '@lucide/svelte';
+	import { Check, Clock, Link2 } from '@lucide/svelte';
 	import { mutate } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import { bookPosition, loadChapters } from '#lib/chapters.svelte.ts';
@@ -29,6 +29,9 @@
 		(kind === 'book' && bookPosition(entry.item.id, entry.progress)) || progressLabel(kind, entry.progress, entry.total)
 	);
 
+	/** The apps that track this title, when any do: its buttons then step back. */
+	const tracker = $derived(entry.linked?.join(' and ') ?? '');
+
 	const subtitle = $derived.by(() => {
 		if (episodic) return `Season ${season}${entry.next ? '' : ' · caught up'}`;
 		if (entry.last_session)
@@ -47,12 +50,19 @@
 			path: epPath,
 			body: { episodes: [next.number], watched: true },
 			label: `${entry.title} E${next.number} watched`,
-			optimistic: () => {
-				entry.progress += 1;
-				entry.next = null;
-				return () => Object.assign(entry, before);
-			},
+			// A tracked title changes only after the user says yes, so nothing moves before that.
+			optimistic: tracker
+				? undefined
+				: () => {
+						entry.progress += 1;
+						entry.next = null;
+						return () => Object.assign(entry, before);
+					},
 			onSuccess: () => {
+				if (tracker) {
+					entry.progress = before.progress + 1;
+					entry.next = null;
+				}
 				toast(`${entry.title} · E${next.number} watched`, {
 					kind: 'success',
 					action: {
@@ -63,6 +73,7 @@
 								path: epPath,
 								body: { episodes: [next.number], watched: false },
 								label: `${entry.title} E${next.number} unmarked`,
+								override: !!tracker,
 								optimistic: () => {
 									Object.assign(entry, before);
 								},
@@ -81,11 +92,14 @@
 			path: `/library/${kind}/${entry.id}/step`,
 			body: { direction: direction === 1 ? 'up' : 'down' },
 			label: `${entry.title} ${direction === 1 ? '+1' : '-1'}`,
-			optimistic: () => {
-				entry.progress = Math.max(0, before + direction);
-				return () => (entry.progress = before);
-			},
+			optimistic: tracker
+				? undefined
+				: () => {
+						entry.progress = Math.max(0, before + direction);
+						return () => (entry.progress = before);
+					},
 			onSuccess: () => {
+				if (tracker) entry.progress = Math.max(0, before + direction);
 				if (direction === 1)
 					toast(`${entry.title} · ${progressLabel(kind, entry.progress, entry.total)}`, {
 						kind: 'success',
@@ -96,6 +110,7 @@
 									path: `/library/${kind}/${entry.id}/step`,
 									body: { direction: 'down' },
 									label: `${entry.title} -1`,
+									override: !!tracker,
 									optimistic: () => {
 										entry.progress = Math.max(0, entry.progress - 1);
 									},
@@ -125,25 +140,32 @@
 
 	{#if episodic && entry.next}
 		<Button
-			variant={upcoming ? 'secondary' : 'primary'}
+			variant={upcoming || tracker ? 'secondary' : 'primary'}
 			full
 			disabled={upcoming}
 			class="mt-3"
-			icon={upcoming ? Clock : Check}
+			icon={upcoming ? Clock : tracker ? Link2 : Check}
 			onclick={markNext}
 			aria-label={upcoming
 				? `Episode ${entry.next.number} airs ${formatDate(entry.next.air_date)}`
-				: `Mark episode ${entry.next.number} watched`}
+				: tracker
+					? `Episode ${entry.next.number}, tracked by ${tracker}. Mark it watched by hand`
+					: `Mark episode ${entry.next.number} watched`}
 		>
 			{#if upcoming}
 				E{entry.next.number} airs {formatDate(entry.next.air_date)}
+			{:else if tracker}
+				<span class="truncate">E{entry.next.number} · from {tracker}</span>
 			{:else}
 				<span class="truncate">Watched E{entry.next.number}{entry.next.title ? ` · ${entry.next.title}` : ''}</span>
 			{/if}
 		</Button>
 	{:else if canStep}
 		<div class="mt-3 flex items-center justify-between gap-3">
-			<span class="text-[0.8125rem] text-muted">{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}</span>
+			<span class="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-muted">
+				{#if tracker}<Link2 class="size-3.5 shrink-0" /><span class="truncate">From {tracker}</span>
+				{:else}{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}{/if}
+			</span>
 			<Stepper
 				display={kind === 'game' ? minutesLabel(entry.progress) : String(entry.progress)}
 				label={meta.unit}

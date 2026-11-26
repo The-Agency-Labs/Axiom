@@ -196,6 +196,9 @@ func (s *Server) libraryRegisterShows(mux *http.ServeMux) {
 			return nil, err
 		}
 		userID := auth.User(ctx).ID
+		if err := s.guardLinked(r, item.ID); err != nil {
+			return nil, err
+		}
 		view, err := s.Library.GetSeasonView(ctx, userID, item, season)
 		if err != nil {
 			return nil, libraryError(err, source)

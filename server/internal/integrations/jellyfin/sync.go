@@ -277,6 +277,9 @@ func (s *Service) syncUser(ctx context.Context, u db.User, jfUsers []string, ful
 	if err != nil {
 		return finish(err.Error(), false)
 	}
+	if err := s.linkLibrary(ctx, u.ID, client, jfUsers); err != nil {
+		slog.WarnContext(ctx, "jellyfin: links", "user", u.ID, "err", err)
+	}
 	ok := true
 	for i, jf := range jfUsers {
 		key := s.markerKey(u.ID, i, jf)

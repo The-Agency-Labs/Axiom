@@ -10,7 +10,7 @@
 //   dropped and a toast tells the user.
 // - `net.pending` drives the pending indicator; `onSynced()` lets pages reload after a replay.
 
-import { replay } from './api.ts';
+import { Declined, replay } from './api.ts';
 import { toast } from './toast.svelte.ts';
 
 export interface QueuedWrite {
@@ -109,11 +109,13 @@ async function drain() {
 				sent++;
 			} catch (e) {
 				if (e instanceof TypeError) break; // still offline: keep the rest, retry later
-				// The server refused it: conflict or invalid now. Drop it and say so.
-				toast(`Couldn't sync "${item.label}": ${e instanceof Error ? e.message : 'rejected'}`, {
-					kind: 'error',
-					duration: 7000
-				});
+				// The server refused it: conflict or invalid now. Drop it and say so,
+				// unless the user was asked and chose to drop it.
+				if (!(e instanceof Declined))
+					toast(`Couldn't sync "${item.label}": ${e instanceof Error ? e.message : 'rejected'}`, {
+						kind: 'error',
+						duration: 7000
+					});
 			}
 			await tx('readwrite', (s) => s.delete(item.id!));
 			await refresh();

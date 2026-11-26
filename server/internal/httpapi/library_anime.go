@@ -136,6 +136,9 @@ func (s *Server) libraryRegisterAnime(mux *http.ServeMux) {
 			return nil, err
 		}
 		userID := auth.User(ctx).ID
+		if err := s.guardLinked(r, item.ID); err != nil {
+			return nil, err
+		}
 		_, err = s.Library.CurrentEntry(ctx, userID, item.ID)
 		switch {
 		case errors.Is(err, library.ErrNoEntry) && !watched:

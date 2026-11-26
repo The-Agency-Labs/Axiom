@@ -280,6 +280,11 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 			return nil, libraryError(err, "")
 		}
 		data := libraryEntryJSON(d.Entry, d.Item)
+		links, err := s.Library.Links(r.Context(), userID)
+		if err != nil {
+			return nil, err
+		}
+		data["linked"] = links[d.Item.ID]
 		data["history"] = libraryHistoryJSON(d.Item, d.History)
 		if catalog.HasEpisodes(d.Item) {
 			data["seasons"] = libraryDetailSeasons(d)
@@ -345,6 +350,9 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		if catalog.HasEpisodes(item) || catalog.IsMovie(item.Kind) {
 			return nil, Errorf(http.StatusBadRequest, "Step a season, not a show or movie")
 		}
+		if err := s.guardLinked(r, item.ID); err != nil {
+			return nil, err
+		}
 		if err := s.Library.Step(r.Context(), userID, item.ID, in.Direction == "up"); err != nil {
 			return nil, libraryError(err, item.Source)
 		}
@@ -392,6 +400,9 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		}
 		if !catalog.IsMovie(item.Kind) {
 			return nil, Errorf(http.StatusBadRequest, "Only movies are watched as a whole")
+		}
+		if err := s.guardLinked(r, item.ID); err != nil {
+			return nil, err
 		}
 		res, err := s.Library.WatchMovie(r.Context(), userID, item.ID, at, library.SourceManual, library.WatchOptions{})
 		if err != nil {
@@ -544,6 +555,17 @@ func (s *Server) librarySave(w http.ResponseWriter, r *http.Request) (any, error
 
 	manual := library.SourceManual
 	bySeason := in.SeasonNumber != nil && catalog.HasEpisodes(item)
+	// Completion, progress and finish dates belong to the tracking app; score,
+	// notes and shelving (planning, paused, dropped) stay free.
+	changes, err := s.libraryChangesProgress(ctx, userID, item.ID, bySeason, in, status, finished)
+	if err != nil {
+		return nil, libraryError(err, item.Source)
+	}
+	if changes {
+		if err := s.guardLinked(r, item.ID); err != nil {
+			return nil, err
+		}
+	}
 	switch {
 	case bySeason:
 		n := *in.SeasonNumber
@@ -596,4 +618,48 @@ func (s *Server) librarySave(w http.ResponseWriter, r *http.Request) (any, error
 		return nil, libraryError(err, item.Source)
 	}
 	return libraryEntryJSON(entry, item), nil
+}
+
+// libraryChangesProgress reports whether a save would complete, un-complete or
+// move the progress or finish date of a title (or of the season it names).
+func (s *Server) libraryChangesProgress(ctx context.Context, userID, itemID int64, bySeason bool, in librarySaveIn, status string, finished library.Optional[time.Time]) (bool, error) {
+	entry, err := s.Library.CurrentEntry(ctx, userID, itemID)
+	has := err == nil
+	if err != nil && !errors.Is(err, library.ErrNoEntry) {
+		return false, err
+	}
+	current := ""
+	if has {
+		current = entry.Status
+	}
+	if bySeason && has {
+		current = ""
+		seasons, err := s.Queries.ListEntrySeasons(ctx, entry.ID)
+		if err != nil {
+			return false, err
+		}
+		for _, season := range seasons {
+			if season.Season == int64(*in.SeasonNumber) {
+				current = season.Status
+			}
+		}
+	}
+	switch {
+	case status != "" && status != current && (status == library.Completed || current == library.Completed):
+		return true, nil
+	case in.Progress != nil && (!has && *in.Progress > 0 || has && int64(*in.Progress) != entry.Progress):
+		return true, nil
+	case !bySeason && finished.Set && has && changedTime(finished, entry.FinishedAt):
+		return true, nil
+	}
+	return false, nil
+}
+
+// changedTime reports whether a requested time differs from the stored one.
+func changedTime(want library.Optional[time.Time], have sql.NullString) bool {
+	if want.Value == nil {
+		return have.Valid && have.String != ""
+	}
+	t, err := time.Parse(time.RFC3339, have.String)
+	return err != nil || !t.Equal(want.Value.Truncate(time.Second))
 }

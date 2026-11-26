@@ -91,6 +91,8 @@ export interface NowEntry {
 	season_number?: number;
 	next: { number: number; title: string | null; air_date?: string } | null;
 	last_session?: { started_at: string; pages_read: number; minutes: number };
+	/** Apps that track this title (Jellyfin, Kindle, ...); they are its source of truth. */
+	linked?: string[] | null;
 }
 
 export interface NowGroup {

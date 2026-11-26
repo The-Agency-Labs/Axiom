@@ -203,6 +203,10 @@ func (s *Server) overviewNow(r *http.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	links, err := s.Library.Links(r.Context(), u.ID)
+	if err != nil {
+		return nil, err
+	}
 	out := []map[string]any{}
 	for _, g := range groups {
 		if !enabled[g.Kind] {
@@ -214,6 +218,7 @@ func (s *Server) overviewNow(r *http.Request) (any, error) {
 			if err != nil {
 				return nil, err
 			}
+			m["linked"] = links[e.Item.ID]
 			entries = append(entries, m)
 		}
 		out = append(out, map[string]any{"media_type": g.Kind, "entries": entries})

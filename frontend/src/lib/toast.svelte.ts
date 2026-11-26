@@ -21,6 +21,7 @@ export function toast(
 	message: string,
 	opts: { kind?: ToastKind; action?: ToastItem['action']; duration?: number } = {}
 ) {
+	if (!message) return -1; // a declined change: nothing to say
 	const id = nextId++;
 	const kind = opts.kind ?? 'info';
 	toasts.items = [...toasts.items.slice(-2), { id, message, kind, action: opts.action }];

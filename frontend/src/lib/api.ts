@@ -7,6 +7,7 @@
 
 import { clearQueue, enqueue, isQueueable, net } from './offline.svelte.ts';
 import { toast } from './toast.svelte.ts';
+import { confirmOverride } from './override.svelte.ts';
 
 let csrfToken = '';
 
@@ -19,12 +20,19 @@ export class ApiError extends Error {
 	}
 }
 
+/** The user chose to leave a tracked title alone. Its message is empty, so error toasts stay quiet. */
+export class Declined extends ApiError {
+	constructor() {
+		super(409, '');
+	}
+}
+
 /** True for fetch() failures caused by the network (not by an HTTP status). */
 export const isNetworkError = (e: unknown) => e instanceof TypeError;
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-async function request<T>(method: Method, path: string, body?: unknown, retried = false): Promise<T> {
+async function request<T>(method: Method, path: string, body?: unknown, retried = false, overridden = false): Promise<T> {
 	const headers: Record<string, string> = { Accept: 'application/json' };
 	const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
 	if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
@@ -32,6 +40,7 @@ async function request<T>(method: Method, path: string, body?: unknown, retried 
 		if (!csrfToken) await session();
 		headers['X-CSRFToken'] = csrfToken;
 	}
+	if (overridden) headers['X-Axiom-Override'] = '1';
 	const response = await fetch(`/api/v1${path}`, {
 		method,
 		headers,
@@ -40,15 +49,23 @@ async function request<T>(method: Method, path: string, body?: unknown, retried 
 	});
 	if (!response.ok) {
 		let detail = response.statusText;
+		let linked: string[] | null = null;
 		try {
-			detail = (await response.json()).detail ?? detail;
+			const data = await response.json();
+			detail = data.detail ?? detail;
+			if (data.code === 'linked') linked = data.sources ?? [];
 		} catch {
 			/* not JSON */
+		}
+		// An app tracks this title: ask, and repeat the request only on a yes.
+		if (response.status === 409 && linked && !overridden) {
+			if (await confirmOverride(linked)) return request<T>(method, path, body, retried, true);
+			throw new Declined();
 		}
 		// A stale CSRF token (rotated cookie): refresh once and retry.
 		if (response.status === 403 && method !== 'GET' && !retried && String(detail).includes('CSRF')) {
 			csrfToken = '';
-			return request<T>(method, path, body, true);
+			return request<T>(method, path, body, true, overridden);
 		}
 		throw new ApiError(response.status, typeof detail === 'string' ? detail : 'Request failed');
 	}
@@ -103,6 +120,8 @@ export interface MutateOptions<T> {
 	onSuccess?: (data: T) => void;
 	/** Show an error toast on failure (default true). */
 	toastOnError?: boolean;
+	/** The user already agreed to change a tracked title (undoing what they just confirmed). */
+	override?: boolean;
 }
 
 export type MutateResult<T> =
@@ -143,7 +162,7 @@ export async function mutate<T = unknown>(opts: MutateOptions<T>): Promise<Mutat
 		if (!net.online || isQueueable(method, opts.path)) return queue();
 	}
 	try {
-		const data = await request<T>(method, opts.path, opts.body);
+		const data = await request<T>(method, opts.path, opts.body, false, opts.override);
 		opts.onSuccess?.(data);
 		return { ok: true, queued: false, data };
 	} catch (e) {

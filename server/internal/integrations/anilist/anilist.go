@@ -280,7 +280,15 @@ func (im *Importer) Run(ctx context.Context, userID int64, username string, opts
 	if err != nil {
 		return nil, err
 	}
-	return im.RunEntries(ctx, userID, anime, manga, opts)
+	res, err := im.RunEntries(ctx, userID, anime, manga, opts)
+	if err != nil || opts.DryRun {
+		return res, err
+	}
+	// After the import, so manga it just added are included.
+	if err := im.linkManga(ctx, userID, manga); err != nil {
+		slog.WarnContext(ctx, "anilist: links", "user", userID, "err", err)
+	}
+	return res, nil
 }
 
 // RunEntries imports already-fetched list entries (see Entry). It is what Run

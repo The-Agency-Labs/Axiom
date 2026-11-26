@@ -199,6 +199,7 @@ func (s *Service) processEpisode(ctx context.Context, u db.User, ev Event, at ti
 			}
 		}
 	}
+	s.link(ctx, u.ID, item.ID)
 	if !ev.Played {
 		return true, s.startShow(ctx, u.ID, item.ID, ref.season, at)
 	}
@@ -324,6 +325,7 @@ func (s *Service) processMovie(ctx context.Context, u db.User, ev Event, at time
 	if err != nil {
 		return false, fmt.Errorf("tmdb movie %s: %w", tmdbID, err)
 	}
+	s.link(ctx, u.ID, item.ID)
 	if !ev.Played {
 		return true, s.startMovie(ctx, u.ID, item.ID, at)
 	}

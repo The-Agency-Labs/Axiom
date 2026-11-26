@@ -137,6 +137,12 @@ type ItemID struct {
 	ExternalID string `json:"external_id"`
 }
 
+type ItemLink struct {
+	UserID int64  `json:"user_id"`
+	ItemID int64  `json:"item_id"`
+	Source string `json:"source"`
+}
+
 type ItemSeason struct {
 	ItemID       int64          `json:"item_id"`
 	Number       int64          `json:"number"`

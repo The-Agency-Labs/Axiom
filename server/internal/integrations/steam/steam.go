@@ -249,6 +249,9 @@ func (im *Importer) importGame(ctx context.Context, userID int64, g game, name s
 		}
 		return err
 	}
+	if err := im.Library.AddLink(ctx, userID, item.ID, library.LinkSteam); err != nil {
+		return err
+	}
 	status := gameStatus(g.PlaytimeForever, g.Playtime2Weeks)
 	cur, curErr := im.Library.CurrentEntry(ctx, userID, item.ID)
 	exists := curErr == nil

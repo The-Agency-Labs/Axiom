@@ -111,9 +111,21 @@ func serve() error {
 	cat := newCatalog(cfg, conn, queries, providerCache, jobMgr)
 	lib := library.New(conn, queries, cat)
 	lib.Loc = loc // "today", released episodes and reading days use TZ
-	jellyfin.NewService(conn, queries, cfg, cat, lib, providerCache, jobMgr).RegisterJobs(jobMgr)
+	jf := jellyfin.NewService(conn, queries, cfg, cat, lib, providerCache, jobMgr)
+	jf.RegisterJobs(jobMgr)
 	// Importers: AniList poll, Goodreads upload and Steam sync jobs.
-	integrations.New(integrations.Deps{Config: cfg, Queries: queries, Catalog: cat, Library: lib, Cache: providerCache}).RegisterJobs(jobMgr)
+	suite := integrations.New(integrations.Deps{Config: cfg, Queries: queries, Catalog: cat, Library: lib, Cache: providerCache})
+	suite.RegisterJobs(jobMgr)
+	// What each app tracks is current from the start, not only after its next sync.
+	go func() {
+		jf.RefreshLinks(ctx)
+		suite.AniList.RefreshLinks(ctx)
+		suite.Steam.RefreshLinks(ctx)
+		// Casts cleared by a migration come back now rather than in six hours.
+		if _, err := cat.BackfillCredits(ctx, catalog.CreditsBackfillLimit); err != nil {
+			slog.Warn("credits backfill", "err", err)
+		}
+	}()
 	// Kindle documents never tried against the book providers get linked in the background.
 	readingSvc := reading.New(conn, queries, cat, lib)
 	readingSvc.RegisterJobs(jobMgr)

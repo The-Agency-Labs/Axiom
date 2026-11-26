@@ -5,6 +5,7 @@
 	import { tick } from 'svelte';
 	import { auth, refreshAuth } from '#lib/auth.svelte.ts';
 	import Nav from '#lib/components/Nav.svelte';
+	import OverrideDialog from '#lib/components/OverrideDialog.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { initOffline } from '#lib/offline.svelte.ts';
 	import { loadSettings } from '#lib/settings.svelte.ts';
@@ -72,7 +73,7 @@
 		>Skip to content</a
 	>
 	<Nav />
-	<div class="pt-[env(safe-area-inset-top)] lg:pl-60">
+	<div class="lg:pt-(--safe-top) lg:pl-60">
 		<TopBar />
 		<OfflineBanner />
 		<main
@@ -90,4 +91,5 @@
 	</div>
 {/if}
 
+<OverrideDialog />
 <Toast />
