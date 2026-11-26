@@ -235,6 +235,12 @@ type ReadingDocument struct {
 	LinkCheckedAt     sql.NullString  `json:"link_checked_at"`
 }
 
+type ReadingDocumentToc struct {
+	DocumentID int64  `json:"document_id"`
+	Chapters   string `json:"chapters"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
 type ReadingSession struct {
 	ID              int64         `json:"id"`
 	UserID          int64         `json:"user_id"`
