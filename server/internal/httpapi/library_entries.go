@@ -13,6 +13,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/catalog"
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/encompass/server/internal/providers"
 )
 
 // libraryMetadata fetches provider metadata for an item or a bare (kind,
@@ -48,8 +49,9 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/search", auth.Require(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
 		q := r.URL.Query()
 		kind := q.Get("media_type")
-		if !libraryValidKind(kind) {
-			return nil, Errorf(http.StatusUnprocessableEntity, "media_type must be one of the library media types")
+		all := kind == "all"
+		if !all && !libraryValidKind(kind) {
+			return nil, Errorf(http.StatusUnprocessableEntity, "media_type must be \"all\" or one of the library media types")
 		}
 		if !q.Has("q") {
 			return nil, Errorf(http.StatusUnprocessableEntity, "q is required")
@@ -58,7 +60,12 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		if err != nil {
 			return nil, err
 		}
-		res, err := s.Catalog.Reg.Search(r.Context(), kind, q.Get("source"), q.Get("q"), page, true)
+		var res providers.SearchPage
+		if all {
+			res, err = s.searchAll(r.Context(), searchKinds(r), q.Get("q"), page)
+		} else {
+			res, err = s.Catalog.Reg.Search(r.Context(), kind, q.Get("source"), q.Get("q"), page, true)
+		}
 		if err != nil {
 			if errors.Is(err, catalog.ErrUnsupported) {
 				return nil, Errorf(http.StatusBadRequest, err.Error())
@@ -185,8 +192,9 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/library/find", auth.Require(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
 		q := r.URL.Query()
 		kind := q.Get("media_type")
-		if !libraryValidKind(kind) {
-			return nil, Errorf(http.StatusUnprocessableEntity, "media_type must be one of the library media types")
+		all := kind == "all"
+		if !all && !libraryValidKind(kind) {
+			return nil, Errorf(http.StatusUnprocessableEntity, "media_type must be \"all\" or one of the library media types")
 		}
 		if !q.Has("source") || !q.Has("media_id") {
 			return nil, Errorf(http.StatusUnprocessableEntity, "source and media_id are required")
