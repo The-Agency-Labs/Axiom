@@ -3,8 +3,10 @@ package httpapi
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/the-agency-labs/encompass/server/internal/catalog"
 	"github.com/the-agency-labs/encompass/server/internal/providers"
@@ -64,7 +66,44 @@ func (s *Server) searchAll(ctx context.Context, kinds []string, query string, pa
 			}
 		}
 	}
+	rankByTitle(results, query)
 	return providers.SearchPage{"page": page, "total_pages": totalPages, "total_results": len(results), "results": results}, nil
+}
+
+// rankByTitle moves closer title matches up: exact, then starting with the
+// query, then containing every word of it, then the rest (matched by a
+// provider on another title). The interleaved order is kept within each group,
+// so one kind's loose hits no longer outrank another kind's real ones.
+func rankByTitle(results []map[string]any, query string) {
+	q := foldTitle(query)
+	if q == "" {
+		return
+	}
+	words := strings.Fields(q)
+	rank := func(r map[string]any) int {
+		title, _ := r["title"].(string)
+		t := foldTitle(title)
+		switch {
+		case t == q:
+			return 0
+		case strings.HasPrefix(t, q+" "):
+			return 1
+		}
+		for _, w := range words {
+			if !strings.Contains(t, w) {
+				return 3
+			}
+		}
+		return 2
+	}
+	slices.SortStableFunc(results, func(a, b map[string]any) int { return rank(a) - rank(b) })
+}
+
+// foldTitle lowercases a title and reduces punctuation to single spaces.
+func foldTitle(s string) string {
+	return strings.Join(strings.FieldsFunc(strings.ToLower(s), func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	}), " ")
 }
 
 // searchKinds reads the optional comma-separated "types" filter of an "all"
