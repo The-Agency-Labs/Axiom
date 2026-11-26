@@ -142,6 +142,17 @@ textarea {
 	scroll-snap-type: x proximity;
 	scrollbar-width: none;
 	-webkit-overflow-scrolling: touch;
+	/* Slide sideways only: no vertical wobble, and reaching the end doesn't bounce
+	   the page or trigger the back gesture. */
+	overflow-y: hidden;
+	overscroll-behavior-x: contain;
+}
+/* Items slide with the row; they aren't picked up (link drag, long-press preview). */
+.shelf a,
+.shelf img {
+	-webkit-user-drag: none;
+	-webkit-touch-callout: none;
+	user-select: none;
 }
 .shelf::-webkit-scrollbar {
 	display: none;

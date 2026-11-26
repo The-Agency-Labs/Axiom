@@ -46,7 +46,7 @@
 {/snippet}
 
 {#if href}
-	<a {href} class={cls} aria-current={selected ? 'page' : undefined} {...rest}>{@render inner()}</a>
+	<a {href} class={cls} draggable="false" aria-current={selected ? 'page' : undefined} {...rest}>{@render inner()}</a>
 {:else}
 	<button type="button" class={cls} aria-pressed={selected} {onclick} {...rest}>{@render inner()}</button>
 {/if}
