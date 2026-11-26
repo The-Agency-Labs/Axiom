@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { CheckCheck, Plus, Sparkles } from '@lucide/svelte';
 	import { get } from '#lib/api.ts';
-	import { auth } from '#lib/auth.svelte.ts';
 	import NowItem from '#lib/components/library/NowItem.svelte';
 	import SectionHead from '#lib/components/library/SectionHead.svelte';
 	import ReadingStrip from '#lib/components/ReadingStrip.svelte';
@@ -62,7 +61,7 @@
 <PullToRefresh onrefresh={load}>
 	<header class="mb-5 flex items-end justify-between gap-3">
 		<div class="min-w-0">
-			<h1 class="truncate text-2xl font-semibold tracking-tight capitalize sm:text-3xl">{auth.username}</h1>
+			<h1 class="truncate text-2xl font-semibold tracking-tight sm:text-3xl">Now</h1>
 			<p class="mt-1 h-5 text-[0.8125rem] text-faint">
 				{#if groups}{total} in progress{/if}
 			</p>

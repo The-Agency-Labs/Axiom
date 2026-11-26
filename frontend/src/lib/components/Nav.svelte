@@ -61,7 +61,7 @@
 	aria-label="Sidebar"
 >
 	<a href="/" class="mb-6 flex items-center gap-2.5 px-3">
-		<img src="/icon.svg" alt="" class="size-7" />
+		<img src="/icon.svg" alt="" class="size-7 rounded-md" />
 		<span class="text-[1.0625rem] font-semibold tracking-tight">Axiom</span>
 	</a>
 

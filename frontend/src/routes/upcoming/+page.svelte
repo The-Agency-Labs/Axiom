@@ -7,7 +7,7 @@
 	import { MEDIA, titleHref } from '#lib/media.ts';
 	import { loadSettings, settings } from '#lib/settings.svelte.ts';
 	import type { SearchResult } from '#lib/types.ts';
-	import { Button, Chip, ChipRow, CopyField, EmptyState, IconButton, PosterCard, PosterGrid, PullToRefresh, Sheet, Skeleton, Tabs } from '#lib/ui/index.ts';
+	import { Button, CopyField, EmptyState, IconButton, PosterCard, PosterGrid, PullToRefresh, Sheet, Skeleton, Tabs } from '#lib/ui/index.ts';
 
 	let view = $state('agenda');
 	let events = $state<CalendarEvent[] | null>(null);
@@ -49,7 +49,6 @@
 	let picked_season = $state<SeasonRef | null>(null);
 	let titles = $state<SeasonalTitle[] | null>(null);
 	let seasonalError = $state(false);
-	let seasonChips = $state<HTMLElement>();
 
 	async function loadSeasons() {
 		try {
@@ -81,13 +80,27 @@
 	$effect(() => {
 		if (view === 'seasonal' && picked_season) void loadTitles(picked_season);
 	});
-	// Bring the chosen season into view in the chip strip (it is long: 7+ years).
-	$effect(() => {
-		void seasons;
-		void view;
-		void picked_season;
-		queueMicrotask(() => seasonChips?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }));
-	});
+	// A year picker plus four season tabs: nothing to scroll sideways, however many years there are.
+	const SEASONS = ['winter', 'spring', 'summer', 'fall'];
+	const years = $derived([...new Set((seasons ?? []).map((s) => s.year))]);
+	const seasonOptions = $derived(
+		SEASONS.map((name) => ({
+			value: name,
+			label: name[0].toUpperCase() + name.slice(1),
+			disabled: !seasons?.some((s) => s.year === picked_season?.year && s.season === name)
+		}))
+	);
+	function pickSeason(name: string) {
+		const next = seasons?.find((s) => s.year === picked_season?.year && s.season === name);
+		if (next) picked_season = next;
+	}
+	/** Same season in another year, or that year's closest one at either end of the range. */
+	function pickYear(year: number) {
+		const inYear = seasons?.filter((s) => s.year === year) ?? [];
+		const at = SEASONS.indexOf(picked_season?.season ?? 'winter');
+		const next = [...inYear].sort((a, b) => Math.abs(SEASONS.indexOf(a.season) - at) - Math.abs(SEASONS.indexOf(b.season) - at))[0];
+		if (next) picked_season = next;
+	}
 
 	async function load() {
 		if (view === 'seasonal') {
@@ -190,15 +203,20 @@
 		<section class="mt-3" aria-label="Seasonal anime">
 			{#if seasons === null}
 				<Skeleton class="h-10 w-full" />
-			{:else if seasons.length}
-				<div bind:this={seasonChips} class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0" role="group" aria-label="Season">
-					{#each seasons as sn, i (sn.label)}
-						{#if i === 0 || seasons[i - 1].year !== sn.year}<span class="shrink-0 self-center pl-2 text-xs font-semibold text-faint first:pl-0">{sn.year}</span>{/if}
-						<Chip selected={picked_season?.label === sn.label} onclick={() => (picked_season = sn)}>{sn.season[0].toUpperCase() + sn.season.slice(1)}</Chip>
-					{/each}
+			{:else if picked_season}
+				{@const year = picked_season.year}
+				<div class="max-w-md">
+					<div class="mb-2 flex items-center justify-between gap-2">
+						<IconButton icon={ChevronLeft} label="Previous year" disabled={year <= years[0]} onclick={() => pickYear(year - 1)} />
+						<select class="input w-auto text-center font-semibold" aria-label="Year" value={year} onchange={(e) => pickYear(Number(e.currentTarget.value))}>
+							{#each years as y (y)}<option value={y}>{y}</option>{/each}
+						</select>
+						<IconButton icon={ChevronRight} label="Next year" disabled={year >= years[years.length - 1]} onclick={() => pickYear(year + 1)} />
+					</div>
+					<Tabs label="Season" full value={picked_season.season} options={seasonOptions} onchange={pickSeason} />
 				</div>
 			{/if}
-			{#if picked_season}<h2 class="mt-2 mb-3 text-lg font-semibold">{picked_season.label}</h2>{/if}
+			{#if picked_season}<h2 class="mt-4 mb-3 text-lg font-semibold">{picked_season.label}</h2>{/if}
 			{#if titles === null}
 				<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6" aria-hidden="true">{#each Array(12) as _, i (i)}<Skeleton class="aspect-[2/3] w-full" />{/each}</div>
 			{:else if titles.length === 0}

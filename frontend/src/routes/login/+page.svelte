@@ -40,7 +40,7 @@
 
 	<form onsubmit={submit} class="relative w-full max-w-sm space-y-5">
 		<div class="mb-8 flex flex-col items-center gap-3 text-center">
-			<img src="/icon.svg" alt="" class="size-12" />
+			<img src="/icon.svg" alt="" class="size-12 rounded-xl" />
 			<h1 class="text-2xl font-semibold tracking-tight">Axiom</h1>
 			<p class="text-sm text-muted">Everything you watch and read, in one place.</p>
 		</div>

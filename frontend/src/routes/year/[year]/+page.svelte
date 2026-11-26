@@ -74,7 +74,7 @@
 			{
 				label: 'Time reading',
 				value: r?.minutes ? minutesLabel(r.minutes).replace(/ \d+m$/, '') : '-',
-				sub: r?.minutes ? `${minutesLabel(r.minutes)} · ${r.sessions} session${r.sessions === 1 ? '' : 's'}` : 'no reading time logged',
+				sub: r?.minutes ? `${r.sessions} session${r.sessions === 1 ? '' : 's'}` : 'no reading time logged',
 				icon: Hourglass
 			},
 			{
@@ -148,7 +148,7 @@
 				<div class="rounded-[var(--radius-card)] border border-line bg-surface p-4">
 					<p class="flex items-center gap-1.5 text-xs text-muted"><card.icon class="size-3.5" />{card.label}</p>
 					<p class="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{card.value}</p>
-					<p class="truncate text-xs text-faint">{card.sub}</p>
+					<p class="text-xs text-faint">{card.sub}</p>
 				</div>
 			{/each}
 		</div>

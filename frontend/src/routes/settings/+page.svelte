@@ -75,7 +75,7 @@
 		<div class="space-y-4"><Skeleton class="h-40 w-full" /><Skeleton class="h-64 w-full" /></div>
 	{/if}
 {:else}
-	<Tabs label="Settings sections" variant="underline" class="mb-5" value={tab} options={tabOptions} onchange={pickTab} />
+	<Tabs label="Settings sections" variant="underline" full class="mb-5 max-w-2xl" value={tab} options={tabOptions} onchange={pickTab} />
 
 	<div class="max-w-2xl space-y-4">
 		{#if tab === 'general'}

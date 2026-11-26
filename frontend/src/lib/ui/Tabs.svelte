@@ -71,9 +71,9 @@
 			tabindex={active ? 0 : -1}
 			disabled={option.disabled}
 			onclick={() => select(option.value)}
-			class="inline-flex min-h-11 items-center justify-center gap-1.5 px-3.5 text-sm font-medium whitespace-nowrap transition disabled:opacity-40 {full
-				? 'flex-1'
-				: ''} {variant === 'segmented'
+			class="inline-flex min-h-11 items-center justify-center gap-1.5 text-sm font-medium whitespace-nowrap transition disabled:opacity-40 {full
+				? 'flex-1 px-2'
+				: 'px-3.5'} {variant === 'segmented'
 				? `rounded-lg ${active ? 'bg-ink/12 text-ink' : 'text-muted hover:text-ink'}`
 				: `-mb-px border-b-2 ${active ? 'border-brand text-ink' : 'border-transparent text-muted hover:text-ink'}`}"
 		>

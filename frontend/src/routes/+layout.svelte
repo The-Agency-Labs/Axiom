@@ -61,7 +61,7 @@
 
 {#if !auth.ready}
 	<div class="grid min-h-dvh place-items-center">
-		<img src="/icon.svg" alt="" class="size-10 animate-pulse opacity-60" />
+		<img src="/icon.svg" alt="" class="size-10 animate-pulse rounded-lg opacity-60" />
 	</div>
 {:else if isLogin}
 	{@render children()}

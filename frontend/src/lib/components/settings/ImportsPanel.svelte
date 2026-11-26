@@ -211,7 +211,7 @@
 					{#snippet extra()}
 						{#if mal.configured}
 							<form onsubmit={importMal} class="mt-3 flex gap-2">
-								<input class="input min-w-0 flex-1" bind:value={malUser} required minlength="2" maxlength="16" placeholder="MyAnimeList username" aria-label="MyAnimeList username" autocapitalize="none" autocomplete="off" />
+								<input class="input min-w-0 flex-1" bind:value={malUser} required minlength="2" maxlength="16" placeholder="MAL username" aria-label="MyAnimeList username" autocapitalize="none" autocomplete="off" />
 								<Button type="submit" variant="primary" icon={Upload} loading={busy === 'mal'}>Import</Button>
 							</form>
 							<p class="mt-2 text-[0.75rem] text-faint">Your list must be public. Re-importing only adds entries and moves progress forward.</p>
