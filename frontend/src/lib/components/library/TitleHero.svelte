@@ -4,7 +4,7 @@
 	import Cover from '#lib/components/Cover.svelte';
 	import { MEDIA, SOURCE_NAMES } from '#lib/media.ts';
 	import type { MediaType } from '#lib/types.ts';
-	import { IconButton, Skeleton } from '#lib/ui/index.ts';
+	import { IconButton, ReleaseBadge, Skeleton } from '#lib/ui/index.ts';
 
 	/** Backdrop, poster, title, native title, year, type badge, genres and the provider rating. */
 	let {
@@ -17,6 +17,7 @@
 		rating,
 		source,
 		loadingMeta = false,
+		release,
 		back,
 		children
 	}: {
@@ -29,6 +30,8 @@
 		rating?: number | null;
 		source?: string;
 		loadingMeta?: boolean;
+		/** Release status of the title itself (catalog.ReleaseStatus). */
+		release?: string | null;
 		back: () => void;
 		children?: Snippet;
 	} = $props();
@@ -64,6 +67,7 @@
 				{#if showNative}<p class="mt-0.5 text-[15px] text-muted">{nativeTitle}</p>{/if}
 				<p class="mt-2 flex min-h-5 flex-wrap items-center gap-x-3 text-sm text-muted">
 					{#if year}<span class="tabular-nums">{year}</span>{/if}
+					<ReleaseBadge status={release} />
 					{#if rating}
 						<span class="inline-flex items-center gap-1 tabular-nums">
 							<Star class="size-3.5 fill-amber-300 text-amber-300" />{Number(rating).toFixed(1)}

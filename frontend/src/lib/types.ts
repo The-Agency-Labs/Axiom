@@ -22,6 +22,21 @@ export interface Item {
 	image: string;
 	season_number: number | null;
 	episode_number: number | null;
+	/** Release status of the title itself: ongoing, hiatus, ended, cancelled, upcoming. */
+	release_status?: string;
+}
+
+/** A completed season, for the year view of shows (GET /library/seasons). */
+export interface SeasonFinished {
+	entry_id: number;
+	season_number: number;
+	season_title: string;
+	episodes: number;
+	score: number | null;
+	image: string;
+	start_date: string | null;
+	end_date: string | null;
+	item: Pick<Item, 'id' | 'media_id' | 'source' | 'media_type' | 'title' | 'image'>;
 }
 
 export interface Entry {
@@ -326,6 +341,7 @@ export interface LibraryPerson {
 export interface TitleMetadata {
 	title?: string;
 	native_title?: string;
+	release_status?: string;
 	image?: string;
 	backdrop?: string;
 	synopsis?: string;

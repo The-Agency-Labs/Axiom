@@ -9,6 +9,7 @@ export { default as IconButton } from './IconButton.svelte';
 export { default as ListRow } from './ListRow.svelte';
 export { default as OfflineBanner } from './OfflineBanner.svelte';
 export { default as PosterCard } from './PosterCard.svelte';
+export { default as ReleaseBadge } from './ReleaseBadge.svelte';
 export { default as PosterGrid } from './PosterGrid.svelte';
 export { default as ProgressBar } from './ProgressBar.svelte';
 export { default as ProgressRing } from './ProgressRing.svelte';

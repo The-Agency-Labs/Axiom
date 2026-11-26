@@ -94,7 +94,44 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		if err != nil {
 			return nil, libraryError(err, source)
 		}
+		if season == nil {
+			if d, ok := meta["details"].(map[string]any); ok {
+				if st := catalog.ReleaseStatus(kind, d, time.Now()); st != "" {
+					meta["release_status"] = st
+				}
+			}
+		}
 		return meta, nil
+	})))
+
+	// GET /library/seasons?media_type=tv|anime: every completed season with its
+	// own art and the date its last episode was watched, for the year view.
+	mux.Handle("GET /api/v1/library/seasons", auth.Require(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
+		kind := r.URL.Query().Get("media_type")
+		if kind != catalog.KindTV && kind != catalog.KindAnime {
+			return nil, Errorf(http.StatusUnprocessableEntity, "media_type must be tv or anime")
+		}
+		rows, err := s.Queries.ListCompletedSeasons(r.Context(), db.ListCompletedSeasonsParams{UserID: auth.User(r.Context()).ID, Kind: kind})
+		if err != nil {
+			return nil, err
+		}
+		out := make([]map[string]any, 0, len(rows))
+		for _, row := range rows {
+			image := row.SeasonImage
+			if image == "" {
+				image = row.ShowImage
+			}
+			out = append(out, map[string]any{
+				"entry_id": row.EntryID, "season_number": row.Season, "season_title": row.SeasonTitle,
+				"episodes": row.EpisodeCount, "score": libraryNullFloat(row.Score), "image": image,
+				"start_date": libraryStrOrNil(row.StartedAt), "end_date": libraryStrOrNil(row.FinishedAt),
+				"item": map[string]any{
+					"id": row.ItemID, "media_id": row.ExternalID, "source": row.Source, "media_type": kind,
+					"title": row.Title, "image": row.ShowImage,
+				},
+			})
+		}
+		return map[string]any{"results": out}, nil
 	})))
 
 	// GET /library (api/library.py: list_library)

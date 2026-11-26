@@ -258,6 +258,15 @@ export const pluralize = (n: number, one: string, many = one + "s") =>
   `${n} ${n === 1 ? one : many}`;
 
 /** Library sort orders; ids match the `sort` default in user settings. */
+/** Release status of a title itself (server: catalog.ReleaseStatus). */
+export const RELEASE_STATUS: Record<string, { label: string; color: string }> = {
+	ongoing: { label: 'Ongoing', color: '#34d399' },
+	hiatus: { label: 'On hiatus', color: '#fbbf24' },
+	ended: { label: 'Ended', color: '#a1a1aa' },
+	cancelled: { label: 'Cancelled', color: '#f87171' },
+	upcoming: { label: 'Coming soon', color: '#60a5fa' }
+};
+
 export const SORTS: [string, string][] = [
   ["year", "Year finished"],
   ["activity", "Recent activity"],

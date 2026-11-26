@@ -155,3 +155,20 @@ SELECT COUNT(*) FROM (
 -- name: WatchBounds :one
 SELECT MIN(watched_at) AS first_at, MAX(watched_at) AS last_at
 FROM watches WHERE entry_id = ? AND season > 0 AND source != 'assumed';
+
+-- name: ListCompletedSeasons :many
+-- Every completed regular season of the user's shows of one kind, with the
+-- season's own art and the dates of its first and last watch.
+SELECT e.id AS entry_id, i.id AS item_id, i.source, i.external_id, i.title, i.image AS show_image,
+       es.season, es.score,
+       CAST(COALESCE(s.title, '') AS TEXT) AS season_title,
+       CAST(COALESCE(s.image, '') AS TEXT) AS season_image,
+       CAST(COALESCE(s.episode_count, 0) AS INTEGER) AS episode_count,
+       CAST(COALESCE((SELECT MIN(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season), '') AS TEXT) AS started_at,
+       CAST(COALESCE((SELECT MAX(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season), '') AS TEXT) AS finished_at
+FROM entry_seasons es
+JOIN entries e ON e.id = es.entry_id
+JOIN items i ON i.id = e.item_id
+LEFT JOIN item_seasons s ON s.item_id = i.id AND s.number = es.season
+WHERE e.user_id = ? AND i.kind = ? AND es.season > 0 AND es.status = 'Completed'
+ORDER BY finished_at DESC, i.title, es.season;

@@ -534,6 +534,82 @@ func (q *Queries) ListActivityWatches(ctx context.Context, arg ListActivityWatch
 	return items, nil
 }
 
+const listCompletedSeasons = `-- name: ListCompletedSeasons :many
+SELECT e.id AS entry_id, i.id AS item_id, i.source, i.external_id, i.title, i.image AS show_image,
+       es.season, es.score,
+       CAST(COALESCE(s.title, '') AS TEXT) AS season_title,
+       CAST(COALESCE(s.image, '') AS TEXT) AS season_image,
+       CAST(COALESCE(s.episode_count, 0) AS INTEGER) AS episode_count,
+       CAST(COALESCE((SELECT MIN(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season), '') AS TEXT) AS started_at,
+       CAST(COALESCE((SELECT MAX(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season), '') AS TEXT) AS finished_at
+FROM entry_seasons es
+JOIN entries e ON e.id = es.entry_id
+JOIN items i ON i.id = e.item_id
+LEFT JOIN item_seasons s ON s.item_id = i.id AND s.number = es.season
+WHERE e.user_id = ? AND i.kind = ? AND es.season > 0 AND es.status = 'Completed'
+ORDER BY finished_at DESC, i.title, es.season
+`
+
+type ListCompletedSeasonsParams struct {
+	UserID int64  `json:"user_id"`
+	Kind   string `json:"kind"`
+}
+
+type ListCompletedSeasonsRow struct {
+	EntryID      int64           `json:"entry_id"`
+	ItemID       int64           `json:"item_id"`
+	Source       string          `json:"source"`
+	ExternalID   string          `json:"external_id"`
+	Title        string          `json:"title"`
+	ShowImage    string          `json:"show_image"`
+	Season       int64           `json:"season"`
+	Score        sql.NullFloat64 `json:"score"`
+	SeasonTitle  string          `json:"season_title"`
+	SeasonImage  string          `json:"season_image"`
+	EpisodeCount int64           `json:"episode_count"`
+	StartedAt    string          `json:"started_at"`
+	FinishedAt   string          `json:"finished_at"`
+}
+
+// Every completed regular season of the user's shows of one kind, with the
+// season's own art and the dates of its first and last watch.
+func (q *Queries) ListCompletedSeasons(ctx context.Context, arg ListCompletedSeasonsParams) ([]ListCompletedSeasonsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCompletedSeasons, arg.UserID, arg.Kind)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCompletedSeasonsRow
+	for rows.Next() {
+		var i ListCompletedSeasonsRow
+		if err := rows.Scan(
+			&i.EntryID,
+			&i.ItemID,
+			&i.Source,
+			&i.ExternalID,
+			&i.Title,
+			&i.ShowImage,
+			&i.Season,
+			&i.Score,
+			&i.SeasonTitle,
+			&i.SeasonImage,
+			&i.EpisodeCount,
+			&i.StartedAt,
+			&i.FinishedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listEntryEvents = `-- name: ListEntryEvents :many
 SELECT id, entry_id, at, field, old, new FROM entry_events WHERE entry_id = ? ORDER BY at, id
 `

@@ -359,10 +359,27 @@ func (o *op) handleCompletedSeason(season int64) error {
 	switch {
 	case incomplete && o.entry.Status != InProgress:
 		o.setStatus(InProgress)
-	case !incomplete && o.entry.Status != Completed:
+	case !incomplete && o.entry.Status != Completed && !o.stillReleasing():
 		o.setStatus(Completed)
+	case !incomplete && o.entry.Status != InProgress && o.stillReleasing():
+		o.setStatus(InProgress) // caught up, but more is coming
 	}
 	return nil
+}
+
+// stillReleasing reports whether the show itself hasn't finished (airing, on
+// hiatus or with more announced): watching everything aired so far means
+// caught up, not completed. Unknown status counts as finished.
+func (o *op) stillReleasing() bool {
+	today, err := time.Parse("2006-01-02", o.today)
+	if err != nil {
+		today = time.Now()
+	}
+	switch catalog.ReleaseStatusOfMeta(o.item.Kind, o.item.Meta, today) {
+	case catalog.ReleaseOngoing, catalog.ReleaseHiatus, catalog.ReleaseUpcoming:
+		return true
+	}
+	return false
 }
 
 // incompleteSeasonsExist reports whether a regular season is not completed:

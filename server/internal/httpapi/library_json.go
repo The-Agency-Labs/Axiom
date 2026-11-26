@@ -87,6 +87,11 @@ func libraryItemJSON(it db.Item, season *int) map[string]any {
 	if it.Kind == catalog.KindBook {
 		out["series"] = seriesRefJSON(it.Meta) // series_json.go
 	}
+	if season == nil {
+		if st := catalog.ReleaseStatusOfMeta(it.Kind, it.Meta, time.Now()); st != "" {
+			out["release_status"] = st
+		}
+	}
 	return out
 }
 

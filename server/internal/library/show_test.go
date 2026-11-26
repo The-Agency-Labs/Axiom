@@ -477,3 +477,25 @@ func TestAssumedEarlierSeasons(t *testing.T) {
 	f2.watch(item2, 2, 2, "jellyfin")
 	eqSeasons(t, f2.seasonStatuses(item2), map[int64]string{2: Completed})
 }
+
+// Caught up on a show that is still airing isn't finished: the show stays In
+// progress (its seasons still complete) until the show itself has ended.
+func TestCaughtUpOnAiringShowStaysInProgress(t *testing.T) {
+	f := newFixture(t)
+	item := f.show("100", "Show", season(1, "2020-01-01", 1, 2))
+	if _, err := f.env.Conn.ExecContext(ctx, `UPDATE items SET meta = json_set(meta, '$.details.status', 'Continuing') WHERE id = ?`, item.ID); err != nil {
+		t.Fatal(err)
+	}
+	f.watch(item, 1, 1, SourceManual)
+	f.watch(item, 1, 2, SourceManual) // finale of the only aired season
+	eq(t, "airing show", f.entry(item).Status, InProgress)
+	eqSeasons(t, f.seasonStatuses(item), map[int64]string{1: Completed})
+
+	f2 := newFixture(t)
+	ended := f2.show("101", "Ended", season(1, "2020-01-01", 1, 1))
+	if _, err := f2.env.Conn.ExecContext(ctx, `UPDATE items SET meta = json_set(meta, '$.details.status', 'Ended') WHERE id = ?`, ended.ID); err != nil {
+		t.Fatal(err)
+	}
+	f2.watch(ended, 1, 1, SourceManual)
+	eq(t, "ended show", f2.entry(ended).Status, Completed)
+}

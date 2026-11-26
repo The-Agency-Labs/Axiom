@@ -516,6 +516,7 @@ func TestBulkCompletionDatesAreIgnoredForShows(t *testing.T) {
 func TestAdditiveNeverLowers(t *testing.T) {
 	e := newEnv(t)
 	e.show("600", "Owned", sn(1, "2016-04-01", 1, 12))
+	e.TVDB.SetStatus("600", "Ended") // finished airing: watching it all completes it
 	e.Mappings.AddTVDBShow(600, 1, 0, 71, 0)
 	item, err := e.Catalog.EnsureItem(ctx, "anime", "tvdb", "600")
 	if err != nil {

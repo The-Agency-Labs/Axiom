@@ -404,6 +404,7 @@
 			{kind}
 			{title}
 			nativeTitle={md?.native_title}
+			release={md?.release_status}
 			{image}
 			{year}
 			{genres}

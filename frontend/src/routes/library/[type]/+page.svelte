@@ -7,7 +7,7 @@
 	import { hasEpisodes, isMediaType, MEDIA, progressLabel, STATUS_COLOR, STATUSES, titleHref } from '#lib/media.ts';
 	import { onSynced } from '#lib/offline.svelte.ts';
 	import { settings, typeDefaults } from '#lib/settings.svelte.ts';
-	import type { Entry, LibraryResponse, MediaType, Status } from '#lib/types.ts';
+	import type { Entry, LibraryResponse, MediaType, SeasonFinished, Status } from '#lib/types.ts';
 	import {
 		Button,
 		Chip,
@@ -42,6 +42,9 @@
 	let shown = $state(PAGE);
 	// Keep the user's choices once they touch a control; otherwise follow the per-type defaults.
 	let touched = $state(false);
+	// Shows by year are by season: each season under the year it was finished, with its own art.
+	const seasonView = $derived((type === 'tv' || type === 'anime') && sort === 'year');
+	let seasons = $state<SeasonFinished[] | null>(null);
 
 	try {
 		const saved = localStorage.getItem('encompass-library-view');
@@ -118,6 +121,40 @@
 		load(true);
 		return onSynced(() => load());
 	});
+
+	async function loadSeasons() {
+		const kind = type;
+		try {
+			const data = await get<{ results: SeasonFinished[] }>(
+				'/library/seasons' + qs({ media_type: kind }),
+				(d) => kind === type && (seasons = d.results)
+			);
+			if (kind === type) seasons = data.results;
+		} catch {
+			if (!seasons) seasons = [];
+		}
+	}
+	$effect(() => {
+		if (!valid || !seasonView) return;
+		void type;
+		seasons = null;
+		loadSeasons();
+		return onSynced(() => loadSeasons());
+	});
+	const seasonGroups = $derived.by(() => {
+		const q = query.trim().toLowerCase();
+		const out: { label: string; list: SeasonFinished[] }[] = [];
+		for (const s of seasons ?? []) {
+			if (q && !s.item.title.toLowerCase().includes(q)) continue;
+			const label = s.end_date ? s.end_date.slice(0, 4) : 'No finish date';
+			if (year && label !== year) continue;
+			if (out.at(-1)?.label !== label) out.push({ label, list: [] });
+			out.at(-1)!.list.push(s);
+		}
+		return out;
+	});
+	const seasonLabel = (s: SeasonFinished) =>
+		s.season_title && !/^season \d+$/i.test(s.season_title) ? `S${s.season_number} · ${s.season_title}` : `Season ${s.season_number}`;
 
 	// Re-page when any filter changes.
 	$effect(() => {
@@ -211,7 +248,8 @@
 			<div class="min-w-0 flex-1">
 				<h1 class="truncate text-xl font-semibold tracking-tight sm:text-2xl">{meta.plural}</h1>
 				<p class="h-4 text-[13px] text-faint">
-					{#if entries}{counts.All} {year ? `active in ${year}` : 'tracked'}{/if}
+					{#if seasonView}{#if seasons}{seasonGroups.reduce((n, g) => n + g.list.length, 0)} seasons finished{/if}
+					{:else if entries}{counts.All} {year ? `active in ${year}` : 'tracked'}{/if}
 				</p>
 			</div>
 			<IconButton
@@ -255,7 +293,7 @@
 			{/if}
 		</div>
 
-		{#if !isGame}<ChipRow label="Status">
+		{#if !isGame && !seasonView}<ChipRow label="Status">
 			{#each CHIPS as s (s)}
 				<Chip
 					selected={status === s}
@@ -270,7 +308,56 @@
 		</ChipRow>{/if}
 
 		<div class="mt-3">
-			{#if failed}
+			{#if seasonView}
+				{#if !seasons}
+					<PosterGrid>
+						{#each Array(12) as _, i (i)}
+							<div>
+								<Skeleton class="aspect-[2/3] w-full" />
+								<Skeleton shape="text" class="mt-2" lines={2} />
+							</div>
+						{/each}
+					</PosterGrid>
+				{:else if seasonGroups.length === 0}
+					<EmptyState
+						icon={meta.icon}
+						title={query || year ? 'No matches' : 'No finished seasons yet'}
+						description="Seasons show up here, under the year you finished them."
+					/>
+				{:else}
+					{#each seasonGroups as g (g.label)}
+						<h2 class="mt-5 mb-2 flex items-baseline gap-2 text-lg font-semibold tracking-tight first:mt-1">
+							{g.label}<span class="text-[13px] font-normal text-faint">{g.list.length}</span>
+						</h2>
+						{#if view === 'grid'}
+							<PosterGrid>
+								{#each g.list as s (`${s.entry_id}:${s.season_number}`)}
+									<PosterCard
+										href={titleHref(s.item, s.item.media_type, s.entry_id)}
+										src={s.image}
+										title={s.item.title}
+										type={s.item.media_type}
+										subtitle={seasonLabel(s)}
+										score={s.score}
+									/>
+								{/each}
+							</PosterGrid>
+						{:else}
+							<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+								{#each g.list as s (`${s.entry_id}:${s.season_number}`)}
+									<li>
+										<ListRow href={titleHref(s.item, s.item.media_type, s.entry_id)} title={s.item.title} subtitle={seasonLabel(s)}>
+											{#snippet leading()}
+												<Cover src={s.image} title={s.item.title} type={s.item.media_type} class="aspect-[2/3] w-10 shrink-0 rounded-md" />
+											{/snippet}
+										</ListRow>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					{/each}
+				{/if}
+			{:else if failed}
 				<EmptyState title="Could not load {meta.plural.toLowerCase()}" description="Check your connection and try again.">
 					{#snippet actions()}<Button variant="primary" onclick={() => load(true)}>Retry</Button>{/snippet}
 				</EmptyState>
@@ -328,6 +415,7 @@
 									status={isGame ? undefined : entry.status}
 									subtitle={subtitle(entry)}
 									score={entry.score}
+									release={entry.item.release_status}
 								/>
 							{/each}
 						</PosterGrid>

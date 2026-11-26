@@ -405,7 +405,7 @@ func TestCompletedShowStaysCompletedOnRewatch(t *testing.T) {
 	f := newFixture(t)
 	f.env.TVDB.AddShow("5", "Mini", catalogtest.Season{Number: 1, AirDate: "2000-01-01", Episodes: []catalogtest.Episode{
 		{ID: 501, Number: 1, AirDate: "2000-01-01", Name: "a"}, {ID: 502, Number: 2, AirDate: "2000-01-01", Name: "b"},
-	}})
+	}}).SetStatus("5", "Ended")
 	ev := func(kind, id string) Event {
 		return Event{Kind: kind, Type: "Episode", SeriesName: "Mini", Tvdb: id, Played: kind == "Stop"}
 	}
