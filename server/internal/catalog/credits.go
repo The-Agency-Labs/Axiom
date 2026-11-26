@@ -217,11 +217,16 @@ func (c *Catalog) voiceRows(ctx context.Context, item Item, base int) ([]creditR
 	if err != nil {
 		return nil, err
 	}
+	art := c.tvdbCharacterArt(ctx, item)
 	rows := make([]creditRow, 0, len(credits))
 	for _, v := range credits {
+		charImage := v.CharacterImage
+		if img := art[characterKey(v.Character)]; img != "" {
+			charImage = img
+		}
 		rows = append(rows, creditRow{
 			source: SourceAniList, extID: strconv.Itoa(v.PersonID), name: v.PersonName, native: v.PersonNative, image: v.PersonImage,
-			role: RoleVoice, character: v.Character, charImage: v.CharacterImage, charRole: v.CharacterRole,
+			role: RoleVoice, character: v.Character, charImage: charImage, charRole: v.CharacterRole,
 			language: v.Language, order: base + v.Order,
 		})
 	}
