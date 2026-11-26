@@ -306,3 +306,6 @@ export const SORTS: [string, string][] = [
   ["start_date", "Started"],
   ["end_date", "Finished"],
 ];
+
+/** A person's or character's picture, or null: a provider's "no picture" stand-in is none. */
+export const picture = (url: string | null | undefined) => (url && !/\/default\.(jpg|png)$/.test(url) ? url : null);

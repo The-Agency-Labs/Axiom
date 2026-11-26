@@ -196,6 +196,9 @@ func (c *Catalog) gatherCredits(ctx context.Context, item Item) ([]creditRow, er
 			fillCharacterArt(rows)
 		}
 	}
+	if item.Source == SourceTMDB && item.Kind == KindAnimeMovie {
+		c.filmCharacterArt(ctx, item, rows) // character pictures are shown for anime only
+	}
 	return rows, nil
 }
 
@@ -209,10 +212,19 @@ func (c *Catalog) voiceRows(ctx context.Context, item Item, base int) ([]creditR
 	source, id := item.Source, item.ExternalID
 	if item.Source == SourceTMDB {
 		m := c.Reg.pickMapping(ctx, item.Kind, item.ExternalID)
-		if m == nil || !m.AnilistID.Valid {
+		switch {
+		case m != nil && m.AnilistID.Valid:
+			source, id = SourceAniList, strconv.FormatInt(m.AnilistID.Int64, 10)
+		case item.Kind == KindAnimeMovie:
+			// The mapping misses some films; AniList still has them by title.
+			found, err := c.findAniListFilm(ctx, item)
+			if err != nil || found == "" {
+				return nil, err
+			}
+			source, id = SourceAniList, found
+		default:
 			return nil, nil
 		}
-		source, id = SourceAniList, strconv.FormatInt(m.AnilistID.Int64, 10)
 	}
 	credits, err := c.Reg.P.AniList.Credits(ctx, source, id)
 	if err != nil {

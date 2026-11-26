@@ -1,15 +1,15 @@
 <script lang="ts">
-	/** Small round picture of a character (their initial when there is no picture). */
+	import { picture } from '#lib/media.ts';
+
+	/** Small round picture of a character; nothing at all when there is no picture. */
 	let { src, name, class: className = 'size-5' }: { src?: string | null; name: string; class?: string } = $props();
 
 	let failed = $state(false);
-	const usable = $derived(!!src && !failed);
+	const usable = $derived(!!picture(src) && !failed);
 </script>
 
-<span class="inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-raised align-middle text-[0.625rem] font-semibold text-faint ring-1 ring-line {className}">
-	{#if usable}
-		<img {src} alt="" loading="lazy" decoding="async" class="size-full object-cover" onerror={() => (failed = true)} />
-	{:else}
-		{name.trim().charAt(0).toUpperCase()}
-	{/if}
-</span>
+{#if usable}
+	<span class="inline-block shrink-0 overflow-hidden rounded-full bg-raised align-middle ring-1 ring-line {className}">
+		<img {src} alt="" title={name} loading="lazy" decoding="async" class="size-full object-cover" onerror={() => (failed = true)} />
+	</span>
+{/if}

@@ -296,13 +296,17 @@ func TestCredits(t *testing.T) {
 			w.Write(fixture(t, "cast_page1.json"))
 			return
 		}
-		w.Write(fixture(t, "cast_page2.json"))
+		if req.Variables["page"] == 2.0 {
+			w.Write(fixture(t, "cast_page2.json"))
+			return
+		}
+		w.Write([]byte(`{"data":{"Media":{"characters":{"pageInfo":{"hasNextPage":true},"edges":[]}}}}`))
 	})
 	credits, err := c.Credits(context.Background(), "mal", "52991")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(pages) != 2 { // MaxCharacters/25 pages even when AniList says there are more
+	if len(pages) != MaxCharacters/25 { // the cap holds even when AniList says there are more
 		t.Fatalf("pages fetched: %v", pages)
 	}
 	if len(credits) != 3 {

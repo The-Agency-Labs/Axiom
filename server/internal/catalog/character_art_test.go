@@ -1,6 +1,10 @@
 package catalog
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
+)
 
 func TestFillCharacterArt(t *testing.T) {
 	rows := []creditRow{
@@ -18,5 +22,19 @@ func TestFillCharacterArt(t *testing.T) {
 		if rows[i].charImage != want {
 			t.Errorf("row %d: image %q, want %q", i, rows[i].charImage, want)
 		}
+	}
+}
+
+// The real client knows films (the check at run time must not silently fail).
+var _ filmCharacters = (*tvdb.Client)(nil)
+
+func TestCharacterKeyFoldsRomanisations(t *testing.T) {
+	for _, pair := range [][2]string{{"Doma", "Douma"}, {"Rikido Sato", "Satou Rikidou"}, {"Yushiro", "Yuushirou"}} {
+		if characterKey(pair[0]) != characterKey(pair[1]) {
+			t.Errorf("%q and %q differ", pair[0], pair[1])
+		}
+	}
+	if characterKey("Nezuko") == characterKey("Naoko") {
+		t.Error("different names matched")
 	}
 }

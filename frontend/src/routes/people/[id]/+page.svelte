@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { get } from '#lib/api.ts';
 	import CharacterBubble from '#lib/components/CharacterBubble.svelte';
-	import { MEDIA } from '#lib/media.ts';
+	import { MEDIA, picture } from '#lib/media.ts';
 	import type { Appearance, Person } from '#lib/types.ts';
 	import { EmptyState, IconButton, PosterCard, PosterGrid, Skeleton } from '#lib/ui/index.ts';
 
@@ -38,7 +38,7 @@
 						<ul class="space-y-0.5">
 							{#each a.characters as name, i (name)}
 								<li class="flex min-w-0 items-center gap-1.5">
-									<CharacterBubble src={a.character_images?.[i]} {name} class="size-9" />
+									{#if a.item.media_type.startsWith('anime')}<CharacterBubble src={a.character_images?.[i]} {name} class="size-9" />{/if}
 									<span class="line-clamp-2 break-words">{name}</span>
 								</li>
 							{/each}
@@ -58,10 +58,8 @@
 	<div class="flex items-center gap-4" aria-hidden="true"><Skeleton shape="circle" class="size-24" /><Skeleton class="h-8 w-48" /></div>
 {:else}
 	<header class="mb-8 flex items-center gap-4 sm:gap-5">
-		{#if data.person.image}
+		{#if picture(data.person.image)}
 			<img src={data.person.image} alt="" class="size-24 shrink-0 rounded-full object-cover ring-1 ring-line sm:size-28" />
-		{:else}
-			<span class="grid size-24 shrink-0 place-items-center rounded-full bg-raised text-faint"><UserRound class="size-9" /></span>
 		{/if}
 		<div class="min-w-0">
 			<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{data.person.name}</h1>

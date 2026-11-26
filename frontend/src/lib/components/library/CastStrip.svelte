@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { UserRound } from '@lucide/svelte';
 	import { get } from '#lib/api.ts';
+	import { picture } from '#lib/media.ts';
 	import type { TitleCredits } from '#lib/types.ts';
 	import { Chip, Shelf, Skeleton } from '#lib/ui/index.ts';
 
@@ -112,10 +112,10 @@
 		{/snippet}
 			{#each all ? cards : cards.slice(0, 20) as c (c.key)}
 				<a href="/people/{c.personId}" class="group flex w-24 shrink-0 flex-col items-center rounded-xl py-1 text-center">
-					{#if c.image}
+					{#if picture(c.image)}
 						<img src={c.image} alt="" loading="lazy" class="size-16 rounded-full object-cover ring-1 ring-line transition group-hover:ring-line-strong" />
 					{:else}
-						<span class="grid size-16 place-items-center rounded-full bg-raised text-faint ring-1 ring-line"><UserRound class="size-6" /></span>
+						<span class="size-16" aria-hidden="true"></span><!-- keeps the names level -->
 					{/if}
 					<span class="mt-2 line-clamp-1 w-full text-[0.8125rem] font-medium">{c.name}</span>
 					<span class="line-clamp-2 w-full text-[0.75rem] leading-snug text-faint">{c.role}</span>

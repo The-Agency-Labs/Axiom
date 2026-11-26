@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { LoaderCircle, Search, UserRound, UsersRound } from '@lucide/svelte';
+	import { LoaderCircle, Search, UsersRound } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import CharacterBubble from '#lib/components/CharacterBubble.svelte';
 	import Cover from '#lib/components/Cover.svelte';
-	import { MEDIA } from '#lib/media.ts';
+	import { MEDIA, picture } from '#lib/media.ts';
 	import type { LibraryPerson, Person } from '#lib/types.ts';
 	import { Chip, ChipRow, EmptyState, PullToRefresh, Skeleton } from '#lib/ui/index.ts';
 
@@ -84,7 +84,7 @@
 					{#each found as p (p.id)}
 						<li>
 							<a href="/people/{p.id}" class="flex min-h-14 items-center gap-3 px-4 py-2 hover:bg-ink/5">
-								{#if p.image}<img src={p.image} alt="" loading="lazy" class="size-10 rounded-full object-cover" />{:else}<span class="grid size-10 place-items-center rounded-full bg-raised text-faint"><UserRound class="size-5" /></span>{/if}
+								{#if picture(p.image)}<img src={p.image} alt="" loading="lazy" class="size-10 rounded-full object-cover" />{/if}
 								<span class="min-w-0 flex-1">
 									<span class="block truncate text-[0.9375rem] font-medium">{p.name}</span>
 									{#if p.native_name}<span class="block truncate text-[0.8125rem] text-muted">{p.native_name}</span>{/if}
@@ -127,10 +127,8 @@
 						href="/people/{row.person.id}"
 						class="flex min-w-0 gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3 transition hover:border-line-strong hover:bg-raised"
 					>
-						{#if row.person.image}
+						{#if picture(row.person.image)}
 							<img src={row.person.image} alt="" loading="lazy" class="h-24 w-16 shrink-0 rounded-lg object-cover" />
-						{:else}
-							<span class="grid h-24 w-16 shrink-0 place-items-center rounded-lg bg-raised text-faint"><UserRound class="size-6" /></span>
 						{/if}
 						<div class="min-w-0 flex-1">
 							<p class="truncate font-medium">{row.person.name}</p>
@@ -145,7 +143,7 @@
 											{#if a.characters.length && a.role !== 'crew'}
 												<!-- The character gets its own line, so the picture never squeezes the name out. -->
 												<span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-faint">
-													{#each a.characters.slice(0, 2) as name, i (name)}<CharacterBubble src={a.character_images?.[i]} {name} class="size-6" />{/each}
+													{#if a.item.media_type.startsWith('anime')}{#each a.characters.slice(0, 2) as name, i (name)}<CharacterBubble src={a.character_images?.[i]} {name} class="size-6" />{/each}{/if}
 													<span class="truncate">{ROLE_LABEL[a.role]} {a.characters.join(', ')}</span>
 												</span>
 											{:else if a.characters.length}

@@ -10,7 +10,7 @@ import (
 
 const (
 	// MaxCharacters caps the characters fetched per anime (src/catalog/credits.py).
-	MaxCharacters = 50
+	MaxCharacters = 100
 	castPageSize  = 25
 )
 

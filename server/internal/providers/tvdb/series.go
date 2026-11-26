@@ -181,6 +181,19 @@ func flist(m map[string]any, k string) []map[string]any {
 	return out
 }
 
+// characters reads the character list of a series or film record.
+func characters(d map[string]any) []Character {
+	var out []Character
+	for _, ch := range flist(d, "characters") {
+		out = append(out, Character{
+			ID: int64(fint(ch, "id")), PersonID: int64(fint(ch, "peopleId")), Person: fstr(ch, "personName"),
+			PersonType: fstr(ch, "peopleType"), Character: fstr(ch, "name"), Image: artwork(fstr(ch, "image")),
+			PersonImg: artwork(fstr(ch, "personImgURL")), Sort: fint(ch, "sort"), Featured: ch["isFeatured"] == true,
+		})
+	}
+	return out
+}
+
 func (c *Client) extended(ctx context.Context, id string) (extended, error) {
 	key := extendedPrefix + id
 	var x extended
@@ -241,13 +254,7 @@ func (c *Client) extended(ctx context.Context, id string) (extended, error) {
 			x.SeasonImages[fint(s, "number")] = img
 		}
 	}
-	for _, ch := range flist(d, "characters") {
-		x.Characters = append(x.Characters, Character{
-			ID: int64(fint(ch, "id")), PersonID: int64(fint(ch, "peopleId")), Person: fstr(ch, "personName"),
-			PersonType: fstr(ch, "peopleType"), Character: fstr(ch, "name"), Image: artwork(fstr(ch, "image")),
-			PersonImg: artwork(fstr(ch, "personImgURL")), Sort: fint(ch, "sort"), Featured: ch["isFeatured"] == true,
-		})
-	}
+	x.Characters = characters(d)
 	c.cacheSet(ctx, key, x)
 	return x, nil
 }
