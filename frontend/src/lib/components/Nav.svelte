@@ -3,6 +3,7 @@
 		Activity,
 		BookOpenCheck,
 		CalendarDays,
+		CalendarRange,
 		CirclePlay,
 		Ellipsis,
 		LibraryBig,
@@ -33,6 +34,9 @@
 			match: () => under('/more', '/settings', '/activity', '/people', '/year')
 		}
 	];
+
+	/** Sidebar only: on phones Upcoming sits in the top bar. */
+	const upcoming = { href: '/upcoming', label: 'Upcoming', icon: CalendarRange, match: () => under('/upcoming') };
 
 	/** Sidebar "More" group (also the links on the More page). */
 	const more = [
@@ -66,7 +70,7 @@
 	</a>
 
 	<nav class="space-y-0.5" aria-label="Main">
-		{#each [tabs[0], tabs[2], tabs[3]] as link (link.href)}
+		{#each [tabs[0], tabs[2], tabs[3], upcoming] as link (link.href)}
 			<a href={link.href} class={sideLink(link.match())} aria-current={link.match() ? 'page' : undefined}>
 				<link.icon class="size-4" />
 				{link.label}

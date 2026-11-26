@@ -87,7 +87,7 @@
 		{#each days as [day, items] (day)}
 			<section class="mb-5">
 				<h2
-					class="sticky top-[calc(env(safe-area-inset-top)+3rem)] z-10 -mx-4 bg-canvas/90 px-4 py-2 text-xs font-semibold tracking-wider text-faint uppercase backdrop-blur-xl sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0"
+					class="sticky top-[calc(env(safe-area-inset-top)+3rem)] lg:top-[env(safe-area-inset-top)] z-10 -mx-4 bg-canvas/90 px-4 py-2 text-xs font-semibold tracking-wider text-faint uppercase backdrop-blur-xl sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0"
 				>
 					{dayLabel(day)}
 				</h2>
