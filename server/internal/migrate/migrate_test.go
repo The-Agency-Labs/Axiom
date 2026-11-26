@@ -534,15 +534,10 @@ func TestReadingCatalogAndLists(t *testing.T) {
 	f.exec(`INSERT INTO catalog_credit (id, role, character, character_image, character_role, language, job, "order", episode_count, item_id, person_id) VALUES (1, 'cast', 'Hero', '', '', 'ja', '', 3, 12, ?, 5)`, show)
 	f.exec(`INSERT INTO catalog_credit (id, role, character, character_image, character_role, language, job, "order", episode_count, item_id, person_id) VALUES (2, 'cast', 'Ghost', '', '', '', '', 0, NULL, ?, 5)`, season) // season items have no item row
 	f.exec(`INSERT INTO catalog_creditfetch (id, fetched_at, count, error, item_id) VALUES (1, '2025-06-06 06:06:06', 1, '', ?)`, show)
-	f.exec(`INSERT INTO lists_customlist (id, name, description, owner_id) VALUES (1, 'Favourites', 'best', 1)`)
-	f.exec(`INSERT INTO lists_customlist_collaborators (id, customlist_id, user_id) VALUES (1, 1, 2)`)
-	f.exec(`INSERT INTO lists_customlistitem (id, date_added, custom_list_id, item_id) VALUES (1, '2025-03-03 03:03:03', 1, ?)`, season)
-	f.exec(`INSERT INTO lists_customlistitem (id, date_added, custom_list_id, item_id) VALUES (2, '2025-03-04 03:03:03', 1, ?)`, book)
 
 	rep := f.must(Options{})
 	for k, v := range map[string]int{
 		"reading documents": 2, "page events": 2, "reading sessions": 1, "people": 1, "credits": 1, "credit fetches": 1,
-		"lists": 1, "list members": 1, "list items": 2,
 	} {
 		if rep.Counts[k] != v {
 			t.Errorf("%s = %d, want %d (%v)", k, rep.Counts[k], v, rep.Counts)
@@ -562,13 +557,6 @@ func TestReadingCatalogAndLists(t *testing.T) {
 	}
 	if got := f.str(`SELECT p.id || '|' || p.name || '|' || c.character || '|' || c.episode_count FROM credits c JOIN people p ON p.id = c.person_id`); got != "5|Some Actor|Hero|12" {
 		t.Errorf("credit = %q", got)
-	}
-	if got := f.str(`SELECT name || '|' || owner_id || '|' || visibility FROM lists`); !strings.HasPrefix(got, "Favourites|") || !strings.HasSuffix(got, "|private") {
-		t.Errorf("list = %q", got)
-	}
-	// A season on a list is its show; positions follow the order added.
-	if got := f.str(`SELECT group_concat(item_id || ':' || position) FROM (SELECT * FROM list_items ORDER BY position)`); got != fmt.Sprintf("%d:0,%d:1", show, book) {
-		t.Errorf("list items = %q", got)
 	}
 }
 

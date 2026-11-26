@@ -220,7 +220,6 @@ func Run(ctx context.Context, opts Options) (*Report, error) {
 		{"history", m.history},
 		{"reading", m.reading},
 		{"people and credits", m.catalog},
-		{"lists", m.lists},
 	}
 	for _, s := range steps {
 		if err := s.fn(); err != nil {

@@ -346,26 +346,6 @@ func TestKindOverrideSticks(t *testing.T) {
 	again, _ := env.Catalog.EnsureItem(ctx, "tv", "tmdb", "100")
 	eq(t, "still anime when asked as tv", again.Kind, "anime")
 
-	// Reclassify an auto-classified anime back to tv: pinned too.
-	anime, _ := env.Catalog.EnsureItem(ctx, "tv", "tmdb", "200")
-	eq(t, "auto", anime.Kind, "anime")
-	moved, err := env.Catalog.Reclassify(ctx, anime.ID, "tv")
-	if err != nil {
-		t.Fatal(err)
-	}
-	eq(t, "moved kind", moved.Kind, "tv")
-	eq(t, "moved override", moved.KindOverride, int64(1))
-	again, _ = env.Catalog.EnsureItem(ctx, "anime", "tmdb", "200")
-	eq(t, "mapping no longer changes it", again.Kind, "tv")
-	eq(t, "same row", again.ID, anime.ID)
-
-	if _, err := env.Catalog.Reclassify(ctx, anime.ID, "movie"); !errors.Is(err, catalog.ErrUnsupported) {
-		t.Errorf("tv -> movie = %v", err)
-	}
-	if _, err := env.Catalog.Reclassify(ctx, 99999, "tv"); !errors.Is(err, catalog.ErrNotFound) {
-		t.Errorf("missing item = %v", err)
-	}
-
 	// An unpinned item follows the mapping when it changes.
 	late, _ := env.Catalog.EnsureItem(ctx, "tv", "tmdb", "100")
 	_ = late // pinned (forced anime) above; use a fresh show for the follow-the-mapping case

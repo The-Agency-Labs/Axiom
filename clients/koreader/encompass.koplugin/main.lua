@@ -278,13 +278,29 @@ function Encompass:sync(reason, interactive)
         local ok, code, body = pcall(self.post, self, "/api/v1/reading/koreader",
             json.encode({ device = device, books = books }))
         if not ok or code ~= 200 then
+            self.syncing = false
+            if ok and code == nil then
+                -- Server not reachable yet (Wi-Fi or Tailscale still coming
+                -- up, e.g. right after KOReader starts): not an error, retry.
+                logger.info("encompass: server unreachable, retrying in 60 s (" .. reason .. ")")
+                if not self.retry_scheduled then
+                    self.retry_scheduled = true
+                    UIManager:scheduleIn(60, function()
+                        self.retry_scheduled = false
+                        self:sync("retry")
+                    end)
+                end
+                if interactive then
+                    UIManager:show(InfoMessage:new{ text = _("Can't reach the server yet; will retry in a minute.") })
+                end
+                return total
+            end
             logger.warn("encompass: upload failed", code, body)
             self.settings.last_error = T(_("HTTP %1 at %2"), tostring(code), os.date("%Y-%m-%d %H:%M"))
             self:save()
             if interactive then
                 UIManager:show(InfoMessage:new{ text = T(_("Sync failed: %1"), tostring(code)) })
             end
-            self.syncing = false
             return total
         end
 

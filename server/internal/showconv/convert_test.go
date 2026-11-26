@@ -364,20 +364,12 @@ func TestConvertMergesIntoAnExistingTVDBEntryAsAnotherRun(t *testing.T) {
 	}
 }
 
-func TestConvertMovesListsAndRewritesCredits(t *testing.T) {
+func TestConvertRewritesCredits(t *testing.T) {
 	f := newFx(t)
 	f.friends()
 	item := f.tmdbShow("1668")
 	f.watch(item, 1, 1, t0, library.SourceManual)
-	// A list holding the show, and a TMDB person who also acted in a film.
-	res, err := f.env.Conn.Exec(`INSERT INTO lists (owner_id, name, created_at) VALUES (?, 'Favs', '2020-01-01T00:00:00Z')`, f.user)
-	if err != nil {
-		t.Fatal(err)
-	}
-	listID, _ := res.LastInsertId()
-	if _, err := f.env.Conn.Exec(`INSERT INTO list_items (list_id, item_id, added_at) VALUES (?, ?, '2020-01-01T00:00:00Z')`, listID, item.ID); err != nil {
-		t.Fatal(err)
-	}
+	// A TMDB person who also acted in a film.
 	movie, err := f.env.Catalog.EnsureItem(ctx, "movie", "tmdb", "603")
 	if err == nil {
 		_ = movie
@@ -409,9 +401,6 @@ func TestConvertMovesListsAndRewritesCredits(t *testing.T) {
 		t.Fatal(err)
 	}
 	tv := f.tvdbItem("7000")
-	if n := f.count(`SELECT count(*) FROM list_items WHERE item_id = ?`, tv.ID); n != 1 {
-		t.Errorf("list items on the TVDB item = %d", n)
-	}
 	// The TVDB cast replaced the TMDB cast: Jane merged with the film's person
 	// by the shared TMDB id (not by name), "Newly Keyed" got a TMDB-keyed record,
 	// "No Ids" and the creator stay TVDB people, the guest star is not listed.

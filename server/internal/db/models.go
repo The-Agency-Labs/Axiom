@@ -170,27 +170,6 @@ type Kv struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
-type List struct {
-	ID          int64  `json:"id"`
-	OwnerID     int64  `json:"owner_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"created_at"`
-	Visibility  string `json:"visibility"`
-}
-
-type ListItem struct {
-	ListID   int64  `json:"list_id"`
-	ItemID   int64  `json:"item_id"`
-	AddedAt  string `json:"added_at"`
-	Position int64  `json:"position"`
-}
-
-type ListMember struct {
-	ListID int64 `json:"list_id"`
-	UserID int64 `json:"user_id"`
-}
-
 type PageEvent struct {
 	ID              int64         `json:"id"`
 	DocumentID      int64         `json:"document_id"`

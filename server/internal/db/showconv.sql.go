@@ -52,15 +52,6 @@ func (q *Queries) DeleteItem(ctx context.Context, id int64) error {
 	return err
 }
 
-const deleteListItemsOfItem = `-- name: DeleteListItemsOfItem :exec
-DELETE FROM list_items WHERE item_id = ?
-`
-
-func (q *Queries) DeleteListItemsOfItem(ctx context.Context, itemID int64) error {
-	_, err := q.db.ExecContext(ctx, deleteListItemsOfItem, itemID)
-	return err
-}
-
 const listItemEntries = `-- name: ListItemEntries :many
 SELECT id, user_id, item_id, run, status, score, progress, progressed_at, started_at, finished_at, notes, created_at, updated_at FROM entries WHERE item_id = ? ORDER BY user_id, run, id
 `
@@ -180,20 +171,6 @@ func (q *Queries) MoveEntry(ctx context.Context, arg MoveEntryParams) error {
 		arg.Progress,
 		arg.ID,
 	)
-	return err
-}
-
-const moveListItems = `-- name: MoveListItems :exec
-UPDATE OR IGNORE list_items SET item_id = ? WHERE item_id = ?
-`
-
-type MoveListItemsParams struct {
-	ItemID   int64 `json:"item_id"`
-	ItemID_2 int64 `json:"item_id_2"`
-}
-
-func (q *Queries) MoveListItems(ctx context.Context, arg MoveListItemsParams) error {
-	_, err := q.db.ExecContext(ctx, moveListItems, arg.ItemID, arg.ItemID_2)
 	return err
 }
 

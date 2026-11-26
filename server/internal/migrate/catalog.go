@@ -1,7 +1,6 @@
 package migrate
 
 import (
-	"database/sql"
 	"fmt"
 )
 
@@ -64,84 +63,6 @@ func (m *migrator) catalog() error {
 				return err
 			}
 			m.rep.count("credit fetches", 1)
-		}
-	}
-	return nil
-}
-
-// lists copies custom lists with their collaborators and items. A season or
-// episode item on a list becomes its show.
-func (m *migrator) lists() error {
-	if !hasTable(m.ctx, m.opts.Source, "lists_customlist") {
-		return nil
-	}
-	lists, err := queryRows(m.ctx, m.opts.Source, `SELECT * FROM lists_customlist ORDER BY id`)
-	if err != nil {
-		return err
-	}
-	now := stampOf(m.opts.Now())
-	listMap := map[int64]int64{}
-	for _, r := range lists {
-		owner, ok := m.userMap[r.i64("owner_id")]
-		if !ok {
-			continue
-		}
-		id, err := m.insertID(`INSERT INTO lists (owner_id, name, description, visibility, created_at) VALUES (?, ?, ?, 'private', ?)`,
-			owner, r.str("name"), r.str("description"), now)
-		if err != nil {
-			return err
-		}
-		listMap[r.i64("id")] = id
-		m.rep.count("lists", 1)
-	}
-	if hasTable(m.ctx, m.opts.Source, "lists_customlist_collaborators") {
-		rows, err := queryRows(m.ctx, m.opts.Source, `SELECT * FROM lists_customlist_collaborators ORDER BY id`)
-		if err != nil {
-			return err
-		}
-		for _, r := range rows {
-			list, okL := listMap[r.i64("customlist_id")]
-			user, okU := m.userMap[r.i64("user_id")]
-			if !okL || !okU {
-				continue
-			}
-			if _, err := m.exec(`INSERT OR IGNORE INTO list_members (list_id, user_id) VALUES (?, ?)`, list, user); err != nil {
-				return err
-			}
-			m.rep.count("list members", 1)
-		}
-	}
-	if hasTable(m.ctx, m.opts.Source, "lists_customlistitem") {
-		rows, err := queryRows(m.ctx, m.opts.Source, `SELECT * FROM lists_customlistitem ORDER BY date_added, id`)
-		if err != nil {
-			return err
-		}
-		pos := map[int64]int64{}
-		for _, r := range rows {
-			list, ok := listMap[r.i64("custom_list_id")]
-			if !ok {
-				continue
-			}
-			item, ok := m.itemMap[r.i64("item_id")]
-			if !ok {
-				item, ok = m.showOf[r.i64("item_id")]
-			}
-			if !ok {
-				m.rep.warn("list item %d points at an unmigrated item; skipped", r.i64("id"))
-				continue
-			}
-			added := r.stamp("date_added")
-			if !added.Valid {
-				added = sql.NullString{String: now, Valid: true}
-			}
-			res, err := m.exec(`INSERT OR IGNORE INTO list_items (list_id, item_id, added_at, position) VALUES (?, ?, ?, ?)`, list, item, added.String, pos[list])
-			if err != nil {
-				return err
-			}
-			if n, _ := res.RowsAffected(); n > 0 {
-				pos[list]++
-				m.rep.count("list items", 1)
-			}
 		}
 	}
 	return nil

@@ -18,12 +18,6 @@ UPDATE watches SET season = ?, episode = ?, notes = ? WHERE id = ?;
 -- name: DeleteEntrySeasons :exec
 DELETE FROM entry_seasons WHERE entry_id = ?;
 
--- name: MoveListItems :exec
-UPDATE OR IGNORE list_items SET item_id = ? WHERE item_id = ?;
-
--- name: DeleteListItemsOfItem :exec
-DELETE FROM list_items WHERE item_id = ?;
-
 -- name: MoveReadingDocuments :exec
 UPDATE reading_documents SET item_id = ? WHERE item_id = ?;
 

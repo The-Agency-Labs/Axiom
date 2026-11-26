@@ -187,24 +187,6 @@ func (c *Catalog) FindByExternalID(ctx context.Context, source, id string, kinds
 	return Item{}, ErrNotFound
 }
 
-// Reclassify moves a TVDB or TMDB title between tv and anime (or movie and
-// anime_movie) and pins the choice (kind_override), so the mapping never
-// changes it again. Entries keep pointing at the item.
-func (c *Catalog) Reclassify(ctx context.Context, itemID int64, kind string) (Item, error) {
-	item, err := c.GetItem(ctx, itemID)
-	if err != nil {
-		return Item{}, err
-	}
-	ok := (IsShow(item.Kind) && IsShow(kind)) || (IsMovie(item.Kind) && IsMovie(kind))
-	if !ok || (item.Source != SourceTMDB && item.Source != SourceTVDB) {
-		return Item{}, fmt.Errorf("%w: cannot make a %s from %s (%s)", ErrUnsupported, kind, item.Kind, item.Source)
-	}
-	if err := c.Q.UpdateItemKind(ctx, db.UpdateItemKindParams{Kind: kind, ID: itemID}); err != nil {
-		return Item{}, err
-	}
-	return c.GetItem(ctx, itemID)
-}
-
 // ItemIDs returns every known id of an item as source -> ids.
 func (c *Catalog) ItemIDs(ctx context.Context, itemID int64) (map[string][]string, error) {
 	rows, err := c.Q.ListItemIDs(ctx, itemID)

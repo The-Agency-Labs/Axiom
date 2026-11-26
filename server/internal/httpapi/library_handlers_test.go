@@ -152,7 +152,7 @@ func TestLibraryAuth(t *testing.T) {
 	}
 	for _, w := range []struct{ method, path string }{
 		{"POST", "/api/v1/library"}, {"DELETE", "/api/v1/library/tv/1"}, {"POST", "/api/v1/library/anime/1/step"},
-		{"POST", "/api/v1/items/1/kind"}, {"POST", "/api/v1/shows/tmdb/100/seasons/1/episodes"},
+		{"POST", "/api/v1/shows/tmdb/100/seasons/1/episodes"},
 		{"POST", "/api/v1/anime/mal/1/episodes"},
 	} {
 		if code, _ := le.call(le.read, w.method, w.path, map[string]any{}); code != 403 {
@@ -175,11 +175,11 @@ func TestLibraryAuth(t *testing.T) {
 	if code, _, _ := c.do("GET", "/api/v1/library", nil, nil); code != 200 {
 		t.Errorf("session list: %d", code)
 	}
-	if code, _, _ := c.do("POST", "/api/v1/items/999/kind", map[string]string{"kind": "anime"}, map[string]string{"X-CSRFToken": "bad"}); code != 403 {
+	if code, _, _ := c.do("DELETE", "/api/v1/library/tv/999999", nil, map[string]string{"X-CSRFToken": "bad"}); code != 403 {
 		t.Errorf("bad csrf: %d", code)
 	}
-	if code, _, _ := c.do("POST", "/api/v1/items/999/kind", map[string]string{"kind": "anime"}, nil); code != 404 {
-		t.Errorf("with csrf (unknown item): %d", code)
+	if code, _, _ := c.do("DELETE", "/api/v1/library/tv/999999", nil, nil); code != 404 {
+		t.Errorf("with csrf (unknown entry): %d", code)
 	}
 }
 
@@ -535,73 +535,6 @@ func TestLibraryListAnimeSplit(t *testing.T) {
 	code, body = le.get(fmt.Sprintf("/api/v1/library/anime/%d?include_metadata=false", animeShow))
 	if ss := libraryList(libraryMap(body)["seasons"]); len(ss) != 1 || len(libraryList(libraryMap(ss[0])["episodes"])) != 1 {
 		t.Fatalf("anime seasons: %v", body)
-	}
-}
-
-func TestLibraryReclassify(t *testing.T) {
-	le := newLibraryEnv(t)
-	le.addShows()
-	code, body := le.post("/api/v1/library", map[string]any{"media_type": "tv", "source": "tmdb", "media_id": "100"})
-	e := le.expect(code, 200, body, "track")
-	itemID := libraryNum(libraryMap(e["item"])["id"])
-	path := fmt.Sprintf("/api/v1/items/%d/kind", itemID)
-
-	// Items are shared, so a non-admin may not reclassify.
-	if code, _ := le.call(le.other, "POST", path, map[string]any{"kind": "anime"}); code != 403 {
-		t.Fatalf("non-admin reclassify: %d, want 403", code)
-	}
-
-	code, body = le.post(path, map[string]any{"kind": "anime"})
-	it := le.expect(code, 200, body, "reclassify")
-	if it["media_type"] != "anime" || it["is_anime"] != true || libraryNum(it["id"]) != itemID || it["media_id"] != "100" {
-		t.Fatalf("item: %v", it)
-	}
-	if m := libraryMap(func() any { _, b := le.get("/api/v1/library?media_type=anime"); return b }()); m["count"].(float64) != 1 {
-		t.Errorf("anime list after reclassify: %v", m)
-	}
-	if m := libraryMap(func() any { _, b := le.get("/api/v1/library?media_type=tv"); return b }()); m["count"].(float64) != 0 {
-		t.Errorf("tv list after reclassify: %v", m)
-	}
-	// The pin survives: asking for it as tv again keeps it anime.
-	if code, body = le.post("/api/v1/library", map[string]any{"media_type": "tv", "source": "tmdb", "media_id": "100"}); libraryMap(body)["media_type"] != "anime" {
-		t.Errorf("pin lost: %d %v", code, body)
-	}
-	if code, body = le.post(path, map[string]any{"kind": "tv"}); code != 200 || libraryMap(body)["media_type"] != "tv" || libraryMap(body)["is_anime"] != false {
-		t.Errorf("back to tv: %d %v", code, body)
-	}
-
-	for _, tc := range []struct {
-		what, path string
-		body       any
-		want       int
-	}{
-		{"bad kind", path, map[string]any{"kind": "book"}, 422},
-		{"missing kind", path, map[string]any{}, 422},
-		{"cross family", path, map[string]any{"kind": "movie"}, 422},
-		{"unknown item", "/api/v1/items/99999/kind", map[string]any{"kind": "anime"}, 404},
-		{"bad id", "/api/v1/items/abc/kind", map[string]any{"kind": "anime"}, 422},
-	} {
-		if code, body := le.post(tc.path, tc.body); code != tc.want {
-			t.Errorf("%s: %d, want %d (%v)", tc.what, code, tc.want, body)
-		}
-	}
-	// A count-based MAL anime has no TMDB structure to move.
-	code, body = le.post("/api/v1/library", map[string]any{"media_type": "anime", "source": "mal", "media_id": "1"})
-	malItem := libraryNum(libraryMap(libraryMap(body)["item"])["id"])
-	if code != 200 {
-		t.Fatalf("track mal: %d %v", code, body)
-	}
-	if code, body = le.post(fmt.Sprintf("/api/v1/items/%d/kind", malItem), map[string]any{"kind": "tv"}); code != 422 {
-		t.Errorf("mal reclassify: %d %v", code, body)
-	}
-	// A film moves between movie and anime_movie.
-	code, body = le.post("/api/v1/library", map[string]any{"media_type": "movie", "source": "tmdb", "media_id": "300"})
-	movieItem := libraryNum(libraryMap(libraryMap(body)["item"])["id"])
-	if code, body = le.post(fmt.Sprintf("/api/v1/items/%d/kind", movieItem), map[string]any{"kind": "anime_movie"}); code != 200 || libraryMap(body)["media_type"] != "anime_movie" {
-		t.Errorf("movie to anime_movie: %d %v", code, body)
-	}
-	if m := libraryMap(func() any { _, b := le.get("/api/v1/library?media_type=anime_movie"); return b }()); m["count"].(float64) != 1 {
-		t.Errorf("anime_movie list: %v", m)
 	}
 }
 

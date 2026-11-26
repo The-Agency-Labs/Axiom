@@ -362,38 +362,6 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		return libraryEntryJSON(res.Entry, item), nil
 	})))
 
-	// POST /items/{item_id}/kind: move a TMDB title between tv/anime or movie/anime_movie.
-	mux.Handle("POST /api/v1/items/{item_id}/kind", auth.RequireWrite(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
-		// Items are shared by every user, so only an admin may reclassify.
-		if u := auth.User(r.Context()); u == nil || u.IsAdmin == 0 {
-			return nil, Errorf(http.StatusForbidden, "Only an admin can reclassify titles")
-		}
-		id, err := libraryPathInt(r, "item_id")
-		if err != nil {
-			return nil, err
-		}
-		var in struct {
-			Kind string `json:"kind"`
-		}
-		if err := DecodeJSON(r, &in); err != nil {
-			return nil, err
-		}
-		switch in.Kind {
-		case catalog.KindTV, catalog.KindAnime, catalog.KindMovie, catalog.KindAnimeMovie:
-		default:
-			return nil, Errorf(http.StatusUnprocessableEntity, "kind must be one of tv, anime, movie, anime_movie")
-		}
-		item, err := s.Catalog.Reclassify(r.Context(), id, in.Kind)
-		if err != nil {
-			if errors.Is(err, catalog.ErrUnsupported) {
-				return nil, Errorf(http.StatusUnprocessableEntity, err.Error())
-			}
-			return nil, libraryError(err, item.Source)
-		}
-		out := libraryItemJSON(item, nil)
-		out["is_anime"] = libraryIsAnime(item.Kind)
-		return out, nil
-	})))
 }
 
 // libraryDetailSeasons lists the seasons of a tracked show with the episodes watched.

@@ -588,12 +588,6 @@ func (cv *Converter) apply(ctx context.Context, old db.Item, res *ShowResult, tv
 			}
 		}
 	}
-	if err := q.MoveListItems(ctx, db.MoveListItemsParams{ItemID: target.ID, ItemID_2: old.ID}); err != nil {
-		return nil, "", err
-	}
-	if err := q.DeleteListItemsOfItem(ctx, old.ID); err != nil {
-		return nil, "", err
-	}
 	if err := q.MoveReadingDocuments(ctx, db.MoveReadingDocumentsParams{ItemID: sql.NullInt64{Int64: target.ID, Valid: true}, ItemID_2: sql.NullInt64{Int64: old.ID, Valid: true}}); err != nil {
 		return nil, "", err
 	}
