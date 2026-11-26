@@ -102,6 +102,8 @@
 }
 
 html {
+	/* Everything is rem-based (Tailwind type and spacing), so this makes 100% browser zoom look like the old 120%. */
+	font-size: 120%;
 	background: var(--color-canvas);
 	-webkit-text-size-adjust: 100%;
 	/* App, not a page: no double-tap zoom (pinch is off in the viewport meta). */

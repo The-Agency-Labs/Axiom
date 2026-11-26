@@ -49,13 +49,6 @@
 		}
 	}
 
-	const greeting = $derived.by(() => {
-		const hour = new Date().getHours();
-		if (hour < 5) return 'Up late';
-		if (hour < 12) return 'Good morning';
-		if (hour < 18) return 'Good afternoon';
-		return 'Good evening';
-	});
 	const total = $derived(groups?.reduce((n, g) => n + g.entries.length, 0) ?? 0);
 
 	$effect(() => {
@@ -69,7 +62,6 @@
 <PullToRefresh onrefresh={load}>
 	<header class="mb-5 flex items-end justify-between gap-3">
 		<div class="min-w-0">
-			<p class="text-sm text-muted">{greeting}</p>
 			<h1 class="truncate text-2xl font-semibold tracking-tight capitalize sm:text-3xl">{auth.username}</h1>
 			<p class="mt-1 h-5 text-[0.8125rem] text-faint">
 				{#if groups}{total} in progress{/if}
