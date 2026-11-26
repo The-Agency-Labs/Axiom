@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowDownUp, LayoutGrid, List, Plus, Search, Star, X } from '@lucide/svelte';
+	import { ArrowDownUp, ChevronDown, LayoutGrid, List, Plus, Search, Star, X } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
@@ -45,6 +45,25 @@
 	// Shows by year are by season: each season under the year it was finished, with its own art.
 	const seasonView = $derived((type === 'tv' || type === 'anime') && sort === 'year');
 	let seasons = $state<SeasonFinished[] | null>(null);
+	// Year headings fold: the newest year starts open, the rest closed; choices are kept per type.
+	let folds = $state<Record<string, boolean>>({});
+	const foldKey = () => `encompass-year-folds-${type}`;
+	$effect(() => {
+		try {
+			folds = JSON.parse(localStorage.getItem(foldKey()) ?? '{}');
+		} catch {
+			folds = {};
+		}
+	});
+	const isOpen = (label: string, i: number) => folds[label] ?? i === 0;
+	function toggleYear(label: string, i: number) {
+		folds = { ...folds, [label]: !isOpen(label, i) };
+		try {
+			localStorage.setItem(foldKey(), JSON.stringify(folds));
+		} catch {
+			/* storage unavailable */
+		}
+	}
 
 	try {
 		const saved = localStorage.getItem('encompass-library-view');
@@ -199,7 +218,7 @@
 	const groups = $derived.by(() => {
 		if (sort !== 'year') return [{ label: '', entries: visible }];
 		const out: { label: string; entries: Entry[] }[] = [];
-		for (const e of visible) {
+		for (const e of sorted) {
 			const d = yearDate(e);
 			const label = d ? d.slice(0, 4) : 'No finish date';
 			if (out.at(-1)?.label !== label) out.push({ label, entries: [] });
@@ -325,11 +344,11 @@
 						description="Seasons show up here, under the year you finished them."
 					/>
 				{:else}
-					{#each seasonGroups as g (g.label)}
-						<h2 class="mt-5 mb-2 flex items-baseline gap-2 text-lg font-semibold tracking-tight first:mt-1">
-							{g.label}<span class="text-[13px] font-normal text-faint">{g.list.length}</span>
-						</h2>
-						{#if view === 'grid'}
+					{#each seasonGroups as g, i (g.label)}
+						{@render yearHeader(g.label, g.list.length, i)}
+						{#if !isOpen(g.label, i)}
+							<!-- folded -->
+						{:else if view === 'grid'}
 							<PosterGrid>
 								{#each g.list as s (`${s.entry_id}:${s.season_number}`)}
 									<PosterCard
@@ -398,13 +417,11 @@
 					</EmptyState>
 				{/if}
 			{:else}
-				{#each groups as g (g.label)}
-					{#if g.label}
-						<h2 class="mt-5 mb-2 flex items-baseline gap-2 text-lg font-semibold tracking-tight first:mt-1">
-							{g.label}<span class="text-[13px] font-normal text-faint">{g.entries.length}</span>
-						</h2>
-					{/if}
-					{#if view === 'grid'}
+				{#each groups as g, i (g.label)}
+					{#if g.label}{@render yearHeader(g.label, g.entries.length, i)}{/if}
+					{#if g.label && !isOpen(g.label, i)}
+						<!-- folded -->
+					{:else if view === 'grid'}
 						<PosterGrid>
 							{#each g.entries as entry (entry.id)}
 								<PosterCard
@@ -453,7 +470,7 @@
 				{/each}
 			{/if}
 
-			{#if entries && visible.length < sorted.length}
+			{#if entries && sort !== 'year' && visible.length < sorted.length}
 				<div use:more class="h-16"></div>
 			{/if}
 		</div>
@@ -461,3 +478,18 @@
 
 	<SortSheet bind:open={sortOpen} bind:value={sort} onpick={() => (touched = true)} />
 {/if}
+
+{#snippet yearHeader(label: string, count: number, i: number)}
+	<h2 class="mt-3 first:mt-1">
+		<button
+			type="button"
+			class="flex min-h-11 w-full items-center gap-2 rounded-xl px-1 text-left text-lg font-semibold tracking-tight hover:bg-ink/5"
+			aria-expanded={isOpen(label, i)}
+			onclick={() => toggleYear(label, i)}
+		>
+			<ChevronDown class="size-4 shrink-0 text-faint transition-transform {isOpen(label, i) ? '' : '-rotate-90'}" />
+			{label}
+			<span class="ml-auto text-[13px] font-normal text-faint tabular-nums">{count}</span>
+		</button>
+	</h2>
+{/snippet}
