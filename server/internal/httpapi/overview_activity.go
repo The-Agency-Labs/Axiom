@@ -120,9 +120,20 @@ func overviewActivityEntry(a library.ActivityEntry) map[string]any {
 				"changes": []map[string]any{{"description": "Watched", "field": "end_date"}},
 			}
 		}
+		season := ""
+		if a.Season != nil && *a.Season > 0 {
+			season = fmt.Sprintf("season %d, ", *a.Season)
+		}
+		desc := fmt.Sprintf("Watched %sepisode %d", season, *a.Episode)
+		if a.FirstEpisode != nil && *a.FirstEpisode != *a.Episode {
+			desc = fmt.Sprintf("Watched %sepisodes %d–%d", season, *a.FirstEpisode, *a.Episode)
+			if span := *a.Episode - *a.FirstEpisode + 1; a.Plays != span {
+				desc = fmt.Sprintf("Watched %s%d episodes (%d–%d)", season, a.Plays, *a.FirstEpisode, *a.Episode)
+			}
+		}
 		return map[string]any{
 			"date": a.At, "media_type": "episode", "item": overviewItem(a.Item, "episode", a.Season, a.Episode),
-			"changes": []map[string]any{{"description": fmt.Sprintf("Watched episode %d", *a.Episode), "field": "end_date"}},
+			"changes": []map[string]any{{"description": desc, "field": "end_date"}},
 		}
 	}
 	changes := make([]map[string]any, 0, len(a.Changes))

@@ -31,6 +31,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/integrations/sourcestatus"
 	"github.com/the-agency-labs/encompass/server/internal/jobs"
 	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/encompass/server/internal/providers"
 )
 
 // Source is the source string of everything this importer does.
@@ -57,7 +58,7 @@ const entryFields = `
         format
         episodes
         chapters
-        title { userPreferred }
+        title { userPreferred english romaji }
         coverImage { large }
         startDate { year month day }
         endDate { year month day }
@@ -96,6 +97,8 @@ type media struct {
 	Chapters *int   `json:"chapters"`
 	Title    struct {
 		UserPreferred string `json:"userPreferred"`
+		English       string `json:"english"`
+		Romaji        string `json:"romaji"`
 	} `json:"title"`
 	CoverImage struct {
 		Large string `json:"large"`
@@ -302,7 +305,11 @@ func (im *Importer) Run(ctx context.Context, userID int64, username string, opts
 	for _, p := range fresh {
 		placed, err := r.importAnime(ctx, p.e, p.m)
 		if err == nil && !placed {
-			err = r.syncCount(ctx, p.e, catalog.KindAnime)
+			kind := catalog.KindAnime
+			if p.e.Media.Format == "MOVIE" {
+				kind = catalog.KindAnimeMovie // a film is never filed as a show
+			}
+			err = r.syncCount(ctx, p.e, kind)
 			r.count("anime (unmapped)", 1)
 		}
 		if err != nil { // one bad entry mustn't stop the import
@@ -369,11 +376,20 @@ func (r *run) mapping(ctx context.Context, m media) (*mappings.Mapping, error) {
 
 // importAnime places an entry as a TVDB show or a TMDB film; false if it can't be placed.
 func (r *run) importAnime(ctx context.Context, e entry, m *mappings.Mapping) (bool, error) {
-	if m == nil {
+	if e.Media.Format == "MOVIE" {
+		// A film goes to TMDB: by the mapping, else by title and year. It is
+		// never placed in a TVDB series (the mapping's TVDB id of a franchise
+		// film is the whole show).
+		if m != nil && m.TmdbMovie.Valid {
+			return true, r.importMovie(ctx, e, m.TmdbMovie.Int64)
+		}
+		if id := r.findTMDBMovie(ctx, e); id != 0 {
+			return true, r.importMovie(ctx, e, id)
+		}
 		return false, nil
 	}
-	if e.Media.Format == "MOVIE" && m.TmdbMovie.Valid {
-		return true, r.importMovie(ctx, e, m.TmdbMovie.Int64)
+	if m == nil {
+		return false, nil
 	}
 	if m.TvdbID.Valid {
 		ok, err := r.importShow(ctx, e, m)
@@ -891,4 +907,35 @@ func (im *Importer) RegisterJobs(m *jobs.Manager) {
 // ANILIST_USERS (used by the API's dry run).
 func (im *Importer) SyncUser(ctx context.Context, userID int64, opts SyncOptions) (*Result, error) {
 	return im.syncUser(ctx, userID, opts)
+}
+
+// findTMDBMovie looks a film up on TMDB by its English, romaji or preferred
+// title and keeps the first hit released in the AniList start year (±1); 0
+// when there is none.
+func (r *run) findTMDBMovie(ctx context.Context, e entry) int64 {
+	tmdb := r.im.Catalog.Reg.P.TMDB
+	if tmdb == nil || e.Media.StartDate.Year == 0 {
+		return 0
+	}
+	seen := map[string]bool{}
+	for _, t := range []string{e.Media.Title.English, e.Media.Title.Romaji, e.Media.Title.UserPreferred} {
+		t = strings.TrimSpace(t)
+		if t == "" || seen[t] {
+			continue
+		}
+		seen[t] = true
+		res, err := tmdb.Search(ctx, "movie", t, 1, false)
+		if err != nil {
+			continue
+		}
+		for _, hit := range providers.List(res, "results") {
+			y := providers.Int(hit, "release_year")
+			if y != 0 && y >= e.Media.StartDate.Year-1 && y <= e.Media.StartDate.Year+1 {
+				if id := int64(providers.Int(hit, "media_id")); id != 0 {
+					return id
+				}
+			}
+		}
+	}
+	return 0
 }

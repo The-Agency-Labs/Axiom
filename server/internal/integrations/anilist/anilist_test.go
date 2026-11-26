@@ -748,3 +748,31 @@ func TestOVACourPlacesInTVDBSeasonZeroAndNeverSpills(t *testing.T) {
 		t.Fatalf("specials %v", specials)
 	}
 }
+
+// A film whose mapping only names the franchise's TVDB series (and no TMDB
+// film) is found on TMDB by title and year; failing that it is kept as an
+// anime movie. It is never filed into the series or as a show.
+func TestUnmappedFilmIsNeverAShow(t *testing.T) {
+	e := newEnv(t)
+	e.show("700", "Naruto Shippuden", sn(1, "2007-02-15", 1, 3))
+	e.Mappings.AddTVDBShow(700, 1, 0, 61, 0)
+	e.Mappings.AddTVDBShow(700, 1, 0, 62, 0)
+	e.TMDB.AddMovie("317442", "The Last: Naruto the Movie", "2014-12-06")
+	start := withMedia("startDate", map[string]any{"year": 2014, "month": 12, "day": 6})
+	e.list.anime = []map[string]any{
+		listEntry(61, 0, "MOVIE", "COMPLETED", 1, 1, start,
+			withMedia("title", map[string]any{"userPreferred": "The Last: Naruto the Movie", "english": "The Last: Naruto the Movie"})),
+		listEntry(62, 0, "MOVIE", "COMPLETED", 1, 1, start), // not on TMDB
+	}
+	e.run(t, Options{})
+
+	if fe := e.entry(t, e.item(t, "anime_movie", "tmdb", "317442")); fe.Status != library.Completed {
+		t.Fatalf("film found by title = %+v", fe)
+	}
+	if fe := e.entry(t, e.item(t, "anime_movie", "anilist", "62")); fe.Status != library.Completed {
+		t.Fatalf("film kept as anime movie = %+v", fe)
+	}
+	if _, err := e.Q.GetItemByKey(ctx, db.GetItemByKeyParams{Kind: "anime", Source: "tvdb", ExternalID: "700"}); err == nil {
+		t.Fatal("a film was filed into the TVDB series")
+	}
+}

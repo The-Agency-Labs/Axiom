@@ -471,7 +471,7 @@ func TestOverviewActivity(t *testing.T) {
 	}
 	first := entries[0].(map[string]any)
 	ch := first["changes"].([]any)[0].(map[string]any)
-	if first["media_type"] != "episode" || ch["description"] != "Watched episode 2" || ch["field"] != "end_date" {
+	if first["media_type"] != "episode" || ch["description"] != "Watched season 1, episode 2" || ch["field"] != "end_date" {
 		t.Errorf("first = %v", first)
 	}
 	if it := first["item"].(map[string]any); num(it["season_number"]) != 1 || num(it["episode_number"]) != 2 {

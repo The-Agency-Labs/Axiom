@@ -247,13 +247,15 @@ func (s *Server) libraryRegisterShows(mux *http.ServeMux) {
 			}
 		} else {
 			sort.Sort(sort.Reverse(sort.IntSlice(numbers)))
+			var watched []int
 			for _, n := range numbers {
-				if !isWatched[n] {
-					continue
+				if isWatched[n] {
+					watched = append(watched, n)
 				}
-				if err := s.Library.UnwatchEpisode(ctx, userID, item.ID, season, n); err != nil && !errors.Is(err, library.ErrNoEntry) {
-					return nil, libraryError(err, source)
-				}
+			}
+			// One change for the whole selection: a single activity row.
+			if err := s.Library.UnwatchEpisodes(ctx, userID, item.ID, season, watched); err != nil && !errors.Is(err, library.ErrNoEntry) {
+				return nil, libraryError(err, source)
 			}
 		}
 		out, err := s.librarySeasonJSON(ctx, userID, item, season)

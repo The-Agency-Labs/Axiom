@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Layers } from '@lucide/svelte';
-	import { MEDIA, NO_STATUS, yearView } from '#lib/media.ts';
+	import { MEDIA, NO_STATUS } from '#lib/media.ts';
 	import { saveSettings, settings } from '#lib/settings.svelte.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import type { MediaType } from '#lib/types.ts';
@@ -59,7 +59,7 @@
 								value={row.sort}
 								onchange={(e) => change(row.kind, { sort: e.currentTarget.value })}
 							>
-								{#each SORTS as [value, label] (value)}<option {value}>{value === 'year' ? yearView(row.kind).label : label}</option>{/each}
+								{#each SORTS as [value, label] (value)}<option {value}>{value === 'year' ? 'By year' : label}</option>{/each}
 							</select>
 						</label>
 						{#if !NO_STATUS.has(row.kind)}<label class="block">

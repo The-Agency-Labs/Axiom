@@ -85,11 +85,14 @@
 			<section aria-label={dayHeading(day.date)}>
 				<header class="mb-2 flex items-baseline justify-between gap-3 px-1">
 					<h3 class="text-[0.9375rem] font-semibold">{dayHeading(day.date)}</h3>
-					<p class="text-[0.8125rem] text-muted tabular-nums">
-						{day.pages ? `${day.pages} pages` : ''}{day.pages && day.minutes ? ' · ' : ''}{day.minutes
-							? minutesLabel(day.minutes)
-							: ''}
-					</p>
+					<!-- Day totals only add something when there is more than one book. -->
+					{#if day.books.length > 1}
+						<p class="text-[0.8125rem] text-muted tabular-nums">
+							{day.pages ? `${day.pages} pages` : ''}{day.pages && day.minutes ? ' · ' : ''}{day.minutes
+								? minutesLabel(day.minutes)
+								: ''}
+						</p>
+					{/if}
 				</header>
 				<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
 					{#each day.books as b, i (b.item_id ?? b.document_id ?? i)}

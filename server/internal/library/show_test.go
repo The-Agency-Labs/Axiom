@@ -518,3 +518,24 @@ func TestCaughtUpOnAiringShowStaysInProgress(t *testing.T) {
 	f2.watch(ended, 1, 1, SourceManual)
 	eq(t, "ended show", f2.entry(ended).Status, Completed)
 }
+
+// Unmarking a whole season is one change in the activity log, not one per episode.
+func TestUnmarkSeasonIsOneActivityRow(t *testing.T) {
+	f := newFixture(t)
+	item := f.show("100", "Show", season(1, "2020-01-01", 1, 4))
+	for e := 1; e <= 4; e++ {
+		f.watch(item, 1, e, SourceManual)
+	}
+	before, err := f.env.Q.ListEntryEvents(ctx, f.entry(item).ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.UnwatchEpisodes(ctx, f.user, item.ID, 1, []int{4, 3, 2, 1}); err != nil {
+		t.Fatal(err)
+	}
+	after, _ := f.env.Q.ListEntryEvents(ctx, f.entry(item).ID)
+	if got := len(after) - len(before); got != 1 {
+		t.Fatalf("unmarking a season added %d activity rows, want 1", got)
+	}
+	eq(t, "progress", f.entry(item).Progress, int64(0))
+}

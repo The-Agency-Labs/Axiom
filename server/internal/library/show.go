@@ -475,6 +475,13 @@ func (o *op) startNextAvailableSeason(after int64) (bool, error) {
 // marked Completed stays Completed (e.g. its early seasons were read as
 // manga instead). Unwatching something never watched is a no-op.
 func (s *Service) UnwatchEpisode(ctx context.Context, userID, itemID int64, season, episode int) error {
+	return s.UnwatchEpisodes(ctx, userID, itemID, season, []int{episode})
+}
+
+// UnwatchEpisodes unwatches several episodes of a season (UnwatchEpisode for
+// each, in the given order) as one change: one activity row, not one per
+// episode.
+func (s *Service) UnwatchEpisodes(ctx context.Context, userID, itemID int64, season int, episodes []int) error {
 	return s.run(ctx, userID, itemID, SourceManual, time.Time{}, func(o *op) error {
 		if err := o.load(); err != nil {
 			return err
@@ -482,52 +489,61 @@ func (s *Service) UnwatchEpisode(ctx context.Context, userID, itemID int64, seas
 		if err := o.requireEntry(); err != nil {
 			return err
 		}
-		sn, ep := int64(season), int64(episode)
-		w, err := o.q.LatestEpisodeWatch(o.ctx, db.LatestEpisodeWatchParams{
-			EntryID: o.entry.ID, Season: sql.NullInt64{Int64: sn, Valid: true}, Episode: sql.NullInt64{Int64: ep, Valid: true},
-		})
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if err := o.q.DeleteWatch(o.ctx, w.ID); err != nil {
-			return err
-		}
-		es, has, err := o.entrySeason(sn)
-		if err != nil {
-			return err
-		}
-		if has && es.Status == Completed {
-			remaining, err := o.latestWatchedPosition(sn)
-			if err != nil {
+		for _, ep := range episodes {
+			if err := o.unwatch(int64(season), int64(ep)); err != nil {
 				return err
-			}
-			pos, err := o.position(sn, ep)
-			if err != nil {
-				return err
-			}
-			if remaining < pos {
-				if err := o.putSeason(sn, InProgress); err != nil {
-					return err
-				}
-				es.Status = InProgress
-			}
-		}
-		if has {
-			left, err := o.latestWatchedPosition(sn)
-			if err != nil {
-				return err
-			}
-			if left == 0 {
-				if err := o.q.DeleteEntrySeason(o.ctx, db.DeleteEntrySeasonParams{EntryID: o.entry.ID, Season: sn}); err != nil {
-					return err
-				}
 			}
 		}
 		return o.refreshShow()
 	})
+}
+
+// unwatch removes the newest play of one episode and settles its season.
+func (o *op) unwatch(sn, ep int64) error {
+	w, err := o.q.LatestEpisodeWatch(o.ctx, db.LatestEpisodeWatchParams{
+		EntryID: o.entry.ID, Season: sql.NullInt64{Int64: sn, Valid: true}, Episode: sql.NullInt64{Int64: ep, Valid: true},
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil // never watched: nothing to do
+	}
+	if err != nil {
+		return err
+	}
+	if err := o.q.DeleteWatch(o.ctx, w.ID); err != nil {
+		return err
+	}
+	es, has, err := o.entrySeason(sn)
+	if err != nil {
+		return err
+	}
+	if has && es.Status == Completed {
+		remaining, err := o.latestWatchedPosition(sn)
+		if err != nil {
+			return err
+		}
+		pos, err := o.position(sn, ep)
+		if err != nil {
+			return err
+		}
+		if remaining < pos {
+			if err := o.putSeason(sn, InProgress); err != nil {
+				return err
+			}
+			es.Status = InProgress
+		}
+	}
+	if has {
+		left, err := o.latestWatchedPosition(sn)
+		if err != nil {
+			return err
+		}
+		if left == 0 {
+			if err := o.q.DeleteEntrySeason(o.ctx, db.DeleteEntrySeasonParams{EntryID: o.entry.ID, Season: sn}); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // StepSeason is the +1/-1 button of a season: up watches the first episode

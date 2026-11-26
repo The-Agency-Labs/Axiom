@@ -8,6 +8,8 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -207,8 +209,28 @@ func (f *TMDB) Season(_ context.Context, id string, n int) (Metadata, error) {
 }
 
 // Search implements catalog.TMDB.
-func (f *TMDB) Search(context.Context, string, string, int, bool) (providers.SearchPage, error) {
-	return providers.SearchPage{"results": []providers.Metadata{}}, f.call("Search")
+// Movie searches match the fake's films by title (case-insensitive substring).
+func (f *TMDB) Search(_ context.Context, mediaType, query string, _ int, _ bool) (providers.SearchPage, error) {
+	results := []providers.Metadata{}
+	if mediaType == "movie" {
+		f.mu.Lock()
+		for id, m := range f.movies {
+			title, _ := m["title"].(string)
+			if query == "" || !strings.Contains(strings.ToLower(title), strings.ToLower(query)) {
+				continue
+			}
+			year := 0
+			if d, ok := m["details"].(map[string]any); ok {
+				if rd, _ := d["release_date"].(string); len(rd) >= 4 {
+					year, _ = strconv.Atoi(rd[:4])
+				}
+			}
+			n, _ := strconv.Atoi(id)
+			results = append(results, providers.Metadata{"media_id": n, "source": "tmdb", "media_type": "movie", "title": title, "release_year": year})
+		}
+		f.mu.Unlock()
+	}
+	return providers.SearchPage{"results": results}, f.call("Search")
 }
 
 // Find implements catalog.TMDB.

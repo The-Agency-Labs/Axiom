@@ -44,24 +44,8 @@
 	// Keep the user's choices once they touch a control; otherwise follow the per-type defaults.
 	let touched = $state(false);
 	// Shows by year are by season: each season under the year it was finished, with its own art.
-	const hasSeasons = $derived((type === 'tv' || type === 'anime') && sort === 'year');
-	let bySeason = $state(false);
-	const seasonView = $derived(hasSeasons && bySeason);
-	$effect(() => {
-		try {
-			bySeason = localStorage.getItem(`encompass-by-season-${type}`) === '1';
-		} catch {
-			bySeason = false;
-		}
-	});
-	function setBySeason(v: boolean) {
-		bySeason = v;
-		try {
-			localStorage.setItem(`encompass-by-season-${type}`, v ? '1' : '0');
-		} catch {
-			/* storage unavailable */
-		}
-	}
+	// The year view of shows and anime lists seasons, each under the year it was finished.
+	const seasonView = $derived((type === 'tv' || type === 'anime') && sort === 'year');
 	let seasons = $state<SeasonFinished[] | null>(null);
 	// Year headings fold: the newest year starts open, the rest closed; choices are kept per type.
 	let folds = $state<Record<string, boolean>>({});
@@ -257,6 +241,8 @@
 	// count-based kinds get a progress line here.
 	function subtitle(e: Entry) {
 		if (isGame) return '';
+		// The status filter already says it; only progress adds something.
+		if (status !== 'All' && e.status === status && e.status !== 'In progress') return '';
 		if (hasEpisodes(e.media_type, e.item.source)) return e.status;
 		if (e.status === 'In progress' && e.media_type !== 'movie' && e.media_type !== 'anime_movie') {
 			if (e.max_progress) return `${Math.round((e.progress / e.max_progress) * 100)}% · ${progressLabel(e.media_type, e.progress, e.max_progress)}`;
@@ -285,7 +271,7 @@
 			<div class="min-w-0 flex-1">
 				<h1 class="truncate text-xl font-semibold tracking-tight sm:text-2xl">{meta.plural}</h1>
 				<p class="h-4 text-[0.8125rem] text-faint">
-					{#if seasonView}{#if seasons}{seasonGroups.reduce((n, g) => n + g.list.length, 0)} seasons finished{/if}
+					{#if seasonView}{#if seasons}{seasonGroups.reduce((n, g) => n + g.list.length, 0)} seasons{/if}
 					{:else if entries}{counts.All} {year ? `active in ${year}` : 'tracked'}{/if}
 				</p>
 			</div>
@@ -318,31 +304,8 @@
 					>
 				{/if}
 			</label>
-			{#if years.length}
-				<select
-					bind:value={year}
-					aria-label="Filter by year"
-					class="h-11 shrink-0 rounded-xl border border-line bg-surface px-3 outline-none focus:border-line-strong"
-				>
-					<option value="">All years</option>
-					{#each years as y (y)}<option value={String(y)}>{y}</option>{/each}
-				</select>
-			{/if}
 		</div>
 
-		{#if hasSeasons}
-			<div class="mt-3 inline-flex rounded-xl border border-line bg-surface p-0.5 text-sm" role="radiogroup" aria-label="Show">
-				{#each [[false, 'Shows'], [true, 'Seasons']] as const as [v, label] (label)}
-					<button
-						type="button"
-						role="radio"
-						aria-checked={bySeason === v}
-						class="min-h-9 rounded-[10px] px-3 font-medium {bySeason === v ? 'bg-ink/10 text-ink' : 'text-muted hover:text-ink'}"
-						onclick={() => setBySeason(v)}>{label}</button
-					>
-				{/each}
-			</div>
-		{/if}
 		{#if !isGame && !seasonView}<ChipRow label="Status">
 			{#each CHIPS as s (s)}
 				<Chip
@@ -460,7 +423,7 @@
 									src={entry.item.image}
 									title={entry.item.title}
 									type={entry.media_type}
-									status={isGame ? undefined : entry.status}
+									status={isGame || status !== 'All' ? undefined : entry.status}
 									subtitle={subtitle(entry)}
 									score={entry.score}
 									release={entry.item.release_status}

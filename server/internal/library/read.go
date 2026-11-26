@@ -799,11 +799,18 @@ type ActivityEntry struct {
 	Changes []Change
 	Season  *int
 	Episode *int
-	Source  string
+	// FirstEpisode is set when a burst of plays of one season was folded into
+	// this row (mergeBursts): episodes FirstEpisode..Episode, Plays of them.
+	FirstEpisode *int
+	Plays        int
+	Source       string
 
 	// order key, for the cursor
 	rank int
 	id   int64
+	// set when older rows of a burst were folded in (mergeBursts)
+	merged bool
+	from   string
 }
 
 // ActivityCursor continues an activity listing.
@@ -921,6 +928,7 @@ func (s *Service) Activity(ctx context.Context, userID int64, q ActivityQuery) (
 		}
 		return a.id > b.id
 	})
+	rows = mergeBursts(rows)
 	page := ActivityPage{}
 	if len(rows) > limit {
 		rows = rows[:limit]
@@ -979,4 +987,112 @@ func (s *Service) Years(ctx context.Context, userID int64) ([]int, error) {
 // exclusive), oldest first.
 func (s *Service) UserWatches(ctx context.Context, userID int64, from, to time.Time) ([]db.Watch, error) {
 	return s.Q.ListUserWatchesBetween(ctx, db.ListUserWatchesBetweenParams{UserID: userID, WatchedAt: stamp(from), WatchedAt_2: stamp(to)})
+}
+
+// activityBurst: changes to one entry this close together (newest first, no
+// other row between them) are one row showing the net change.
+const activityBurst = 10 * time.Minute
+
+// mergeBursts folds runs of consecutive change rows of one entry into the
+// newest of them: each field goes from its oldest old value to its newest new
+// value, and a field that ends where it started is dropped (unmarking and
+// re-marking a season is no change). rows are newest first.
+func mergeBursts(rows []ActivityEntry) []ActivityEntry {
+	out := make([]ActivityEntry, 0, len(rows))
+	for _, r := range rows {
+		if n := len(out); n > 0 && r.Kind == "watch" && samePlaySeason(out[n-1], r) {
+			last := &out[n-1]
+			oldest, _ := time.Parse(time.RFC3339, last.earliest())
+			at, _ := time.Parse(time.RFC3339, r.At)
+			if !oldest.IsZero() && !at.IsZero() && oldest.Sub(at) <= activityBurst {
+				last.foldOlderPlay(r)
+				continue
+			}
+		}
+		if n := len(out); n > 0 && r.Kind == "change" && out[n-1].Kind == "change" && out[n-1].EntryID == r.EntryID {
+			last := &out[n-1]
+			oldest, _ := time.Parse(time.RFC3339, last.earliest())
+			at, _ := time.Parse(time.RFC3339, r.At)
+			if !oldest.IsZero() && !at.IsZero() && oldest.Sub(at) <= activityBurst {
+				last.foldOlder(r)
+				continue
+			}
+		}
+		out = append(out, r)
+	}
+	kept := out[:0]
+	for _, r := range out {
+		if r.Kind == "change" && r.merged {
+			r.Changes = netChanges(r.Changes)
+			if len(r.Changes) == 0 {
+				continue
+			}
+		}
+		kept = append(kept, r)
+	}
+	return kept
+}
+
+// earliest is the time of the oldest row folded into a (its own At otherwise).
+func (a *ActivityEntry) earliest() string {
+	if a.from != "" {
+		return a.from
+	}
+	return a.At
+}
+
+// foldOlder merges an older row of the same entry into a.
+func (a *ActivityEntry) foldOlder(older ActivityEntry) {
+	a.merged = true
+	a.from = older.At
+	a.id = min(a.id, older.id)
+	for _, c := range older.Changes {
+		found := false
+		for i := range a.Changes {
+			if a.Changes[i].Field == c.Field {
+				a.Changes[i].Old = c.Old // the change now starts where the older one did
+				found = true
+				break
+			}
+		}
+		if !found {
+			a.Changes = append(a.Changes, c)
+		}
+	}
+}
+
+// netChanges drops status/progress/score changes that end where they started.
+func netChanges(cs []Change) []Change {
+	out := cs[:0]
+	for _, c := range cs {
+		if c.Field != "created" && c.Old == c.New {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
+}
+
+// samePlaySeason: both rows are episode plays of one entry and season.
+func samePlaySeason(a, b ActivityEntry) bool {
+	return a.Kind == "watch" && b.Kind == "watch" && a.EntryID == b.EntryID &&
+		a.Episode != nil && b.Episode != nil && a.Season != nil && b.Season != nil && *a.Season == *b.Season
+}
+
+// foldOlderPlay merges an older play of the same season into a: the row then
+// covers the lowest to the highest episode.
+func (a *ActivityEntry) foldOlderPlay(older ActivityEntry) {
+	if a.Plays == 0 {
+		a.Plays = 1
+	}
+	a.Plays++
+	a.merged = true
+	a.from = older.At
+	a.id = min(a.id, older.id)
+	lo, hi := *older.Episode, *older.Episode
+	if a.FirstEpisode != nil {
+		lo = min(lo, *a.FirstEpisode)
+	}
+	lo, hi = min(lo, *a.Episode), max(hi, *a.Episode)
+	a.FirstEpisode, a.Episode = &lo, &hi
 }
