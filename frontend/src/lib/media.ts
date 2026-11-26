@@ -166,8 +166,15 @@ export function progressLabel(
   const meta = MEDIA[type];
   if (type === "movie") return progress ? "Watched" : "";
   if (type === "game") return `${Math.floor(progress / 60)}h ${progress % 60}m`;
+  if (type === "manga") return total ? `Chapter ${progress} of ${total}` : `Chapter ${progress}`;
   const units = meta.units ? ` ${meta.units}` : "";
   return total ? `${progress} / ${total}${units}` : `${progress}${units}`;
+}
+
+/** One progress value on its own: "Chapter 77", "524 p", "12 ep". */
+export function countLabel(type: MediaType, n: number) {
+  if (type === "manga") return `Chapter ${n}`;
+  return MEDIA[type].units ? `${n} ${MEDIA[type].units}` : String(n);
 }
 
 export function relativeTime(iso: string | null | undefined) {

@@ -103,7 +103,7 @@
 									{bookTitle(b.title, b.series, b.series_number)}
 								</p>
 								<p class="mt-0.5 text-[0.75rem] text-faint tabular-nums">
-									{#if b.pages}{b.pages} pages{:else if b.chapters}{b.chapters} ch{/if}{#if pageRange(b)}
+									{#if b.pages}{b.pages} pages{:else if b.chapters}{b.chapters} {b.chapters === 1 ? "chapter" : "chapters"}{/if}{#if pageRange(b)}
 										· {pageRange(b)}{/if}
 								</p>
 							</div>

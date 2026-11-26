@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatDate, MEDIA, minutesLabel, relativeTime } from '#lib/media.ts';
+	import { countLabel, formatDate, minutesLabel, relativeTime } from '#lib/media.ts';
 	import type { EntryDetail, MediaType } from '#lib/types.ts';
 	import { Button } from '#lib/ui/index.ts';
 
@@ -32,7 +32,7 @@
 			if (h.type === 'created') bits.push('Added');
 			if (h.status) bits.push(h.status);
 			if (h.progress)
-				bits.push(kind === 'game' ? minutesLabel(h.progress) : `${h.progress}${MEDIA[kind].units ? ' ' + MEDIA[kind].units : ''}`);
+				bits.push(kind === 'game' ? minutesLabel(h.progress) : countLabel(kind, h.progress));
 			if (h.score) bits.push(`★ ${h.score}`);
 			out.push({ at: h.date, text: bits.join(' · ') || 'Updated' });
 		}

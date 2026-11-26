@@ -14,6 +14,7 @@
 	import TitleHero from '#lib/components/library/TitleHero.svelte';
 	import {
 		formatDate,
+		progressLabel,
 		hasEpisodes,
 		isCountAnime,
 		isFilmKind,
@@ -209,7 +210,9 @@
 			? ''
 			: kind === 'game'
 				? minutesLabel(entry.progress)
-				: total
+				: kind === 'manga'
+					? progressLabel(kind, entry.progress, total)
+					: total
 					? `${entry.progress}/${total}`
 					: String(entry.progress)
 	);

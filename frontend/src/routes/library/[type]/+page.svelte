@@ -245,6 +245,7 @@
 		if (status !== 'All' && e.status === status && e.status !== 'In progress') return '';
 		if (hasEpisodes(e.media_type, e.item.source)) return e.status;
 		if (e.status === 'In progress' && e.media_type !== 'movie' && e.media_type !== 'anime_movie') {
+			if (e.media_type === 'manga') return e.progress ? `Chapter ${e.progress}` : e.status;
 			if (e.max_progress) return `${Math.round((e.progress / e.max_progress) * 100)}% · ${progressLabel(e.media_type, e.progress, e.max_progress)}`;
 			return e.progress ? progressLabel(e.media_type, e.progress, null) : e.status;
 		}
