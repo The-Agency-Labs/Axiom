@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	export type SheetName = 'status' | 'score' | 'dates' | 'kind' | 'delete' | null;
+	export type SheetName = 'status' | 'score' | 'dates' | 'delete' | null;
 </script>
 
 <script lang="ts">
@@ -8,7 +8,7 @@
 	import type { MediaType, Status } from '#lib/types.ts';
 	import { Button, Sheet, Stepper } from '#lib/ui/index.ts';
 
-	/** The title page's bottom sheets: status, score, dates and notes, reclassify, delete confirmation. */
+	/** The title page's bottom sheets: status, score, dates and notes, delete confirmation. */
 	let {
 		which = $bindable(null),
 		status,
@@ -21,7 +21,6 @@
 		onstatus,
 		onscore,
 		onsave,
-		onkind,
 		ondelete
 	}: {
 		which: SheetName;
@@ -35,7 +34,6 @@
 		onstatus: (s: Status) => void;
 		onscore: (v: number | null) => void;
 		onsave: (v: { start_date: string; end_date: string; notes: string }) => void;
-		onkind: (k: MediaType) => void;
 		ondelete: () => void;
 	} = $props();
 
@@ -59,9 +57,6 @@
 		}
 	});
 
-	const flipTo: Partial<Record<MediaType, MediaType>> = { tv: 'anime', anime: 'tv', movie: 'anime_movie', anime_movie: 'movie' };
-	const target = $derived(flipTo[kind]);
-	const isAnime = $derived(kind === 'anime' || kind === 'anime_movie');
 </script>
 
 <Sheet open={which === 'status'} title="Status" onclose={() => set('status')(false)}>
@@ -166,25 +161,6 @@
 	{/snippet}
 </Sheet>
 
-<Sheet open={which === 'kind'} title={isAnime ? 'Not anime?' : 'This is anime?'} onclose={() => set('kind')(false)}>
-	<p class="pb-4 text-[0.9375rem] text-muted">
-		Move <strong class="text-ink">{title}</strong> from {MEDIA[kind].plural} to {target ? MEDIA[target].plural : ''}. This changes the
-		title for everyone on this server.
-	</p>
-	{#snippet footer()}
-		<div class="flex gap-2">
-			<Button full onclick={() => (which = null)}>Cancel</Button>
-			<Button
-				full
-				variant="primary"
-				onclick={() => {
-					which = null;
-					if (target) onkind(target);
-				}}>Move to {target ? MEDIA[target].plural : ''}</Button
-			>
-		</div>
-	{/snippet}
-</Sheet>
 
 <Sheet open={which === 'delete'} title="Remove from library?" onclose={() => set('delete')(false)}>
 	<p class="pb-4 text-[0.9375rem] text-muted">

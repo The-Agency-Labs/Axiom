@@ -74,7 +74,7 @@
 			{#if mode === 'episodes' && next}
 				<Button
 					variant="primary"
-					class="shrink-0"
+					class="order-first w-full"
 					icon={next.upcoming ? Clock : Check}
 					disabled={next.disabled}
 					onclick={onnext}

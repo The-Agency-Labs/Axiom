@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarRange, Clock, ListPlus, NotebookPen, Repeat, Trash2 } from '@lucide/svelte';
+	import { CalendarRange, ChevronRight, Clock, NotebookPen, Repeat, Trash2 } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { ApiError, get, mutate, qs } from '#lib/api.ts';
@@ -9,7 +9,6 @@
 	import CountEpisodes from '#lib/components/library/CountEpisodes.svelte';
 	import EntrySheets, { type SheetName } from '#lib/components/library/EntrySheets.svelte';
 	import HistoryList from '#lib/components/library/HistoryList.svelte';
-	import ListsSheet from '#lib/components/library/ListsSheet.svelte';
 	import { ShowState } from '#lib/components/library/show.svelte.ts';
 	import ShowEpisodes from '#lib/components/library/ShowEpisodes.svelte';
 	import TitleHero from '#lib/components/library/TitleHero.svelte';
@@ -44,13 +43,11 @@
 	let phase = $state<'loading' | 'ready' | 'missing' | 'error'>('loading');
 	let show = $state<ShowState | null>(null);
 	let sheet = $state<SheetName>(null);
-	let listsOpen = $state(false);
 	let synopsisOpen = $state(false);
 	let tracking = $state(false);
 	let loadedFor = '';
 
 	const base = $derived(`/library/${kind}/${entry?.id}`);
-	const isAdmin = $derived(!!settings.data?.is_admin);
 
 	async function findEntryId(): Promise<number | null> {
 		if (hint) return hint;
@@ -342,21 +339,17 @@
 		});
 	}
 
-	function reclassify(next: MediaType) {
-		const current = entry;
-		if (!current) return;
-		mutate({
-			path: `/items/${current.item.id}/kind`,
-			body: { kind: next },
-			label: `${title} moved to ${MEDIA[next].plural}`,
-			onSuccess: () => {
-				toast(`Moved to ${MEDIA[next].plural}`, { kind: 'success' });
-				goto(titleHref({ source, media_id: mediaId }, next), { replaceState: true });
-			}
-		});
-	}
-
-	const canReclassify = $derived(isAdmin && !!entry && (source === 'tmdb' || source === 'tvdb') && ['tv', 'anime', 'movie', 'anime_movie'].includes(kind));
+	// Started, then Finished — or, while not finished, when it was last
+	// watched/read/played.
+	const dateCells = $derived.by((): [string, string | null][] => {
+		if (!entry) return [];
+		const fmt = (d: string | null) => (d ? formatDate(d, { year: 'numeric' }) : null);
+		const verb = ['book', 'manga', 'comic'].includes(kind) ? 'read' : ['game', 'boardgame'].includes(kind) ? 'played' : 'watched';
+		const second: [string, string | null] = entry.end_date
+			? ['Finished', fmt(entry.end_date)]
+			: [`Last ${verb}`, fmt(entry.progressed_at)];
+		return [['Started', fmt(entry.start_date)], second];
+	});
 	const bookItem = $derived<Record<string, unknown>>({
 		...(entry?.item ?? { source, media_id: mediaId, media_type: 'book', title, image }),
 		...(md ? { metadata: md } : {}),
@@ -511,41 +504,28 @@
 					<Card flush>
 						<ul class="divide-y divide-line">
 							<li>
-								<ListRow
-									title="Dates"
-									subtitle={entry.start_date || entry.end_date
-										? [entry.start_date && `Started ${formatDate(entry.start_date, { year: 'numeric' })}`, entry.end_date && `Finished ${formatDate(entry.end_date, { year: 'numeric' })}`]
-												.filter(Boolean)
-												.join(' · ')
-										: 'Not set'}
-									chevron
+								<button
+									type="button"
+									class="flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-ink/5 active:bg-ink/8"
 									onclick={() => (sheet = 'dates')}
 								>
-									{#snippet leading()}<CalendarRange class="size-5 shrink-0 text-muted" />{/snippet}
-								</ListRow>
+									<CalendarRange class="size-5 shrink-0 text-muted" />
+									<span class="grid min-w-0 flex-1 grid-cols-2 gap-3">
+										{#each dateCells as [label, value] (label)}
+											<span class="min-w-0">
+												<span class="block text-[0.75rem] tracking-wide text-faint uppercase">{label}</span>
+												<span class="block text-[0.9375rem] font-medium {value ? '' : 'text-muted'}">{value ?? 'Not set'}</span>
+											</span>
+										{/each}
+									</span>
+									<ChevronRight class="size-4 shrink-0 text-faint" />
+								</button>
 							</li>
 							<li>
 								<ListRow title="Notes" subtitle={entry.notes || 'Add a note'} chevron onclick={() => (sheet = 'dates')}>
 									{#snippet leading()}<NotebookPen class="size-5 shrink-0 text-muted" />{/snippet}
 								</ListRow>
 							</li>
-							<li>
-								<ListRow title="Add to list" chevron onclick={() => (listsOpen = true)}>
-									{#snippet leading()}<ListPlus class="size-5 shrink-0 text-muted" />{/snippet}
-								</ListRow>
-							</li>
-							{#if canReclassify}
-								<li>
-									<ListRow
-										title={kind === 'anime' || kind === 'anime_movie' ? 'This is not anime' : 'This is anime'}
-										subtitle="Admin: moves it between sections for everyone"
-										chevron
-										onclick={() => (sheet = 'kind')}
-									>
-										{#snippet leading()}<meta.icon class="size-5 shrink-0 text-muted" />{/snippet}
-									</ListRow>
-								</li>
-							{/if}
 							<li>
 								<ListRow title="Remove from library" onclick={() => (sheet = 'delete')} class="text-danger">
 									{#snippet leading()}<Trash2 class="size-5 shrink-0" />{/snippet}
@@ -587,9 +567,7 @@
 			onstatus={setStatus}
 			onscore={setScore}
 			onsave={saveDetails}
-			onkind={reclassify}
 			ondelete={remove}
 		/>
-		<ListsSheet bind:open={listsOpen} itemId={entry.item.id} />
 	{/if}
 {/if}

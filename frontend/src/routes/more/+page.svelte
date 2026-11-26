@@ -3,7 +3,6 @@
 		Activity,
 		CalendarDays,
 		CalendarRange,
-		ListChecks,
 		LogOut,
 		RefreshCw,
 		Settings,
@@ -30,7 +29,6 @@
 			links: [
 				{ href: '/activity', label: 'Activity', sub: 'Everything you logged, newest first', icon: Activity, tint: 'var(--color-type-game)' },
 				{ href: '/calendar', label: 'Calendar', sub: 'Upcoming episodes and releases', icon: CalendarRange, tint: 'var(--color-type-manga)' },
-				{ href: '/lists', label: 'Lists', sub: 'Your custom lists', icon: ListChecks, tint: 'var(--color-type-book)' },
 				{ href: '/people', label: 'People', sub: 'Actors and voice actors in your library', icon: UsersRound, tint: 'var(--color-type-boardgame)' },
 				{ href: '/year', label: 'Year in review', sub: 'Your year in numbers', icon: CalendarDays, tint: 'var(--color-type-anime)' }
 			]

@@ -6,7 +6,6 @@
 		CirclePlay,
 		Ellipsis,
 		LibraryBig,
-		ListChecks,
 		LogOut,
 		Search,
 		Settings,
@@ -36,7 +35,7 @@
 			href: '/more',
 			label: 'More',
 			icon: Ellipsis,
-			match: () => under('/more', '/settings', '/sources', '/activity', '/people', '/year', '/calendar', '/lists')
+			match: () => under('/more', '/settings', '/sources', '/activity', '/people', '/year', '/calendar')
 		}
 	];
 
@@ -44,7 +43,6 @@
 	const more = [
 		{ href: '/activity', label: 'Activity', icon: Activity },
 		{ href: '/calendar', label: 'Calendar', icon: CalendarRange },
-		{ href: '/lists', label: 'Lists', icon: ListChecks },
 		{ href: '/people', label: 'People', icon: UsersRound },
 		{ href: '/year', label: 'Year in review', icon: CalendarDays },
 		{ href: '/sources', label: 'Sources', icon: RefreshCw },

@@ -357,10 +357,3 @@ export interface LibraryResponse {
 	results: Entry[];
 }
 
-export interface ListSummary {
-	id: number;
-	name: string;
-	items_count: number;
-	has_item: boolean;
-	image?: string | null;
-}

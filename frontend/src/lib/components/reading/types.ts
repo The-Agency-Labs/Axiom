@@ -1,4 +1,4 @@
-// API shapes for the reading, series, lists and calendar pages (phase 5C).
+// API shapes for the reading, series and calendar pages (phase 5C).
 import type { Item, MediaType, Status } from '#lib/types.ts';
 
 export interface JournalBook {
@@ -135,36 +135,8 @@ export interface CalendarEvent {
 	image: string;
 }
 
-export interface ListSummary {
-	id: number;
-	name: string;
-	description: string;
-	visibility: 'private' | 'public';
-	owner: { id: number; username: string };
-	created_at: string;
-	is_owner: boolean;
-	can_edit: boolean;
-	can_delete: boolean;
-	items_count: number;
-	image: string;
-	last_item_added: string | null;
-}
 
-export interface ListItem {
-	item: Item;
-	added_at: string;
-	position: number;
-	entry: { id: number; status: Status; score: number | null; progress: number } | null;
-}
 
-export interface ListDetail extends Omit<ListSummary, 'items_count' | 'image' | 'last_item_added'> {
-	members: { id: number; username: string }[];
-	items: ListItem[];
-	items_count: number;
-	page: number;
-	page_size: number;
-	media_types: MediaType[];
-}
 
 /** One bar of <BarChart>. */
 export interface Bar {
