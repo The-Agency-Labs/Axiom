@@ -7,7 +7,7 @@
 	import { MEDIA, relativeTime, titleHref } from '#lib/media.ts';
 	import { onSynced } from '#lib/offline.svelte.ts';
 	import type { Finished, NowGroup, ReadingStats } from '#lib/types.ts';
-	import { Button, EmptyState, PosterCard, PullToRefresh, Skeleton } from '#lib/ui/index.ts';
+	import { Button, EmptyState, PosterCard, PullToRefresh, Skeleton, Shelf } from '#lib/ui/index.ts';
 
 	let groups = $state<NowGroup[] | null>(null);
 	let finished = $state<Finished[]>([]);
@@ -128,8 +128,8 @@
 
 		{#if finished.length}
 			<section class="mt-10">
-				<SectionHead title="Recently finished" icon={CheckCheck} accent="var(--color-success)" />
-				<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 scroll-px-4 sm:scroll-px-6 lg:scroll-px-10">
+				<Shelf label="recently finished" class="-mx-4 gap-3 px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 scroll-px-4 sm:scroll-px-6 lg:scroll-px-10">
+					{#snippet header()}<SectionHead title="Recently finished" icon={CheckCheck} accent="var(--color-success)" />{/snippet}
 					{#each finished as entry (entry.media_type + entry.id)}
 						<div class="w-28 shrink-0">
 							<PosterCard
@@ -142,7 +142,7 @@
 							/>
 						</div>
 					{/each}
-				</div>
+				</Shelf>
 			</section>
 		{/if}
 	{/if}

@@ -2,7 +2,7 @@
 	import { UserRound } from '@lucide/svelte';
 	import { get } from '#lib/api.ts';
 	import type { TitleCredits } from '#lib/types.ts';
-	import { Chip, Skeleton } from '#lib/ui/index.ts';
+	import { Chip, Shelf, Skeleton } from '#lib/ui/index.ts';
 
 	/** Cast & crew (or characters with voice actors for anime) as a horizontal strip linking to /people/[id]. */
 	let {
@@ -91,11 +91,13 @@
 	</section>
 {:else if data.supported && cards.length}
 	<section>
+		<Shelf label="cast" class="-mx-4 gap-3 px-4 pb-2 sm:mx-0 sm:px-0 scroll-px-4 sm:scroll-px-0">
+		{#snippet header()}
 		<div class="mb-2 flex items-center justify-between gap-3">
-			<h2 class="text-[0.9375rem] font-semibold">{data.characters.length ? 'Characters & voice cast' : 'Cast & crew'}</h2>
-			{#if (data.languages?.length ?? 0) > 1}
+			<h2 class="text-[0.9375rem] font-semibold">{data?.characters.length ? 'Characters & voice cast' : 'Cast & crew'}</h2>
+			{#if (data?.languages?.length ?? 0) > 1}
 				<div class="flex gap-1.5">
-					{#each data.languages ?? [] as lang (lang)}
+					{#each data?.languages ?? [] as lang (lang)}
 						<Chip selected={language === lang} onclick={() => (language = lang)} class="capitalize">{lang}</Chip>
 					{/each}
 				</div>
@@ -107,7 +109,7 @@
 					<span class="text-ink">{names.slice(0, 3).join(', ')}</span>{/each}
 			</p>
 		{/if}
-		<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 scroll-px-4 sm:scroll-px-0">
+		{/snippet}
 			{#each all ? cards : cards.slice(0, 20) as c (c.key)}
 				<a href="/people/{c.personId}" class="group flex w-24 shrink-0 flex-col items-center rounded-xl py-1 text-center">
 					{#if c.image}
@@ -125,6 +127,6 @@
 					+{cards.length - 20} more
 				</button>
 			{/if}
-		</div>
+		</Shelf>
 	</section>
 {/if}

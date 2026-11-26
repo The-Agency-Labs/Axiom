@@ -15,6 +15,7 @@ export { default as ProgressBar } from './ProgressBar.svelte';
 export { default as ProgressRing } from './ProgressRing.svelte';
 export { default as PullToRefresh } from './PullToRefresh.svelte';
 export { default as Sheet } from './Sheet.svelte';
+export { default as Shelf } from './Shelf.svelte';
 export { default as Skeleton } from './Skeleton.svelte';
 export { default as StatusBadge } from './StatusBadge.svelte';
 export { default as Stepper } from './Stepper.svelte';
