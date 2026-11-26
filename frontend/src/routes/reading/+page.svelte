@@ -33,7 +33,7 @@
 	}
 </script>
 
-<svelte:head><title>Reading · Encompass</title></svelte:head>
+<svelte:head><title>Reading · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={refresh}>
 	<header class="mb-4 flex items-end justify-between gap-3">

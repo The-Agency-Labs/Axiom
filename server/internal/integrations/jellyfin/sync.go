@@ -18,7 +18,7 @@ import (
 
 const (
 	// JobSync is the one-off job kind that imports a user's history (job
-	// user_id = the Encompass user, 0 = every mapped user). Payload: {"full": bool}.
+	// user_id = the Axiom user, 0 = every mapped user). Payload: {"full": bool}.
 	JobSync = "jellyfin.sync"
 	// SyncEvery is how often the sync runs for every mapped user.
 	SyncEvery = 6 * time.Hour
@@ -163,7 +163,7 @@ func (s *Service) ImportHistory(ctx context.Context, u db.User, c *Client, jelly
 	return res, nil
 }
 
-// mapped lists, per Encompass user id, the Jellyfin usernames whose history
+// mapped lists, per Axiom user id, the Jellyfin usernames whose history
 // to import: JELLYFIN_USERS ("jfuser:encompassuser", or one name when both
 // match) plus the usernames a user set in Settings.
 func (s *Service) mapped(ctx context.Context) (map[int64][]string, error) {
@@ -200,7 +200,7 @@ func (s *Service) mapped(ctx context.Context) (map[int64][]string, error) {
 		}
 		u, ok := byName[strings.ToLower(enc)]
 		if !ok {
-			slog.WarnContext(ctx, "jellyfin sync: no Encompass user", "user", enc)
+			slog.WarnContext(ctx, "jellyfin sync: no Axiom user", "user", enc)
 			continue
 		}
 		add(u.ID, jf)

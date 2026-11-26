@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, ChevronLeft, Eye, Gamepad2, RefreshCw, Sparkles, Tv, Upload, Webhook } from '@lucide/svelte';
+	import { BookOpen, Eye, Gamepad2, RefreshCw, Sparkles, Tv, Upload, Webhook } from '@lucide/svelte';
 	import { ApiError, get, post, upload } from '#lib/api.ts';
 	import SourceCard, { type SourceStatus } from '#lib/components/SourceCard.svelte';
 	import { toast } from '#lib/toast.svelte.ts';
@@ -119,21 +119,16 @@
 	});
 </script>
 
-<svelte:head><title>Integrations · Encompass</title></svelte:head>
-
-<a href="/settings" class="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-muted hover:text-ink">
-	<ChevronLeft class="size-4" /> Settings
-</a>
-<h1 class="mb-1 text-3xl font-semibold tracking-tight">Integrations</h1>
-<p class="mb-6 text-sm text-muted">Import media from other services, and see how the last import went.</p>
+<h2 class="text-lg font-semibold tracking-tight">Import media</h2>
+<p class="mb-4 text-sm text-muted">Import from other services, and see how the last import went.</p>
 
 <PullToRefresh onrefresh={load}>
 	{#if error}
 		<p class="rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger" role="alert">{error}</p>
 	{:else if !sources}
-		<div class="grid gap-4 md:grid-cols-2">{#each [0, 1, 2, 3] as i (i)}<Skeleton class="h-40 w-full" />{/each}</div>
+		<div class="grid gap-4">{#each [0, 1, 2, 3] as i (i)}<Skeleton class="h-40 w-full" />{/each}</div>
 	{:else}
-		<div class="grid items-start gap-4 md:grid-cols-2">
+		<div class="grid items-start gap-4">
 			{#if jellyfin}
 				<SourceCard
 					title="Jellyfin"
@@ -163,7 +158,7 @@
 						{#if !hook.status}
 							<p class="mt-3 text-[0.8125rem] text-muted">No event received yet.</p>
 						{/if}
-						<p class="mt-1 text-[0.8125rem]"><a class="inline-flex min-h-11 items-center text-brand underline-offset-2 hover:underline" href="/settings#webhooks">Get your webhook URL in Settings</a></p>
+						<p class="mt-1 text-[0.8125rem]"><a class="inline-flex min-h-11 items-center text-brand underline-offset-2 hover:underline" href="#webhooks">Get your webhook URL below</a></p>
 					{/snippet}
 				</SourceCard>
 			{/if}

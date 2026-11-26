@@ -43,7 +43,7 @@
 	}
 </script>
 
-<svelte:head><title>{series?.name ?? 'Series'} · Encompass</title></svelte:head>
+<svelte:head><title>{series?.name ?? 'Series'} · Axiom</title></svelte:head>
 
 <div class="mb-4 flex items-center gap-1">
 	<IconButton icon={ArrowLeft} label="Back to series" href="/series" />

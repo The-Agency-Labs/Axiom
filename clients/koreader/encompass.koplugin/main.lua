@@ -1,5 +1,5 @@
 --[[--
-Encompass sync for KOReader.
+Axiom sync for KOReader.
 
 Reads KOReader's own statistics database (statistics.sqlite3) and uploads new
 page views to POST /api/v1/reading/koreader. The server groups them into
@@ -11,7 +11,7 @@ When it syncs:
   * on resume and whenever Wi-Fi connects, to flush anything missed.
 
 It also sends the open book's table of contents (chapter titles and the
-pages they start on, as KOReader lays the book out) so Encompass can show
+pages they start on, as KOReader lays the book out) so Axiom can show
 "Chapter 12: Page 214". It's sent when it changes: a new book, or a new
 layout after a font change.
 
@@ -38,7 +38,7 @@ local OVERLAP_SECONDS = 6 * 3600
 local MAX_ROWS_PER_REQUEST = 4000
 local TIMEOUT_SECONDS = 8
 
-local Encompass = WidgetContainer:extend{
+local Axiom = WidgetContainer:extend{
     name = "encompass",
     is_doc_only = false,
 }
@@ -52,7 +52,7 @@ local function tailscale(action, wait)
     os.execute(TAILSCALE .. " " .. action .. " >/dev/null 2>&1" .. (wait and "" or " &"))
 end
 
-function Encompass:init()
+function Axiom:init()
     self.settings = G_reader_settings:readSetting(SETTINGS_KEY) or {}
     self.ui.menu:registerToMainMenu(self)
     if self.settings.tailscale ~= false then
@@ -62,15 +62,15 @@ end
 
 -- The file browser and the reader each have their own instance of this
 -- plugin; re-read the shared settings so neither overwrites the other.
-function Encompass:reload()
+function Axiom:reload()
     self.settings = G_reader_settings:readSetting(SETTINGS_KEY) or self.settings
 end
 
-function Encompass:save()
+function Axiom:save()
     G_reader_settings:saveSetting(SETTINGS_KEY, self.settings)
 end
 
-function Encompass:isConfigured()
+function Axiom:isConfigured()
     return self.settings.server and self.settings.server ~= ""
         and self.settings.token and self.settings.token ~= ""
 end
@@ -84,7 +84,7 @@ local function isOnline()
 end
 
 -- Make sure the statistics plugin has written its in-memory page views.
-function Encompass:flushStatistics()
+function Axiom:flushStatistics()
     local stats = self.ui and self.ui.statistics
     if stats and stats.insertDB then
         local ok, err = pcall(stats.insertDB, stats)
@@ -92,7 +92,7 @@ function Encompass:flushStatistics()
     end
 end
 
-function Encompass:readRows(since)
+function Axiom:readRows(since)
     local SQ3 = require("lua-ljsqlite3/init")
     local db_path = DataStorage:getSettingsDir() .. "/statistics.sqlite3"
     local ok, conn = pcall(SQ3.open, db_path)
@@ -145,7 +145,7 @@ function Encompass:readRows(since)
     return order, max_time, count
 end
 
-function Encompass:post(path, body)
+function Axiom:post(path, body)
     local url = self.settings.server:gsub("/+$", "") .. path
     local http = url:match("^https://") and require("ssl.https") or require("socket.http")
     local socketutil = require("socketutil")
@@ -168,7 +168,7 @@ end
 
 -- The open book's table of contents, ready to send, or nil (no book open,
 -- no TOC). `key` changes when the chapters or the layout change.
-function Encompass:currentTOC()
+function Axiom:currentTOC()
     local ui = self.ui
     if not (ui and ui.document and ui.toc) then return nil end
     local ok = pcall(ui.toc.fillToc, ui.toc)
@@ -204,7 +204,7 @@ end
 
 -- Remember the open book's table of contents until it has been sent, so a
 -- later sync from the file browser (no book open) still sends it.
-function Encompass:captureTOC()
+function Axiom:captureTOC()
     if not (self.ui and self.ui.document) then return end
     local ok, toc = pcall(self.currentTOC, self)
     if not ok then
@@ -223,8 +223,8 @@ function Encompass:captureTOC()
     self:save()
 end
 
--- Send every table of contents captured but not yet accepted by Encompass.
-function Encompass:sendTOCs()
+-- Send every table of contents captured but not yet accepted by Axiom.
+function Axiom:sendTOCs()
     self:captureTOC()
     local pending = self.settings.toc_pending or {}
     self.settings.toc_sent = self.settings.toc_sent or {}
@@ -247,7 +247,7 @@ function Encompass:sendTOCs()
 end
 
 -- Upload everything newer than the last successful sync. Returns rows sent.
-function Encompass:sync(reason, interactive)
+function Axiom:sync(reason, interactive)
     if self.syncing then return 0 end
     if not self:isConfigured() then
         if interactive then
@@ -326,35 +326,35 @@ end
 
 -- Events --------------------------------------------------------------------
 
-function Encompass:onSuspend() self:sync("suspend") end
-function Encompass:onReaderReady()
+function Axiom:onSuspend() self:sync("suspend") end
+function Axiom:onReaderReady()
     -- A book was opened: keep its chapters, send them soon (layout settled).
     UIManager:scheduleIn(5, function()
         self:captureTOC()
         self:sync("open")
     end)
 end
-function Encompass:onCloseDocument()
+function Axiom:onCloseDocument()
     self:captureTOC() -- even offline: it waits for the next sync
     self:sync("close")
 end
-function Encompass:onExit()
+function Axiom:onExit()
     self:sync("exit")
     if self.settings.tailscale ~= false then
         tailscale("stop", true)
     end
 end
-function Encompass:onResume()
+function Axiom:onResume()
     -- Wi-Fi usually needs a few seconds after wake.
     UIManager:scheduleIn(15, function() self:sync("resume") end)
 end
-function Encompass:onNetworkConnected()
+function Axiom:onNetworkConnected()
     UIManager:scheduleIn(2, function() self:sync("network") end)
 end
 
 -- Menu ----------------------------------------------------------------------
 
-function Encompass:editSetting(key, title, hint)
+function Axiom:editSetting(key, title, hint)
     local dialog
     dialog = InputDialog:new{
         title = title,
@@ -373,9 +373,9 @@ function Encompass:editSetting(key, title, hint)
     dialog:onShowKeyboard()
 end
 
-function Encompass:addToMainMenu(menu_items)
+function Axiom:addToMainMenu(menu_items)
     menu_items.encompass = {
-        text = _("Encompass sync"),
+        text = _("Axiom sync"),
         sorting_hint = "tools",
         sub_item_table = {
             {
@@ -442,4 +442,4 @@ function Encompass:addToMainMenu(menu_items)
     }
 end
 
-return Encompass
+return Axiom

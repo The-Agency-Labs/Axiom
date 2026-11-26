@@ -168,7 +168,7 @@
 	</li>
 {/snippet}
 
-<svelte:head><title>Upcoming · Encompass</title></svelte:head>
+<svelte:head><title>Upcoming · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
 	<header class="mb-3 flex items-center justify-between gap-3">

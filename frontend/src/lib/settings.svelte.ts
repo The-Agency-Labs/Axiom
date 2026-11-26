@@ -17,6 +17,8 @@ export interface UserSettings {
 	is_admin: boolean;
 	timezone: string;
 	language: string;
+	display_name: string;
+	avatar: string;
 	media_types: MediaSetting[];
 	jellyfin_users: string;
 	watched_percent: number;
@@ -79,4 +81,9 @@ export function enabledTypes(): MediaType[] {
 /** The user's default sort/status for a type (used by library pages). */
 export function typeDefaults(kind: MediaType) {
 	return settings.data?.media_types.find((m) => m.kind === kind);
+}
+
+/** What to call the user: their display name, else their username. */
+export function shownName(fallback: string | null) {
+	return settings.data?.display_name || fallback || '';
 }

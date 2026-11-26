@@ -3,7 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
-// The Encompass Go server. In dev, Vite proxies API calls to it so the session
+// The Axiom Go server. In dev, Vite proxies API calls to it so the session
 // cookie and CSRF token stay same-origin.
 const backend = process.env.ENCOMPASS_BACKEND ?? 'http://127.0.0.1:8765';
 

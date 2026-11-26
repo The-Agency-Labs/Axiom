@@ -1,5 +1,5 @@
 #!/bin/sh
-# Start/stop Tailscale on the Kindle (used by the Encompass KOReader plugin).
+# Start/stop Tailscale on the Kindle (used by the Axiom KOReader plugin).
 # Everything lives in /mnt/us/tailscale; nothing touches the system partition.
 DIR=/mnt/us/tailscale
 SOCK=/var/tmp/tailscaled.sock

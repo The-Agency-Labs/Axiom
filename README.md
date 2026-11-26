@@ -1,4 +1,4 @@
-# Encompass
+# Axiom
 
 A self-hosted tracker for everything you watch and read: TV, anime, movies,
 manga, books, comics, games and board games. One small Go binary with SQLite
@@ -55,7 +55,7 @@ Settings come from `.env`:
 | `ANILIST_USERS` (`<anilist>:<encompass>`) | AniList polling |
 | `SESSION_DAYS` | Login lifetime |
 
-Coming from the old Django version of Encompass:
+Coming from the old Django version of Axiom:
 `encompass migrate-django --from <old db.sqlite3> --timezone <zone>`
 (`--dry-run` first).
 

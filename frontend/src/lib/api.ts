@@ -1,4 +1,4 @@
-// Thin client for the Encompass JSON API (session cookie + CSRF header).
+// Thin client for the Axiom JSON API (session cookie + CSRF header).
 //
 // Reads: `get()`. Writes that must succeed immediately: `post()/patch()/put()/del()`.
 // Taps that should keep working offline (episode mark, progress step, status

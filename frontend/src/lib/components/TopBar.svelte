@@ -9,9 +9,9 @@
 <header
 	class="sticky top-[env(safe-area-inset-top)] z-20 flex h-12 items-center justify-between gap-3 border-b border-line bg-canvas/85 px-4 backdrop-blur-xl sm:px-6 lg:px-10"
 >
-	<a href="/" class="flex items-center gap-2 lg:invisible" aria-label="Encompass home">
+	<a href="/" class="flex items-center gap-2 lg:invisible" aria-label="Axiom home">
 		<img src="/icon.svg" alt="" class="size-6" />
-		<span class="font-semibold tracking-tight">Encompass</span>
+		<span class="font-semibold tracking-tight">Axiom</span>
 	</a>
 	<nav aria-label="Quick links">
 		<a

@@ -136,7 +136,7 @@ func (s *Server) calendarFeed(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="calendar.ics"`)
 	w.Header().Set("Cache-Control", "private, max-age=0")
-	_, _ = w.Write(calendar.Encode("-//Encompass//EN", "Encompass", now, evs))
+	_, _ = w.Write(calendar.Encode("-//Axiom//EN", "Axiom", now, evs))
 }
 
 // calendarJSON is GET /api/v1/calendar?start=YYYY-MM-DD&end=YYYY-MM-DD (inclusive;

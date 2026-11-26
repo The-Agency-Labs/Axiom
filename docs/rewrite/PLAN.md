@@ -1,4 +1,4 @@
-# Encompass server rewrite (Django → Go)
+# Axiom server rewrite (Django → Go)
 
 Status: phase 0 (design). Owner decisions are final unless marked open.
 

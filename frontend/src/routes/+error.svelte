@@ -6,7 +6,7 @@
 	const missing = $derived(page.status === 404);
 </script>
 
-<svelte:head><title>{missing ? 'Not found' : 'Something went wrong'} · Encompass</title></svelte:head>
+<svelte:head><title>{missing ? 'Not found' : 'Something went wrong'} · Axiom</title></svelte:head>
 
 <EmptyState
 	icon={missing ? Compass : CircleAlert}

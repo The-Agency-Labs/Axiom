@@ -1,4 +1,4 @@
-# Encompass server image. Build context is the repository root:
+# Axiom server image. Build context is the repository root:
 #   docker build -f server/Dockerfile .
 
 # --- Frontend: SvelteKit static build -> frontend/build ---

@@ -26,7 +26,7 @@ func fixture(t *testing.T, name string) []byte {
 func newClient(t *testing.T, routes map[string]string) *Client {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.HasPrefix(r.Header.Get("User-Agent"), "Encompass/1.0") {
+		if !strings.HasPrefix(r.Header.Get("User-Agent"), "Axiom/1.0") {
 			t.Errorf("User-Agent = %q", r.Header.Get("User-Agent"))
 		}
 		file, ok := routes[r.URL.Path]

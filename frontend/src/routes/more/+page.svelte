@@ -2,25 +2,14 @@
 	import {
 		Activity,
 		CalendarDays,
-		LogOut,
-		Settings,
 		UsersRound
 	} from '@lucide/svelte';
-	import { goto } from '$app/navigation';
-	import { logout } from '#lib/api.ts';
-	import { auth } from '#lib/auth.svelte.ts';
+	import ProfileMenu from '#lib/components/ProfileMenu.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import { net } from '#lib/offline.svelte.ts';
-	import { resetSettings } from '#lib/settings.svelte.ts';
 	import { ListRow } from '#lib/ui/index.ts';
 
 	const groups = [
-		{
-			title: 'Account',
-			links: [
-				{ href: '/settings', label: 'Settings', sub: 'Media types, theme, tokens, integrations and imports', icon: Settings, tint: 'var(--color-brand)' }
-			]
-		},
 		{
 			title: 'Explore',
 			links: [
@@ -30,28 +19,16 @@
 			]
 		}
 	];
-
-	async function signOut() {
-		await logout();
-		auth.username = null;
-		resetSettings();
-		goto('/login');
-	}
 </script>
 
-<svelte:head><title>More · Encompass</title></svelte:head>
+<svelte:head><title>More · Axiom</title></svelte:head>
 
 <header class="mb-6 flex items-center justify-between gap-3">
-	<div class="flex min-w-0 items-center gap-3">
-		<span class="grid size-12 shrink-0 place-items-center rounded-full bg-brand/20 text-lg font-semibold text-brand uppercase">
-			{auth.username?.[0] ?? '?'}
-		</span>
-		<div class="min-w-0">
-			<h1 class="truncate text-2xl font-semibold tracking-tight">{auth.username}</h1>
-			<p class="text-sm text-muted">
-				{#if net.pending > 0}{net.pending} change{net.pending === 1 ? '' : 's'} waiting to sync{:else}All changes saved{/if}
-			</p>
-		</div>
+	<div class="min-w-0 flex-1">
+		<ProfileMenu class="max-w-72" />
+		<p class="mt-1 px-2 text-sm text-muted">
+			{#if net.pending > 0}{net.pending} change{net.pending === 1 ? '' : 's'} waiting to sync{:else}All changes saved{/if}
+		</p>
 	</div>
 	<ThemeToggle />
 </header>
@@ -73,11 +50,3 @@
 		{/each}
 	</div>
 {/each}
-
-<div class="mt-6 overflow-hidden rounded-2xl border border-line bg-surface">
-	<ListRow title="Sign out" onclick={signOut} chevron={false}>
-		{#snippet leading()}
-			<span class="grid size-10 shrink-0 place-items-center rounded-xl bg-danger/12 text-danger"><LogOut class="size-5" /></span>
-		{/snippet}
-	</ListRow>
-</div>

@@ -31,7 +31,7 @@ const (
 	label     = "Open Library"
 	source    = "openlibrary"
 	cacheTTL  = 24 * time.Hour
-	userAgent = "Encompass/1.0 (+https://github.com/The-Agency-Labs/Encompass)"
+	userAgent = "Axiom/1.0 (+https://github.com/The-Agency-Labs/Encompass)"
 )
 
 // Client talks to Open Library.

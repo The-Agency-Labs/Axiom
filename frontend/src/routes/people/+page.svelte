@@ -62,7 +62,7 @@
 	const ROLE_LABEL = { actor: 'as', voice: 'voices', crew: '' } as const;
 </script>
 
-<svelte:head><title>People · Encompass</title></svelte:head>
+<svelte:head><title>People · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
 	<header class="mb-4">

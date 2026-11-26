@@ -8,9 +8,9 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/db"
 )
 
-// SourceAssumed marks watches Encompass inferred rather than saw: when a
+// SourceAssumed marks watches Axiom inferred rather than saw: when a
 // show is first seen by Jellyfin (webhook or history import) at season
-// N > 1, the owner watched the earlier seasons before Encompass existed
+// N > 1, the owner watched the earlier seasons before Axiom existed
 // (media gets deleted from Jellyfin to free space). They count for progress
 // and completion but not for activity, year views or the entry's dates.
 const SourceAssumed = "assumed"

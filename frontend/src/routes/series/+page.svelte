@@ -67,7 +67,7 @@
 	}
 </script>
 
-<svelte:head><title>Series · Encompass</title></svelte:head>
+<svelte:head><title>Series · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
 	<header class="mb-4">

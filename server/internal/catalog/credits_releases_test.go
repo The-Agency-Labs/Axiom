@@ -11,6 +11,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
+	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
 )
 
 type fakeCredits struct {
@@ -312,4 +313,36 @@ func TestRefreshReleasesAndSelection(t *testing.T) {
 	env.Conn.Exec(`UPDATE entries SET status = 'Paused' WHERE item_id = ?`, film.ID)
 	list, _ = env.Catalog.UserReleases(ctx, user, from, to)
 	eq(t, "after pausing the film", len(list), 0)
+}
+
+// Anime voice credits take the character's picture from TheTVDB when the
+// anime maps to a TVDB series with that character; others keep AniList's.
+func TestAnimeCharacterArtFromTVDB(t *testing.T) {
+	env, _, al := newCreditsEnv(t)
+	env.UseTVDB(env.TVDB)
+	env.Catalog.Reg.P.AniList = al // UseTVDB rebuilds the registry
+	al.credits = []anilist.VoiceCredit{
+		{PersonID: 55, PersonName: "A", Character: "Monkey D. Luffy", CharacterImage: "https://anilist/luffy.png", Language: "japanese", Order: 0},
+		{PersonID: 56, PersonName: "B", Character: "Zoro", CharacterImage: "https://anilist/zoro.png", Language: "japanese", Order: 1},
+		{PersonID: 57, PersonName: "C", Character: "Nami", Language: "japanese", Order: 2},
+	}
+	env.Mappings.AddTVDBShow(7000, 1, 0, 6001, 6002)
+	env.TVDB.AddCharacters("7000",
+		tvdb.Character{PersonID: 1, Person: "X", PersonType: "Actor", Character: "Luffy, Monkey D.", Image: "https://tvdb/luffy.jpg"},
+		tvdb.Character{PersonID: 2, Person: "Y", PersonType: "Actor", Character: "Nami", Image: "https://tvdb/nami.jpg"},
+	)
+	item, err := env.Q.InsertItem(ctx, db.InsertItemParams{Kind: "anime", Source: "mal", ExternalID: "6002", Title: "Pirates", Meta: "{}"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := env.Catalog.FetchCredits(ctx, item, false); err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for _, r := range creditsOf(t, env, item) {
+		got[r.Character] = r.CharacterImage
+	}
+	eq(t, "TVDB wins, name order ignored", got["Monkey D. Luffy"], "https://tvdb/luffy.jpg")
+	eq(t, "no TVDB match keeps AniList", got["Zoro"], "https://anilist/zoro.png")
+	eq(t, "fills a missing picture", got["Nami"], "https://tvdb/nami.jpg")
 }

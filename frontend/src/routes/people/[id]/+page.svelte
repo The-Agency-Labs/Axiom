@@ -25,7 +25,7 @@
 	const sub = (a: Appearance) => (a.characters.length ? `${ROLE[a.role]} ${a.characters.join(', ')}`.trim() : MEDIA[a.item.media_type].label);
 </script>
 
-<svelte:head><title>{data?.person.name ?? 'Person'} · Encompass</title></svelte:head>
+<svelte:head><title>{data?.person.name ?? 'Person'} · Axiom</title></svelte:head>
 
 <div class="mb-3"><IconButton icon={ArrowLeft} label="Back to people" href="/people" /></div>
 

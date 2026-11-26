@@ -2,7 +2,7 @@
 // into a user's library. It ports src/integrations/imports/anilist_shows.py
 // and the manga/count-based half of anilist.py.
 //
-// AniList splits a show into one entry per cour or season. Encompass tracks
+// AniList splits a show into one entry per cour or season. Axiom tracks
 // the show itself, so each anime entry is placed in its TVDB series through
 // the Fribb mapping (TVDB season plus episode offset) and its watched
 // episodes are marked there, by position. Anime films become anime_movie items. Entries
@@ -148,7 +148,7 @@ type Importer struct {
 	Catalog  *catalog.Catalog
 	Mappings catalog.Mappings
 	AniList  GraphQL
-	// Users maps AniList names to Encompass users (ANILIST_USERS).
+	// Users maps AniList names to Axiom users (ANILIST_USERS).
 	Users []sourcestatus.Pair
 	// Now and Loc are the clock and the zone dates are read in (default UTC).
 	Now func() time.Time
@@ -874,7 +874,7 @@ func (im *Importer) writeStatus(ctx context.Context, userID int64, s sourcestatu
 // ErrNotConfigured means the user is not in ANILIST_USERS.
 var ErrNotConfigured = errors.New("anilist: user is not mapped to an AniList account")
 
-// AniListName returns the AniList name mapped to an Encompass user.
+// AniListName returns the AniList name mapped to an Axiom user.
 func (im *Importer) AniListName(username string) (string, bool) {
 	for _, p := range im.Users {
 		if strings.EqualFold(p.Local, username) {
@@ -884,7 +884,7 @@ func (im *Importer) AniListName(username string) (string, bool) {
 	return "", false
 }
 
-// syncUser syncs one Encompass user (by id) from their mapped AniList account.
+// syncUser syncs one Axiom user (by id) from their mapped AniList account.
 func (im *Importer) syncUser(ctx context.Context, userID int64, opts SyncOptions) (*Result, error) {
 	u, err := im.Q.GetUser(ctx, userID)
 	if err != nil {
@@ -933,7 +933,7 @@ func (im *Importer) RegisterJobs(m *jobs.Manager) {
 	})
 }
 
-// SyncUser is Sync for an Encompass user id, resolving the AniList name from
+// SyncUser is Sync for an Axiom user id, resolving the AniList name from
 // ANILIST_USERS (used by the API's dry run).
 func (im *Importer) SyncUser(ctx context.Context, userID int64, opts SyncOptions) (*Result, error) {
 	return im.syncUser(ctx, userID, opts)
