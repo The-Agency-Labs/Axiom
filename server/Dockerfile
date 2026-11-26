@@ -2,7 +2,7 @@
 #   docker build -f server/Dockerfile .
 
 # --- Frontend: SvelteKit static build -> frontend/build ---
-FROM node:22-alpine AS web
+FROM node:26-alpine AS web
 WORKDIR /frontend
 RUN npm install -g pnpm@10
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
