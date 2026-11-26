@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ChevronLeft, Globe, Palette } from '@lucide/svelte';
+	import { ChevronLeft, Globe, Palette, Plug } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import IntegrationsCard from '#lib/components/settings/IntegrationsCard.svelte';
 	import MediaTypesCard from '#lib/components/settings/MediaTypesCard.svelte';
@@ -93,6 +93,9 @@
 		</div>
 
 		<div class="space-y-4">
+			<Card title="Integrations" description="Import media from MyAnimeList, AniList, Goodreads, Steam and Jellyfin." icon={Plug}>
+				<Button href="/settings/integrations" variant="secondary" full>Open integrations</Button>
+			</Card>
 			<IntegrationsCard />
 			<TokensCard />
 			<PasswordCard />

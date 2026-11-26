@@ -1,4 +1,4 @@
-// Package integrations wires the importers (AniList, Goodreads CSV, Steam) on
+// Package integrations wires the importers (AniList, MyAnimeList, Goodreads CSV, Steam) on
 // the catalog and library, for the scheduler and the HTTP API. The Jellyfin
 // integration is wired separately.
 package integrations
@@ -10,6 +10,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/db"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/anilist"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/goodreads"
+	"github.com/the-agency-labs/encompass/server/internal/integrations/mal"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/steam"
 	"github.com/the-agency-labs/encompass/server/internal/jobs"
 	"github.com/the-agency-labs/encompass/server/internal/library"
@@ -31,12 +32,15 @@ type Suite struct {
 	AniList   *anilist.Importer
 	Goodreads *goodreads.Importer
 	Steam     *steam.Importer
+	MAL       *mal.Importer
 }
 
 // New builds the importers.
 func New(d Deps) *Suite {
+	al := anilist.New(d.Catalog, d.Library, d.Queries, d.Config.AniListUsers)
 	return &Suite{
-		AniList:   anilist.New(d.Catalog, d.Library, d.Queries, d.Config.AniListUsers),
+		AniList:   al,
+		MAL:       mal.New(al, d.Queries, providers.NewClient(d.Cache), d.Config.MALKey),
 		Goodreads: goodreads.New(d.Catalog, d.Library, d.Queries),
 		Steam:     steam.New(d.Catalog, d.Library, d.Queries, providers.NewClient(d.Cache), d.Config.SteamKey),
 	}
@@ -50,4 +54,5 @@ func (s *Suite) RegisterJobs(m *jobs.Manager) {
 	s.AniList.RegisterJobs(m)
 	s.Goodreads.RegisterJobs(m)
 	s.Steam.RegisterJobs(m)
+	s.MAL.RegisterJobs(m)
 }

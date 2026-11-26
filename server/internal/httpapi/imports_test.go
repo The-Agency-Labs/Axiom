@@ -52,7 +52,7 @@ func (f *importFx) sources(c *client, hdr map[string]string) map[string]map[stri
 		out[m["name"].(string)] = m
 		order = append(order, m["name"].(string))
 	}
-	if strings.Join(order, ",") != "jellyfin,jellyfin_webhook,anilist,goodreads,steam" {
+	if strings.Join(order, ",") != "jellyfin,jellyfin_webhook,anilist,mal,goodreads,steam" {
 		f.t.Fatalf("source order = %v", order)
 	}
 	return out
