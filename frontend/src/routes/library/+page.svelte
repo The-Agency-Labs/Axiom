@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CalendarDays, CalendarRange, UsersRound } from '@lucide/svelte';
+	import { CalendarDays, UsersRound } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import { MEDIA } from '#lib/media.ts';
 	import { enabledTypes } from '#lib/settings.svelte.ts';
@@ -24,7 +24,6 @@
 
 	const explore = [
 		{ href: '/people', label: 'People', sub: 'Actors and voice actors across your library', icon: UsersRound, tint: 'var(--color-type-boardgame)' },
-		{ href: '/calendar', label: 'Calendar', sub: 'Upcoming episodes and releases', icon: CalendarRange, tint: 'var(--color-type-tv)' },
 		{ href: '/year', label: 'Year in review', sub: 'Your year in numbers', icon: CalendarDays, tint: 'var(--color-type-anime)' }
 	];
 </script>

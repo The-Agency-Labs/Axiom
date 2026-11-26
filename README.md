@@ -17,13 +17,15 @@ Licensed AGPL-3.0.
 - **Imports and sync (additive, never lowers progress):**
   - Jellyfin webhook (marked watched at 75 %) and a 6-hourly history sync. A
     show first seen at season N assumes earlier seasons were watched.
-  - AniList polling every 30 minutes, Goodreads CSV, Steam.
+  - AniList polling every 30 minutes, MyAnimeList list import, Goodreads CSV,
+    Steam. All under Settings → Integrations.
 - **Reading:** KOReader sync (KOSync API + the plugin in
   `clients/koreader`), reading sessions, a daily reading log, stats, and
   linking Kindle documents to books (Hardcover, OpenLibrary fallback).
 - **Books:** series with your place in them, search by series, and Triple P +
   Reflect notes.
-- **Also:** calendar (with an `.ics` feed), lists, people, year in review.
+- **Also:** upcoming releases (with an `.ics` feed) and seasonal anime, people
+  (with character pictures), year in review.
 - **Offline:** the app opens with your last data and queues changes until
   you're back online.
 

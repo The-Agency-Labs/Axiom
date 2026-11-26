@@ -5,6 +5,7 @@
 	import { tick } from 'svelte';
 	import { auth, refreshAuth } from '#lib/auth.svelte.ts';
 	import Nav from '#lib/components/Nav.svelte';
+	import TopBar from '#lib/components/TopBar.svelte';
 	import { initOffline } from '#lib/offline.svelte.ts';
 	import { loadSettings } from '#lib/settings.svelte.ts';
 	import { initTheme } from '#lib/theme.svelte.ts';
@@ -72,12 +73,13 @@
 	>
 	<Nav />
 	<div class="pt-[env(safe-area-inset-top)] lg:pl-60">
+		<TopBar />
 		<OfflineBanner />
 		<main
 			id="main"
 			class="min-h-dvh pb-[calc(var(--spacing-tabbar)+env(safe-area-inset-bottom)+1.5rem)] lg:pb-10"
 		>
-			<div class="mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-10 lg:pt-10">
+			<div class="mx-auto max-w-7xl px-4 pt-5 sm:px-6 lg:px-10 lg:pt-8">
 				{#key page.route.id}
 					<div class="page-in">
 						{@render children()}

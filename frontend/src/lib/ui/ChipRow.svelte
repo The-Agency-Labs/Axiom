@@ -17,7 +17,7 @@
 	role="group"
 	aria-label={label}
 	class="z-20 -mx-4 bg-canvas/90 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 {sticky
-		? 'sticky top-[env(safe-area-inset-top)]'
+		? 'sticky top-[calc(env(safe-area-inset-top)+3rem)]'
 		: ''} {className}"
 >
 	<div class="shelf flex gap-2 overflow-x-auto overflow-y-hidden">
