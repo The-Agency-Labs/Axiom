@@ -22,7 +22,7 @@
 	} from '#lib/ui/index.ts';
 
 	const PAGE = 60;
-	const CHIPS: (Status | 'All')[] = ['In progress', 'Planning', 'Completed', 'Paused', 'Dropped', 'All'];
+	const CHIPS: (Status | 'All')[] = ['All', 'In progress', 'Planning', 'Completed', 'Paused', 'Dropped']; // All first: a search selects it
 
 	const type = $derived(page.params.type as MediaType);
 	const valid = $derived(isMediaType(type));
@@ -37,6 +37,13 @@
 	let status = $state<Status | 'All'>('Completed');
 	let sort = $state('year');
 	let query = $state('');
+	// A search looks through every status; a chip picked while searching narrows it.
+	const searching = $derived(!!query.trim());
+	let searchStatus = $state<Status | 'All'>('All');
+	const filter = $derived(searching ? searchStatus : status);
+	$effect(() => {
+		if (!searching) searchStatus = 'All';
+	});
 	let year = $state<string>('');
 	let view = $state<'grid' | 'list'>('grid');
 	let sortOpen = $state(false);
@@ -45,7 +52,7 @@
 	let touched = $state(false);
 	// Shows by year are by season: each season under the year it was finished, with its own art.
 	// The year view of shows and anime lists seasons, each under the year it was finished.
-	const seasonView = $derived((type === 'tv' || type === 'anime') && sort === 'year');
+	const seasonView = $derived((type === 'tv' || type === 'anime') && sort === 'year' && !searching);
 	let seasons = $state<SeasonFinished[] | null>(null);
 	// Year headings fold: the newest year starts open, the rest closed; choices are kept per type.
 	let folds = $state<Record<string, boolean>>({});
@@ -57,7 +64,7 @@
 			folds = {};
 		}
 	});
-	const isOpen = (label: string, i: number) => folds[label] ?? i === 0;
+	const isOpen = (label: string, i: number) => searching || (folds[label] ?? i === 0); // no match hides in a folded year
 	function toggleYear(label: string, i: number) {
 		folds = { ...folds, [label]: !isOpen(label, i) };
 		try {
@@ -179,7 +186,7 @@
 
 	// Re-page when any filter changes.
 	$effect(() => {
-		void status;
+		void filter;
 		void sort;
 		void query;
 		void year;
@@ -199,7 +206,7 @@
 	const pct = (e: Entry) => (e.max_progress ? e.progress / e.max_progress : e.progress ? 0.0001 : 0);
 	const when = (iso: string | null) => (iso ? Date.parse(iso) : -Infinity);
 	const sorted = $derived.by(() => {
-		const list = searched.filter((e) => isGame || status === 'All' || e.status === status);
+		const list = searched.filter((e) => isGame || filter === 'All' || e.status === filter);
 		const by: Record<string, (a: Entry, b: Entry) => number> = {
 			title: (a, b) => a.item.title.localeCompare(b.item.title, undefined, { sensitivity: 'base', numeric: true }),
 			score: (a, b) => (b.score ?? -1) - (a.score ?? -1),
@@ -242,7 +249,7 @@
 	function subtitle(e: Entry) {
 		if (isGame) return '';
 		// The status filter already says it; only progress adds something.
-		if (status !== 'All' && e.status === status && e.status !== 'In progress') return '';
+		if (filter !== 'All' && e.status === filter && e.status !== 'In progress') return '';
 		if (hasEpisodes(e.media_type, e.item.source)) return e.status;
 		if (e.status === 'In progress' && e.media_type !== 'movie' && e.media_type !== 'anime_movie') {
 			if (e.media_type === 'manga') return e.progress ? `Chapter ${e.progress}` : e.status;
@@ -310,12 +317,15 @@
 		{#if !isGame && !seasonView}<ChipRow label="Status">
 			{#each CHIPS as s (s)}
 				<Chip
-					selected={status === s}
+					selected={filter === s}
 					color={s === 'All' ? undefined : STATUS_COLOR[s]}
 					count={entries ? (counts[s] ?? 0) : undefined}
 					onclick={() => {
-						status = s;
-						touched = true;
+						if (searching) searchStatus = s;
+						else {
+							status = s;
+							touched = true;
+						}
 					}}>{s}</Chip
 				>
 			{/each}
@@ -402,11 +412,11 @@
 				{:else}
 					<EmptyState
 						icon={Search}
-						title={isGame || status === 'All' || hasFilters ? 'No matches' : `Nothing ${status.toLowerCase()}`}
+						title={isGame || filter === 'All' || hasFilters ? 'No matches' : `Nothing ${filter.toLowerCase()}`}
 						description={hasFilters ? 'Try a different search or year.' : 'Pick another status above.'}
 					>
 						{#snippet actions()}
-							{#if status !== 'All'}<Button onclick={() => (status = 'All')}>Show all</Button>{/if}
+							{#if filter !== 'All'}<Button onclick={() => (searching ? (searchStatus = 'All') : (status = 'All'))}>Show all</Button>{/if}
 							{#if hasFilters}<Button onclick={() => ((query = ''), (year = ''))}>Clear filters</Button>{/if}
 						{/snippet}
 					</EmptyState>
@@ -424,7 +434,7 @@
 									src={entry.item.image}
 									title={entry.item.title}
 									type={entry.media_type}
-									status={isGame || status !== 'All' ? undefined : entry.status}
+									status={isGame || filter !== 'All' ? undefined : entry.status}
 									subtitle={subtitle(entry)}
 									score={entry.score}
 								/>
