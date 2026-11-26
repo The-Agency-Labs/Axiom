@@ -60,6 +60,12 @@ function Encompass:init()
     end
 end
 
+-- The file browser and the reader each have their own instance of this
+-- plugin; re-read the shared settings so neither overwrites the other.
+function Encompass:reload()
+    self.settings = G_reader_settings:readSetting(SETTINGS_KEY) or self.settings
+end
+
 function Encompass:save()
     G_reader_settings:saveSetting(SETTINGS_KEY, self.settings)
 end
@@ -196,21 +202,48 @@ function Encompass:currentTOC()
     }
 end
 
--- Send the open book's table of contents if Encompass doesn't have this
--- version of it yet.
-function Encompass:sendTOC()
+-- Remember the open book's table of contents until it has been sent, so a
+-- later sync from the file browser (no book open) still sends it.
+function Encompass:captureTOC()
+    if not (self.ui and self.ui.document) then return end
     local ok, toc = pcall(self.currentTOC, self)
-    if not ok or not toc then return end
+    if not ok then
+        logger.warn("encompass: reading table of contents failed", toc)
+        self:reload()
+        self.settings.toc_status = T(_("Chapters: error %1"), tostring(toc):sub(1, 60))
+        self:save()
+        return
+    end
+    if not toc then return end
+    self:reload()
     self.settings.toc_sent = self.settings.toc_sent or {}
     if self.settings.toc_sent[toc.md5] == toc.key then return end
-    local okp, code = pcall(self.post, self, "/api/v1/reading/koreader/toc", json.encode(toc.payload))
-    if okp and code == 200 then
-        self.settings.toc_sent[toc.md5] = toc.key
-        self:save()
-        logger.info("encompass: sent table of contents", #toc.payload.toc)
-    else
-        logger.warn("encompass: table of contents upload failed", code)
+    self.settings.toc_pending = self.settings.toc_pending or {}
+    self.settings.toc_pending[toc.md5] = { key = toc.key, payload = toc.payload }
+    self:save()
+end
+
+-- Send every table of contents captured but not yet accepted by Encompass.
+function Encompass:sendTOCs()
+    self:captureTOC()
+    local pending = self.settings.toc_pending or {}
+    self.settings.toc_sent = self.settings.toc_sent or {}
+    for md5, item in pairs(pending) do
+        local okp, code, body = pcall(self.post, self, "/api/v1/reading/koreader/toc", json.encode(item.payload))
+        if okp and code == 200 then
+            pending[md5] = nil
+            self.settings.toc_sent[md5] = item.key
+            self.settings.toc_status = T(_("Chapters: sent %1 for %2 at %3"), #item.payload.toc,
+                (item.payload.title or ""):sub(1, 24), os.date("%H:%M"))
+            logger.info("encompass: sent table of contents", md5, #item.payload.toc)
+        else
+            local why = okp and (tostring(code) .. " " .. tostring(body):sub(1, 60)) or tostring(code)
+            self.settings.toc_status = T(_("Chapters: failed %1"), why)
+            logger.warn("encompass: table of contents upload failed", why)
+        end
     end
+    self.settings.toc_pending = pending
+    self:save()
 end
 
 -- Upload everything newer than the last successful sync. Returns rows sent.
@@ -231,6 +264,7 @@ function Encompass:sync(reason, interactive)
     end
 
     self.syncing = true
+    self:reload()
     self:flushStatistics()
     local total = 0
     local watermark = tonumber(self.settings.watermark) or 0
@@ -260,7 +294,7 @@ function Encompass:sync(reason, interactive)
         if count < MAX_ROWS_PER_REQUEST then break end
     end
 
-    self:sendTOC()
+    self:sendTOCs()
 
     self.settings.watermark = watermark
     self.settings.last_sync = os.date("%Y-%m-%d %H:%M")
@@ -278,10 +312,16 @@ end
 
 function Encompass:onSuspend() self:sync("suspend") end
 function Encompass:onReaderReady()
-    -- A book was opened: send its chapters soon (once the layout settles).
-    UIManager:scheduleIn(5, function() self:sync("open") end)
+    -- A book was opened: keep its chapters, send them soon (layout settled).
+    UIManager:scheduleIn(5, function()
+        self:captureTOC()
+        self:sync("open")
+    end)
 end
-function Encompass:onCloseDocument() self:sync("close") end
+function Encompass:onCloseDocument()
+    self:captureTOC() -- even offline: it waits for the next sync
+    self:sync("close")
+end
 function Encompass:onExit()
     self:sync("exit")
     if self.settings.tailscale ~= false then
@@ -353,6 +393,12 @@ function Encompass:addToMainMenu(menu_items)
                         return T(_("Last error: %1"), self.settings.last_error)
                     end
                     return T(_("Last sync: %1"), self.settings.last_sync or _("never"))
+                end,
+                enabled_func = function() return false end,
+            },
+            {
+                text_func = function()
+                    return self.settings.toc_status or _("Chapters: not sent yet (open a book)")
                 end,
                 enabled_func = function() return false end,
             },
