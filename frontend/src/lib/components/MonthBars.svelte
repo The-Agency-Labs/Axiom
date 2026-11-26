@@ -49,10 +49,12 @@
 			<span class="text-muted">{unit}</span>
 		</div>
 	{/if}
-	<table class="sr-only">
+	<div class="sr-only">
+	<table>
 		<caption>{label}</caption>
 		<tbody>
 			{#each values as value, i (i)}<tr><th>{MONTHS[i]}</th><td>{value}</td></tr>{/each}
 		</tbody>
 	</table>
+	</div>
 </figure>

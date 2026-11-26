@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { countLabel } from '#lib/media.ts';
 	import { bookPosition, loadChapters } from '#lib/chapters.svelte.ts';
 	import { mutate, get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
@@ -51,7 +52,7 @@
 							<span class="block truncate text-[0.75rem] text-faint tabular-nums">{bookPosition(b.item.id, b.progress) ?? `Page ${b.progress}`}</span>
 						</span>
 					</a>
-					<Stepper display="{b.progress} p" label="pages of {b.item.title}" onstep={(d) => step(b, d)} canDecrement={b.progress > 0} />
+					<Stepper display={countLabel('book', b.progress)} label="pages of {b.item.title}" onstep={(d) => step(b, d)} canDecrement={b.progress > 0} />
 				</li>
 			{/each}
 		</ul>

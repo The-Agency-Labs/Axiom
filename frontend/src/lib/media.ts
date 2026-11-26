@@ -93,7 +93,7 @@ export const MEDIA: Record<MediaType, MediaMeta> = {
     icon: BookOpen,
     accent: "var(--color-type-book)",
     unit: "page",
-    units: "p",
+    units: "Pages",
     steppable: true,
   },
   comic: {
@@ -167,13 +167,15 @@ export function progressLabel(
   if (type === "movie") return progress ? "Watched" : "";
   if (type === "game") return `${Math.floor(progress / 60)}h ${progress % 60}m`;
   if (type === "manga") return total ? `Chapter ${progress} of ${total}` : `Chapter ${progress}`;
+  if (!total) return countLabel(type, progress);
   const units = meta.units ? ` ${meta.units}` : "";
-  return total ? `${progress} / ${total}${units}` : `${progress}${units}`;
+  return `${progress} / ${total}${units}`;
 }
 
-/** One progress value on its own: "Chapter 77", "524 p", "12 ep". */
+/** One progress value on its own: "Chapter 77", "524 Pages", "12 ep". */
 export function countLabel(type: MediaType, n: number) {
   if (type === "manga") return `Chapter ${n}`;
+  if (type === "book" && n === 1) return "1 Page";
   return MEDIA[type].units ? `${n} ${MEDIA[type].units}` : String(n);
 }
 

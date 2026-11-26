@@ -37,6 +37,7 @@
 			const short: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
 			let key = d.date;
 			let tick = '';
+			let wideOnly = false;
 			let label = dt.toLocaleDateString(undefined, { weekday: 'short', ...short });
 			if (per === 'day') {
 				// A week of weekdays, or a date every seven days clear of both edges.
@@ -50,13 +51,13 @@
 				label = 'Week of ' + monday.toLocaleDateString(undefined, short);
 			} else {
 				key = d.date.slice(0, 7);
-				// Every other month, ending on the current one.
+				tick = dt.toLocaleDateString(undefined, { month: 'short' });
+				// A phone shows every other month, ending on the current one.
 				const now = new Date();
-				const ago = (now.getFullYear() - dt.getFullYear()) * 12 + now.getMonth() - dt.getMonth();
-				tick = ago % 2 === 0 ? dt.toLocaleDateString(undefined, { month: 'short' }) : '';
+				wideOnly = ((now.getFullYear() - dt.getFullYear()) * 12 + now.getMonth() - dt.getMonth()) % 2 === 1;
 				label = dt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 			}
-			const bar = out.get(key) ?? { tick, label, value: 0 };
+			const bar = out.get(key) ?? { tick, label, wideOnly, value: 0 };
 			bar.value += metric === 'pages' ? d.pages : d.minutes;
 			out.set(key, bar);
 		});
@@ -66,10 +67,9 @@
 	const tiles = $derived.by(() => {
 		if (!stats) return [];
 		const t = stats.totals;
-		const each = (n: number) => Math.round(n / Math.max(1, t.days_read));
 		return [
-			{ label: 'Pages', icon: BookOpen, value: t.pages.toLocaleString(), sub: `${each(t.pages)} per reading day` },
-			{ label: 'Time', icon: Clock, value: minutesLabel(t.minutes), sub: `${minutesLabel(each(t.minutes))} per reading day` },
+			{ label: 'Pages', icon: BookOpen, value: t.pages.toLocaleString() },
+			{ label: 'Time', icon: Clock, value: minutesLabel(t.minutes) },
 			{ label: 'Days read', icon: CalendarCheck, value: String(t.days_read), sub: `of ${t.days_in_range} days` },
 			{ label: 'Streak', icon: Flame, value: `${stats.current_streak}d`, sub: `best ever ${stats.longest_streak} days` }
 		];
@@ -93,12 +93,12 @@
 		<Skeleton class="h-52 w-full" />
 		<Skeleton class="h-52 w-full" />
 	{:else}
-		<dl class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+		<dl class="grid grid-cols-2 gap-3 2xl:grid-cols-4">
 			{#each tiles as tile (tile.label)}
 				<div class="rounded-[var(--radius-card)] border border-line bg-surface p-4">
 					<dt class="flex items-center gap-1.5 text-[0.75rem] text-muted"><tile.icon class="size-3.5 text-type-book" />{tile.label}</dt>
-					<dd class="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{tile.value}</dd>
-					<dd class="text-[0.75rem] text-faint">{tile.sub}</dd>
+					<dd class="mt-1 text-2xl font-semibold tracking-tight whitespace-nowrap tabular-nums">{tile.value}</dd>
+					{#if tile.sub}<dd class="text-[0.75rem] text-faint">{tile.sub}</dd>{/if}
 				</div>
 			{/each}
 		</dl>
@@ -117,6 +117,5 @@
 			</div>
 			<BarChart {bars} unit={metric === 'pages' ? 'pages' : 'min'} title="{metric === 'pages' ? 'Pages' : 'Minutes'} read per {per}" height={160} />
 		</div>
-		<p class="px-1 text-[0.75rem] text-faint">From your Kindle. A page opened on its own, with nothing read around it, isn't counted.</p>
 	{/if}
 </section>

@@ -3,7 +3,7 @@
 	import { untrack } from 'svelte';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
-	import { minutesLabel } from '#lib/media.ts';
+	import { minutesLabel, countLabel } from '#lib/media.ts';
 	import { Button, EmptyState, Skeleton } from '#lib/ui/index.ts';
 	import { bookTitle, dayHeading, isoDaysAgo } from './format.ts';
 	import type { JournalDay } from './types.ts';
@@ -68,7 +68,7 @@
 	});
 
 	const pageRange = (b: { from_page: number | null; to_page: number | null }) =>
-		b.from_page == null || b.to_page == null ? '' : b.to_page > b.from_page ? `p. ${b.from_page}–${b.to_page}` : `p. ${b.to_page}`;
+		b.from_page == null || b.to_page == null ? '' : b.to_page > b.from_page ? `(${b.from_page}–${b.to_page})` : `(${b.to_page})`;
 </script>
 
 {#if !loaded}
@@ -88,7 +88,7 @@
 					<!-- Day totals only add something when there is more than one book. -->
 					{#if day.books.length > 1}
 						<p class="text-[0.8125rem] text-muted tabular-nums">
-							{day.pages ? `${day.pages} pages` : ''}{day.pages && day.minutes ? ' · ' : ''}{day.minutes
+							{day.pages ? countLabel('book', day.pages) : ''}{day.pages && day.minutes ? ' · ' : ''}{day.minutes
 								? minutesLabel(day.minutes)
 								: ''}
 						</p>
@@ -103,8 +103,8 @@
 									{bookTitle(b.title, b.series, b.series_number)}
 								</p>
 								<p class="mt-0.5 text-[0.75rem] text-faint tabular-nums">
-									{#if b.pages}{b.pages} pages{:else if b.chapters}{b.chapters} {b.chapters === 1 ? "chapter" : "chapters"}{/if}{#if pageRange(b)}
-										· {pageRange(b)}{/if}
+									{#if b.pages}{countLabel('book', b.pages)}{:else if b.chapters}{b.chapters} {b.chapters === 1 ? "chapter" : "chapters"}{/if}{#if pageRange(b)}
+										{pageRange(b)}{/if}
 								</p>
 							</div>
 							<span class="shrink-0 text-[0.8125rem] font-medium text-muted tabular-nums">{minutesLabel(b.minutes)}</span>

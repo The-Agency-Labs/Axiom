@@ -145,6 +145,8 @@ export interface CalendarEvent {
 export interface Bar {
 	/** Short x tick label (may be empty). */
 	tick: string;
+	/** Hide this tick where the chart is narrow. */
+	wideOnly?: boolean;
 	/** Full label for the tooltip/table, e.g. "Mon, Nov 24". */
 	label: string;
 	value: number;
