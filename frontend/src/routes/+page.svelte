@@ -71,7 +71,7 @@
 		<div class="min-w-0">
 			<p class="text-sm text-muted">{greeting}</p>
 			<h1 class="truncate text-2xl font-semibold tracking-tight capitalize sm:text-3xl">{auth.username}</h1>
-			<p class="mt-1 h-5 text-[13px] text-faint">
+			<p class="mt-1 h-5 text-[0.8125rem] text-faint">
 				{#if groups}{total} in progress{/if}
 			</p>
 		</div>
@@ -138,7 +138,7 @@
 		{#if finished.length}
 			<section class="mt-10">
 				<SectionHead title="Recently finished" icon={CheckCheck} accent="var(--color-success)" />
-				<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+				<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 scroll-px-4 sm:scroll-px-6 lg:scroll-px-10">
 					{#each finished as entry (entry.media_type + entry.id)}
 						<div class="w-28 shrink-0">
 							<PosterCard

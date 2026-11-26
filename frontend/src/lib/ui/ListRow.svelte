@@ -36,8 +36,8 @@
 {#snippet content()}
 	{#if leading}{@render leading()}{/if}
 	<span class="min-w-0 flex-1">
-		<span class="block truncate text-[15px] font-medium">{title}</span>
-		{#if subtitle}<span class="block truncate text-[13px] text-muted">{subtitle}</span>{/if}
+		<span class="block truncate text-[0.9375rem] font-medium">{title}</span>
+		{#if subtitle}<span class="block truncate text-[0.8125rem] text-muted">{subtitle}</span>{/if}
 	</span>
 	{#if trailing}{@render trailing()}{/if}
 	{#if showChevron}<ChevronRight class="size-4 shrink-0 text-faint" />{/if}

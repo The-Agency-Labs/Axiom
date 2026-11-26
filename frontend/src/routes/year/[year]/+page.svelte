@@ -234,12 +234,12 @@
 		<div class="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]">
 			{#if data.top_rated.length}
 				<Card title="Highest rated" icon={Star} accent="var(--color-warning)" class="min-w-0">
-					<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+					<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scroll-px-4">
 						{#each data.top_rated as entry (entry.media_type + entry.id)}
 							<a href="/item/{entry.media_type}/{entry.id}" class="w-24 shrink-0">
 								<Cover src={entry.item.image} title={entry.item.title} type={entry.media_type} class="aspect-[2/3] w-full" />
 								<p class="mt-1.5 line-clamp-1 text-xs font-medium">{entry.item.title}</p>
-								<p class="text-[11px] text-faint">★ {entry.score}</p>
+								<p class="text-[0.75rem] text-faint">★ {entry.score}</p>
 							</a>
 						{/each}
 					</div>
@@ -262,7 +262,7 @@
 
 		{#if finishedByType.length}
 			<section class="mt-10">
-				<h2 class="mb-4 text-[13px] font-semibold tracking-wide text-faint uppercase">Finished in {year}</h2>
+				<h2 class="mb-4 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase">Finished in {year}</h2>
 				<div class="space-y-8">
 					{#each finishedByType as [type, items] (type)}
 						{@const meta = MEDIA[type]}
@@ -275,7 +275,7 @@
 									<a href="/item/{entry.media_type}/{entry.id}">
 										<Cover src={entry.item.image} title={entry.item.title} type={entry.media_type} class="aspect-[2/3] w-full" />
 										<p class="mt-1.5 line-clamp-1 text-xs font-medium">{entry.item.title}</p>
-										<p class="text-[11px] text-faint">{formatDate(entry.end_date)}{entry.score ? ` · ★ ${entry.score}` : ''}</p>
+										<p class="text-[0.75rem] text-faint">{formatDate(entry.end_date)}{entry.score ? ` · ★ ${entry.score}` : ''}</p>
 									</a>
 								{/each}
 							</div>

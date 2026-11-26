@@ -64,7 +64,7 @@
 					{#if source && source !== 'tmdb'}<span class="font-medium text-faint">{SOURCE_NAMES[source] ?? source}</span>{/if}
 				</p>
 				<h1 class="mt-1 text-2xl font-semibold tracking-tight text-balance sm:text-3xl lg:text-4xl">{title}</h1>
-				{#if showNative}<p class="mt-0.5 text-[15px] text-muted">{nativeTitle}</p>{/if}
+				{#if showNative}<p class="mt-0.5 text-[0.9375rem] text-muted">{nativeTitle}</p>{/if}
 				<p class="mt-2 flex min-h-5 flex-wrap items-center gap-x-3 text-sm text-muted">
 					{#if year}<span class="tabular-nums">{year}</span>{/if}
 					<ReleaseBadge status={release} />

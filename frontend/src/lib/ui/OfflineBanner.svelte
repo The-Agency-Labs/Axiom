@@ -12,7 +12,7 @@
 {#if visible}
 	<div
 		role="status"
-		class="flex min-h-9 items-center justify-center gap-2 border-b border-line bg-raised px-4 py-1.5 text-center text-[13px] font-medium text-ink"
+		class="flex min-h-9 items-center justify-center gap-2 border-b border-line bg-raised px-4 py-1.5 text-center text-[0.8125rem] font-medium text-ink"
 	>
 		{#if !net.online}
 			<CloudOff class="size-4 shrink-0 text-warning" />

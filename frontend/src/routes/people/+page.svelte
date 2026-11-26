@@ -85,8 +85,8 @@
 							<a href="/people/{p.id}" class="flex min-h-14 items-center gap-3 px-4 py-2 hover:bg-ink/5">
 								{#if p.image}<img src={p.image} alt="" loading="lazy" class="size-10 rounded-full object-cover" />{:else}<span class="grid size-10 place-items-center rounded-full bg-raised text-faint"><UserRound class="size-5" /></span>{/if}
 								<span class="min-w-0 flex-1">
-									<span class="block truncate text-[15px] font-medium">{p.name}</span>
-									{#if p.native_name}<span class="block truncate text-[13px] text-muted">{p.native_name}</span>{/if}
+									<span class="block truncate text-[0.9375rem] font-medium">{p.name}</span>
+									{#if p.native_name}<span class="block truncate text-[0.8125rem] text-muted">{p.native_name}</span>{/if}
 								</span>
 							</a>
 						</li>
@@ -146,7 +146,7 @@
 										<meta.icon class="ml-auto size-3 shrink-0" style="color: {meta.accent}" />
 									</li>
 								{/each}
-								{#if row.appearances.length > 3}<li class="text-[11px] text-faint">+{row.appearances.length - 3} more</li>{/if}
+								{#if row.appearances.length > 3}<li class="text-[0.75rem] text-faint">+{row.appearances.length - 3} more</li>{/if}
 							</ul>
 						</div>
 					</a>

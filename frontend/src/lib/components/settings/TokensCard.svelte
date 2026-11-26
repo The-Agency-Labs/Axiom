@@ -78,7 +78,7 @@
 					<div class="min-w-0 flex-1">
 						<p class="truncate text-sm font-medium">
 							{token.name}
-							<span class="ml-1 rounded-full border border-line px-1.5 py-0.5 align-middle text-[10px] font-semibold tracking-wide text-muted uppercase">{token.revoked ? 'revoked' : token.scope}</span>
+							<span class="ml-1 rounded-full border border-line px-1.5 py-0.5 align-middle text-[0.75rem] font-semibold tracking-wide text-muted uppercase">{token.revoked ? 'revoked' : token.scope}</span>
 						</p>
 						<p class="truncate font-mono text-xs text-muted">
 							{token.prefix}… · {token.last_used_at ? 'used ' + relativeTime(token.last_used_at) : 'never used'}

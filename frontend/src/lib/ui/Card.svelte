@@ -37,8 +37,8 @@
 				</span>
 			{/if}
 			<div class="min-w-0 flex-1">
-				<h2 class="truncate text-[15px] font-semibold">{title}</h2>
-				{#if description}<p class="text-[13px] text-muted">{description}</p>{/if}
+				<h2 class="truncate text-[0.9375rem] font-semibold">{title}</h2>
+				{#if description}<p class="text-[0.8125rem] text-muted">{description}</p>{/if}
 			</div>
 			{#if action}{@render action()}{/if}
 		</header>

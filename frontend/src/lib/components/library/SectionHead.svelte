@@ -30,13 +30,13 @@
 				<Icon class="size-4" />
 			</span>
 		{/if}
-		<h2 class="truncate text-[15px] font-semibold tracking-tight">{title}</h2>
+		<h2 class="truncate text-[0.9375rem] font-semibold tracking-tight">{title}</h2>
 		{#if count !== undefined}
 			<span class="rounded-full bg-ink/6 px-2 py-0.5 text-xs text-muted tabular-nums">{count}</span>
 		{/if}
 	</div>
 	{#if href}
-		<a {href} class="-mr-2 flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-[13px] font-medium text-muted transition hover:text-ink">
+		<a {href} class="-mr-2 flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-[0.8125rem] font-medium text-muted transition hover:text-ink">
 			{linkLabel} <ChevronRight class="size-4" />
 		</a>
 	{/if}

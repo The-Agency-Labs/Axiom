@@ -84,8 +84,8 @@
 		{#each days as day (day.date)}
 			<section aria-label={dayHeading(day.date)}>
 				<header class="mb-2 flex items-baseline justify-between gap-3 px-1">
-					<h3 class="text-[15px] font-semibold">{dayHeading(day.date)}</h3>
-					<p class="text-[13px] text-muted tabular-nums">
+					<h3 class="text-[0.9375rem] font-semibold">{dayHeading(day.date)}</h3>
+					<p class="text-[0.8125rem] text-muted tabular-nums">
 						{day.pages ? `${day.pages} pages` : ''}{day.pages && day.minutes ? ' · ' : ''}{day.minutes
 							? minutesLabel(day.minutes)
 							: ''}
@@ -96,15 +96,15 @@
 						<li class="flex items-center gap-3 px-3 py-2.5">
 							<Cover src={b.image} title={b.title} type="book" class="aspect-[2/3] w-10 shrink-0 !rounded-md" />
 							<div class="min-w-0 flex-1">
-								<p class="line-clamp-2 text-[14px] leading-snug font-medium">
+								<p class="line-clamp-2 text-[0.875rem] leading-snug font-medium">
 									{bookTitle(b.title, b.series, b.series_number)}
 								</p>
-								<p class="mt-0.5 text-[12px] text-faint tabular-nums">
+								<p class="mt-0.5 text-[0.75rem] text-faint tabular-nums">
 									{#if b.pages}{b.pages} pages{:else if b.chapters}{b.chapters} ch{/if}{#if pageRange(b)}
 										· {pageRange(b)}{/if}
 								</p>
 							</div>
-							<span class="shrink-0 text-[13px] font-medium text-muted tabular-nums">{minutesLabel(b.minutes)}</span>
+							<span class="shrink-0 text-[0.8125rem] font-medium text-muted tabular-nums">{minutesLabel(b.minutes)}</span>
 						</li>
 					{/each}
 				</ul>

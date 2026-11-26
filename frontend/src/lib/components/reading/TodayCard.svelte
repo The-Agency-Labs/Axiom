@@ -15,22 +15,22 @@
 <section class="rounded-[var(--radius-card)] border border-line bg-surface p-4" aria-label="Today">
 	<div class="grid grid-cols-3 gap-2">
 		<div>
-			<p class="flex items-center gap-1.5 text-[12px] text-muted"><BookOpen class="size-3.5 text-type-book" />Pages</p>
+			<p class="flex items-center gap-1.5 text-[0.75rem] text-muted"><BookOpen class="size-3.5 text-type-book" />Pages</p>
 			<p class="mt-1 text-3xl font-semibold tracking-tight tabular-nums">{today?.pages ?? 0}</p>
 		</div>
 		<div>
-			<p class="flex items-center gap-1.5 text-[12px] text-muted"><Clock class="size-3.5 text-type-book" />Time</p>
+			<p class="flex items-center gap-1.5 text-[0.75rem] text-muted"><Clock class="size-3.5 text-type-book" />Time</p>
 			<p class="mt-1 text-3xl font-semibold tracking-tight tabular-nums">{minutesLabel(today?.minutes ?? 0)}</p>
 		</div>
 		<div>
-			<p class="flex items-center gap-1.5 text-[12px] text-muted"><Flame class="size-3.5 text-warning" />Streak</p>
+			<p class="flex items-center gap-1.5 text-[0.75rem] text-muted"><Flame class="size-3.5 text-warning" />Streak</p>
 			<p class="mt-1 text-3xl font-semibold tracking-tight tabular-nums">
 				{stats.current_streak}<span class="ml-1 text-sm font-normal text-faint">{stats.current_streak === 1 ? 'day' : 'days'}</span>
 			</p>
 		</div>
 	</div>
 	{#if !stats.read_today}
-		<p class="mt-2 text-[13px] text-muted">
+		<p class="mt-2 text-[0.8125rem] text-muted">
 			{stats.current_streak ? 'Read a little today to keep your streak.' : 'Nothing read yet today.'}
 		</p>
 	{/if}
@@ -46,7 +46,7 @@
 					></span>
 				</div>
 				<span
-					class="grid size-6 place-items-center rounded-full text-[11px] {d.date === todayIso
+					class="grid size-6 place-items-center rounded-full text-[0.75rem] {d.date === todayIso
 						? 'bg-ink text-canvas font-semibold'
 						: 'text-faint'}"
 					>{parseDay(d.date).toLocaleDateString(undefined, { weekday: 'narrow' })}</span

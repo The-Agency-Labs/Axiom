@@ -51,20 +51,20 @@
 			<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">{data.person.name}</h1>
 			{#if data.person.native_name}<p class="text-muted">{data.person.native_name}</p>{/if}
 			<p class="mt-1 text-sm text-faint">In {data.in_library.length} of your titles</p>
-			<a href={data.person.url} target="_blank" rel="noreferrer" class="mt-1 inline-flex min-h-11 items-center gap-1 text-[13px] text-muted hover:text-ink">
+			<a href={data.person.url} target="_blank" rel="noreferrer" class="mt-1 inline-flex min-h-11 items-center gap-1 text-[0.8125rem] text-muted hover:text-ink">
 				Full filmography on {data.person.source === 'tmdb' ? 'TMDB' : data.person.source === 'tvdb' ? 'TheTVDB' : 'AniList'} <ExternalLink class="size-3.5" />
 			</a>
 		</div>
 	</header>
 
 	<section>
-		<h2 class="mb-3 text-[13px] font-semibold tracking-wide text-faint uppercase">In your library</h2>
+		<h2 class="mb-3 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase">In your library</h2>
 		{#if data.in_library.length}{@render grid(data.in_library)}{:else}<p class="text-sm text-muted">Nothing you have watched yet.</p>{/if}
 	</section>
 
 	{#if data.elsewhere.length}
 		<section class="mt-10">
-			<h2 class="mb-3 text-[13px] font-semibold tracking-wide text-faint uppercase">Also in</h2>
+			<h2 class="mb-3 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase">Also in</h2>
 			{@render grid(data.elsewhere)}
 		</section>
 	{/if}

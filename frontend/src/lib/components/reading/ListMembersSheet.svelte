@@ -55,11 +55,11 @@
 </script>
 
 <Sheet bind:open title="Members">
-	<p class="mb-3 text-[13px] text-muted">Members can add and remove items. Only {owner} can change visibility or delete the list.</p>
+	<p class="mb-3 text-[0.8125rem] text-muted">Members can add and remove items. Only {owner} can change visibility or delete the list.</p>
 	<ul class="divide-y divide-line rounded-xl border border-line">
-		<li class="flex min-h-12 items-center justify-between px-3 text-[14px]"><span>{owner}</span><span class="text-xs text-faint">Owner</span></li>
+		<li class="flex min-h-12 items-center justify-between px-3 text-[0.875rem]"><span>{owner}</span><span class="text-xs text-faint">Owner</span></li>
 		{#each members as m (m.id)}
-			<li class="flex min-h-12 items-center justify-between pl-3 text-[14px]">
+			<li class="flex min-h-12 items-center justify-between pl-3 text-[0.875rem]">
 				<span>{m.username}</span>
 				{#if canEdit}
 					<button type="button" class="grid size-11 place-items-center text-muted hover:text-danger" aria-label="Remove {m.username}" onclick={() => remove(m)}>

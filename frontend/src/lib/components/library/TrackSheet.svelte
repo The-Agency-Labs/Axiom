@@ -68,7 +68,7 @@
 			<Cover src={result.image} title={result.title} type={result.media_type} class="aspect-[2/3] w-12 shrink-0 rounded-lg" />
 			<div class="min-w-0">
 				<p class="line-clamp-2 font-semibold">{result.title}</p>
-				<p class="text-[13px] text-muted">{meta.label}{result.release_year ? ` · ${result.release_year}` : ''}</p>
+				<p class="text-[0.8125rem] text-muted">{meta.label}{result.release_year ? ` · ${result.release_year}` : ''}</p>
 			</div>
 		</div>
 		<p class="mb-1 text-xs font-medium text-muted">Status</p>

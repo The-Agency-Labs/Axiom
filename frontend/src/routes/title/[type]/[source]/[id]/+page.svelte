@@ -443,11 +443,11 @@
 			<div class="min-w-0 space-y-8">
 				{#if md?.synopsis}
 					<section>
-						<p class="text-[15px] leading-relaxed text-ink/85 {synopsisOpen ? '' : 'line-clamp-4'}">{md.synopsis}</p>
+						<p class="text-[0.9375rem] leading-relaxed text-ink/85 {synopsisOpen ? '' : 'line-clamp-4'}">{md.synopsis}</p>
 						{#if md.synopsis.length > 220}
 							<button
 								type="button"
-								class="mt-1 min-h-11 text-[13px] font-medium text-muted hover:text-ink"
+								class="mt-1 min-h-11 text-[0.8125rem] font-medium text-muted hover:text-ink"
 								onclick={() => (synopsisOpen = !synopsisOpen)}
 							>
 								{synopsisOpen ? 'Show less' : 'Read more'}
@@ -460,12 +460,12 @@
 
 				{#if show}
 					<section>
-						<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
+						<h2 class="mb-3 text-[0.9375rem] font-semibold">Episodes</h2>
 						<ShowEpisodes state={show} accent={meta.accent} />
 					</section>
 				{:else if isCountAnime(kind, source) && ['mal', 'anilist'].includes(source)}
 					<section>
-						<h2 class="mb-3 text-[15px] font-semibold">Episodes</h2>
+						<h2 class="mb-3 text-[0.9375rem] font-semibold">Episodes</h2>
 						<CountEpisodes {source} {mediaId} accent={meta.accent} onchange={adopt} />
 					</section>
 				{/if}
@@ -473,11 +473,11 @@
 				{#if film && entry}
 					<Card title="Watched" icon={Repeat} accent={meta.accent}>
 						{#if entry.status === 'Completed'}
-							<p class="text-[15px]">
+							<p class="text-[0.9375rem]">
 								{entry.end_date ? `Watched on ${formatDate(entry.end_date, { year: 'numeric' })}` : 'Marked as watched'}
 							</p>
 						{:else}
-							<p class="text-[15px] text-muted">Not watched yet. Use the Watched button below to log it for today.</p>
+							<p class="text-[0.9375rem] text-muted">Not watched yet. Use the Watched button below to log it for today.</p>
 						{/if}
 						<div class="mt-3 flex flex-wrap gap-2">
 							{#if entry.status === 'Completed'}
@@ -491,7 +491,7 @@
 				{#if kind === 'game' && entry}
 					<Card title="Playtime" icon={Clock} accent={meta.accent}>
 						<p class="text-3xl font-semibold tabular-nums">{minutesLabel(entry.progress)}</p>
-						<p class="mt-1 text-[13px] text-muted">The + button in the bar adds 30 minutes.</p>
+						<p class="mt-1 text-[0.8125rem] text-muted">The + button in the bar adds 30 minutes.</p>
 					</Card>
 				{/if}
 
@@ -560,7 +560,7 @@
 						<dl class="grid grid-cols-2 gap-x-4 gap-y-3 lg:grid-cols-1">
 							{#each details.slice(0, 10) as [key, value] (key)}
 								<div class="min-w-0">
-									<dt class="text-[11px] tracking-wide text-faint uppercase">{key.replaceAll('_', ' ')}</dt>
+									<dt class="text-[0.75rem] tracking-wide text-faint uppercase">{key.replaceAll('_', ' ')}</dt>
 									<dd class="mt-0.5 text-sm break-words">{value}</dd>
 								</div>
 							{/each}

@@ -79,7 +79,7 @@
 >
 	<a href="/" class="mb-6 flex items-center gap-2.5 px-3">
 		<img src="/icon.svg" alt="" class="size-7" />
-		<span class="text-[17px] font-semibold tracking-tight">Encompass</span>
+		<span class="text-[1.0625rem] font-semibold tracking-tight">Encompass</span>
 	</a>
 
 	<nav class="space-y-0.5" aria-label="Main">
@@ -91,7 +91,7 @@
 		{/each}
 	</nav>
 
-	<p class="mt-4 mb-1 px-3 text-[11px] font-semibold tracking-wider text-faint uppercase">Library</p>
+	<p class="mt-4 mb-1 px-3 text-[0.75rem] font-semibold tracking-wider text-faint uppercase">Library</p>
 	<nav class="space-y-0.5" aria-label="Library">
 		<a href="/library" class={sideLink(path === '/library')} aria-current={path === '/library' ? 'page' : undefined}>
 			<LibraryBig class="size-4" /> Overview
@@ -106,7 +106,7 @@
 		{/each}
 	</nav>
 
-	<p class="mt-4 mb-1 px-3 text-[11px] font-semibold tracking-wider text-faint uppercase">More</p>
+	<p class="mt-4 mb-1 px-3 text-[0.75rem] font-semibold tracking-wider text-faint uppercase">More</p>
 	<nav class="space-y-0.5" aria-label="More">
 		{#each more as link (link.href)}
 			<a href={link.href} class={sideLink(under(link.href))} aria-current={under(link.href) ? 'page' : undefined}>
@@ -149,7 +149,7 @@
 			href={tab.href}
 			onclick={(e) => tabClick(e, tab)}
 			aria-current={active ? 'page' : undefined}
-			class="relative flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition {active
+			class="relative flex h-14 flex-col items-center justify-center gap-0.5 text-[0.75rem] font-medium transition {active
 				? 'text-ink'
 				: 'text-faint'}"
 		>

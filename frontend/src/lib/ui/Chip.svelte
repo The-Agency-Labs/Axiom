@@ -28,7 +28,7 @@
 	} = $props();
 
 	const cls = $derived(
-		`relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-medium whitespace-nowrap transition before:absolute before:-inset-y-1 before:inset-x-0 before:content-[''] ${
+		`relative inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.8125rem] font-medium whitespace-nowrap transition before:absolute before:-inset-y-1 before:inset-x-0 before:content-[''] ${
 			selected
 				? 'border-line-strong bg-ink/10 text-ink'
 				: 'border-line bg-surface text-muted hover:text-ink'

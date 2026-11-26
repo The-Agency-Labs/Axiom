@@ -78,7 +78,7 @@
 	<header class="mb-3 flex items-center justify-between gap-3">
 		<div>
 			<h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">Activity</h1>
-			<p class="text-[13px] text-faint">Everything you tracked, newest first</p>
+			<p class="text-[0.8125rem] text-faint">Everything you tracked, newest first</p>
 		</div>
 		<Button href="/year" variant="secondary" icon={CalendarDays} class="shrink-0">{new Date().getFullYear()}</Button>
 	</header>
@@ -106,7 +106,7 @@
 								{#snippet trailing()}
 									<span class="flex shrink-0 flex-col items-end gap-1">
 										<meta.icon class="size-3.5" style="color: {meta.accent}" />
-										<span class="text-[11px] text-faint tabular-nums">{timeOf(entry.date)}</span>
+										<span class="text-[0.75rem] text-faint tabular-nums">{timeOf(entry.date)}</span>
 									</span>
 								{/snippet}
 							</ListRow>

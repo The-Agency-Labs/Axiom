@@ -137,14 +137,14 @@
 				<li class="rounded-2xl border border-line bg-canvas/40 p-3">
 					<div class="flex items-start justify-between gap-2">
 						<div class="min-w-0">
-							<p class="line-clamp-2 text-[15px] leading-snug font-semibold">{doc.display_title}</p>
-							<p class="mt-0.5 truncate text-[12px] text-faint">
+							<p class="line-clamp-2 text-[0.9375rem] leading-snug font-semibold">{doc.display_title}</p>
+							<p class="mt-0.5 truncate text-[0.75rem] text-faint">
 								{doc.authors || 'Unknown author'} · {doc.pages_read} pages · {minutesLabel(doc.minutes)}
 							</p>
 						</div>
 					</div>
 					{#if doc.suggestions?.length}
-						<p class="mt-3 mb-1.5 text-[12px] font-medium text-muted">Is it one of these?</p>
+						<p class="mt-3 mb-1.5 text-[0.75rem] font-medium text-muted">Is it one of these?</p>
 						<ul class="-mx-1 space-y-0.5">
 							{#each doc.suggestions.slice(0, 3) as s (s.source + s.media_id)}
 								<li>
@@ -156,10 +156,10 @@
 									>
 										<Cover src={s.image} title={s.title} type="book" class="aspect-[2/3] w-9 shrink-0 !rounded-md" />
 										<span class="min-w-0 flex-1">
-											<span class="line-clamp-2 text-[14px] leading-snug">{s.title}</span>
-											<span class="text-[11px] text-faint">{SOURCE_NAMES[s.source] ?? s.source}</span>
+											<span class="line-clamp-2 text-[0.875rem] leading-snug">{s.title}</span>
+											<span class="text-[0.75rem] text-faint">{SOURCE_NAMES[s.source] ?? s.source}</span>
 										</span>
-										<span class="shrink-0 rounded-full bg-brand px-3 py-1.5 text-[12px] font-semibold text-on-brand">Link</span>
+										<span class="shrink-0 rounded-full bg-brand px-3 py-1.5 text-[0.75rem] font-semibold text-on-brand">Link</span>
 									</button>
 								</li>
 							{/each}
@@ -167,7 +167,7 @@
 					{:else if loadingSuggestions}
 						<Skeleton class="mt-3 h-14 w-full" />
 					{:else}
-						<p class="mt-3 text-[13px] text-muted">No close matches found.</p>
+						<p class="mt-3 text-[0.8125rem] text-muted">No close matches found.</p>
 					{/if}
 					<div class="mt-2 flex flex-wrap gap-2">
 						<Button size="sm" variant="secondary" icon={Search} onclick={() => openSearch(doc)}>Search</Button>
@@ -182,7 +182,7 @@
 
 <Sheet bind:open={searchOpen} title="Other matches">
 	{#if searchDoc}
-		<p class="mb-3 text-[13px] text-muted">{searchDoc.display_title}</p>
+		<p class="mb-3 text-[0.8125rem] text-muted">{searchDoc.display_title}</p>
 		<ChipRow sticky={false} label="Search source">
 			{#each ['hardcover', 'openlibrary'] as src (src)}
 				<Chip
@@ -212,7 +212,7 @@
 								}}
 							>
 								<Cover src={s.image} title={s.title} type="book" class="aspect-[2/3] w-9 shrink-0 !rounded-md" />
-								<span class="min-w-0 flex-1 line-clamp-2 text-[14px] leading-snug">{s.title}</span>
+								<span class="min-w-0 flex-1 line-clamp-2 text-[0.875rem] leading-snug">{s.title}</span>
 							</button>
 						</li>
 					{/each}
@@ -224,7 +224,7 @@
 
 <Sheet bind:open={mergeOpen} title="Merge duplicate into…">
 	{#if mergeDoc}
-		<p class="mb-2 text-[13px] text-muted">
+		<p class="mb-2 text-[0.8125rem] text-muted">
 			Reading from <span class="font-medium text-ink">{mergeDoc.display_title}</span> will count towards the book you pick.
 		</p>
 		{#if mergeTargets.length === 0}

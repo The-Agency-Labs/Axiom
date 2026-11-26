@@ -40,7 +40,7 @@
 		ghost: 'text-ink hover:bg-ink/6 active:bg-ink/10',
 		danger: 'border border-danger/40 bg-danger/10 text-danger hover:bg-danger/16 active:bg-danger/20'
 	};
-	const sizes = { md: 'px-4 text-[15px]', sm: 'px-3 text-sm' };
+	const sizes = { md: 'px-4 text-[0.9375rem]', sm: 'px-3 text-sm' };
 	const cls = $derived(
 		`inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-xl font-medium whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 ${styles[variant]} ${sizes[size]} ${full ? 'w-full' : ''} ${className}`
 	);

@@ -25,7 +25,7 @@
 					type="button"
 					role="radio"
 					aria-checked={value === id}
-					class="flex min-h-12 w-full items-center justify-between rounded-xl px-3 text-left text-[15px] hover:bg-ink/5 {value === id
+					class="flex min-h-12 w-full items-center justify-between rounded-xl px-3 text-left text-[0.9375rem] hover:bg-ink/5 {value === id
 						? 'font-semibold'
 						: ''}"
 					onclick={() => {

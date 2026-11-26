@@ -104,6 +104,8 @@
 html {
 	background: var(--color-canvas);
 	-webkit-text-size-adjust: 100%;
+	/* App, not a page: no double-tap zoom (pinch is off in the viewport meta). */
+	touch-action: manipulation;
 	-webkit-tap-highlight-color: transparent;
 }
 
@@ -215,5 +217,13 @@ textarea {
 		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b8b95' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 		background-repeat: no-repeat;
 		background-position: right 0.75rem center;
+	}
+}
+
+/* Phones (iPhone 16 is 393pt wide): everything is sized in rem, so a larger
+   root scales text, spacing and tap targets together. */
+@media (max-width: 40rem) {
+	html {
+		font-size: 112.5%;
 	}
 }

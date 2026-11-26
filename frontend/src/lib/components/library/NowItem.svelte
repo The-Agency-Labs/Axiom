@@ -106,8 +106,8 @@
 	<a {href} class="flex gap-3 rounded-xl" aria-label={entry.title}>
 		<Cover src={entry.image} title={entry.title} type={kind} class="aspect-[2/3] w-16 shrink-0 sm:w-20" />
 		<span class="flex min-w-0 flex-1 flex-col py-0.5">
-			<span class="line-clamp-2 text-[15px] leading-snug font-semibold">{entry.title}</span>
-			<span class="mt-0.5 line-clamp-1 text-[13px] text-muted">{subtitle}</span>
+			<span class="line-clamp-2 text-[0.9375rem] leading-snug font-semibold">{entry.title}</span>
+			<span class="mt-0.5 line-clamp-1 text-[0.8125rem] text-muted">{subtitle}</span>
 			<span class="mt-auto flex items-baseline justify-between pt-2 text-xs">
 				<span class="font-medium tabular-nums">{progressLabel(kind, entry.progress, entry.total)}</span>
 				{#if percent !== null}<span class="text-faint tabular-nums">{Math.round(percent)}%</span>{/if}
@@ -136,7 +136,7 @@
 		</Button>
 	{:else if canStep}
 		<div class="mt-3 flex items-center justify-between gap-3">
-			<span class="text-[13px] text-muted">{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}</span>
+			<span class="text-[0.8125rem] text-muted">{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}</span>
 			<Stepper
 				display={kind === 'game' ? minutesLabel(entry.progress) : String(entry.progress)}
 				label={meta.unit}

@@ -73,8 +73,8 @@
 	<details {open} class="group border-t border-line first:border-t-0">
 		<summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 py-2 [&::-webkit-details-marker]:hidden">
 			<span>
-				<span class="text-[14px] font-semibold">{label}</span>
-				<span class="ml-1.5 text-[12px] text-faint">{hint}</span>
+				<span class="text-[0.875rem] font-semibold">{label}</span>
+				<span class="ml-1.5 text-[0.75rem] text-faint">{hint}</span>
 			</span>
 			<ChevronDown class="size-4 text-faint transition group-open:rotate-180" />
 		</summary>
@@ -92,8 +92,8 @@
 			<div class="mb-3 flex gap-3 rounded-xl border border-line-strong bg-raised p-3">
 				<Lightbulb class="mt-0.5 size-5 shrink-0 text-warning" />
 				<div class="min-w-0 flex-1">
-					<p class="text-[14px] font-semibold">Before you dive in: what do you expect?</p>
-					<p class="mt-0.5 text-[13px] text-muted">A sentence or two now makes the ending more fun to compare.</p>
+					<p class="text-[0.875rem] font-semibold">Before you dive in: what do you expect?</p>
+					<p class="mt-0.5 text-[0.8125rem] text-muted">A sentence or two now makes the ending more fun to compare.</p>
 				</div>
 			</div>
 		{/if}
@@ -152,7 +152,7 @@
 			{@render section('Purpose', '', true, purposeBody)}
 			{@render section('Reflect', completed ? 'you finished it' : 'after you finish', reflectOpen || !!notes.reflect, reflectBody)}
 		</div>
-		<p class="mt-2 h-4 text-right text-[12px] text-faint" aria-live="polite">
+		<p class="mt-2 h-4 text-right text-[0.75rem] text-faint" aria-live="polite">
 			{#if saveState === 'saving'}Saving…{:else if saveState === 'saved'}Saved{:else if saveState === 'error'}Not saved - will retry on your next edit{/if}
 		</p>
 	{/if}

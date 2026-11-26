@@ -53,7 +53,7 @@
 						style="height: {value ? Math.max(12, (value / peak) * 100) : 0}%"
 					></div>
 				</div>
-				<span class="text-[10px] text-faint">{weekday(day.date)}</span>
+				<span class="text-[0.75rem] text-faint">{weekday(day.date)}</span>
 			</div>
 		{/each}
 	</div>

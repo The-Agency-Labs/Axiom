@@ -21,10 +21,10 @@
 
 <figure class="relative m-0" aria-label={title}>
 	<div class="relative pl-9">
-		<span class="absolute top-0 left-0 w-8 text-right text-[11px] leading-none text-faint tabular-nums"
+		<span class="absolute top-0 left-0 w-8 text-right text-[0.75rem] leading-none text-faint tabular-nums"
 			>{max.toLocaleString()}</span
 		>
-		<span class="absolute bottom-0 left-0 w-8 text-right text-[11px] leading-none text-faint tabular-nums">0</span>
+		<span class="absolute bottom-0 left-0 w-8 text-right text-[0.75rem] leading-none text-faint tabular-nums">0</span>
 		<div
 			class="relative flex items-end gap-[3px] border-b border-line-strong"
 			style="height: {height}px"
@@ -50,7 +50,7 @@
 			{/each}
 			{#if active !== null && bars[active]}
 				<div
-					class="pointer-events-none absolute bottom-full z-10 mb-1 -translate-x-1/2 rounded-md border border-line-strong bg-raised px-2 py-1 text-[12px] whitespace-nowrap shadow-lg"
+					class="pointer-events-none absolute bottom-full z-10 mb-1 -translate-x-1/2 rounded-md border border-line-strong bg-raised px-2 py-1 text-[0.75rem] whitespace-nowrap shadow-lg"
 					style="left: clamp(60px, {((active + 0.5) / bars.length) * 100}%, calc(100% - 60px))"
 				>
 					<span class="text-muted">{bars[active].label}</span>
@@ -59,7 +59,7 @@
 				</div>
 			{/if}
 		</div>
-		<div class="mt-1.5 flex gap-[3px] text-[10px] text-faint">
+		<div class="mt-1.5 flex gap-[3px] text-[0.75rem] text-faint">
 			{#each bars as bar, i (i)}
 				<span class="flex min-w-0 flex-1 justify-center whitespace-nowrap {i === peak && bar.value ? 'font-semibold text-muted' : ''}">
 					{i % tickEvery === 0 ? bar.tick : ''}

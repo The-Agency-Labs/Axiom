@@ -108,8 +108,8 @@
 	<a href={titleHref(e)} class="flex min-h-14 items-center gap-3 px-3 py-2 active:bg-ink/5">
 		<Cover src={e.image} title={e.title} type={e.media_type} class="aspect-[2/3] w-9 shrink-0 !rounded-md" />
 		<div class="min-w-0 flex-1">
-			<p class="line-clamp-2 text-[14px] leading-snug font-medium">{e.title}</p>
-			<p class="flex items-center gap-1 text-[12px] text-faint"><meta.icon class="size-3" style="color: {meta.accent}" />{meta.label}{timeOf(e) ? ` · ${timeOf(e)}` : ''}</p>
+			<p class="line-clamp-2 text-[0.875rem] leading-snug font-medium">{e.title}</p>
+			<p class="flex items-center gap-1 text-[0.75rem] text-faint"><meta.icon class="size-3" style="color: {meta.accent}" />{meta.label}{timeOf(e) ? ` · ${timeOf(e)}` : ''}</p>
 		</div>
 	</a>
 	</li>
@@ -147,7 +147,7 @@
 				<div class="space-y-5">
 					{#each byDay as [iso, list] (iso)}
 						<section aria-label={heading(iso)}>
-							<h2 class="mb-1.5 px-1 text-[14px] font-semibold {iso === today ? 'text-brand' : ''} {iso < today ? 'text-muted' : ''}">{heading(iso)}</h2>
+							<h2 class="mb-1.5 px-1 text-[0.875rem] font-semibold {iso === today ? 'text-brand' : ''} {iso < today ? 'text-muted' : ''}">{heading(iso)}</h2>
 							<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
 								{#each list as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}{@render eventRow(e)}{/each}
 							</ul>
@@ -160,10 +160,10 @@
 		<div class="mt-3">
 			<div class="mb-2 flex items-center justify-between">
 				<IconButton icon={ChevronLeft} label="Previous month" onclick={() => shift(-1)} />
-				<h2 class="text-[16px] font-semibold">{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
+				<h2 class="text-[1rem] font-semibold">{month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h2>
 				<IconButton icon={ChevronRight} label="Next month" onclick={() => shift(1)} />
 			</div>
-			<div class="grid grid-cols-7 gap-1 text-center text-[11px] text-faint" aria-hidden="true">
+			<div class="grid grid-cols-7 gap-1 text-center text-[0.75rem] text-faint" aria-hidden="true">
 				{#each ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as d, i (i)}<span>{d}</span>{/each}
 			</div>
 			<div class="mt-1 grid grid-cols-7 gap-1" role="grid" aria-label="Month">
@@ -181,7 +181,7 @@
 								? 'border-line-strong bg-raised'
 								: 'border-transparent hover:bg-ink/5'} {c.inMonth ? '' : 'opacity-35'}"
 					>
-						<span class="text-[13px] tabular-nums {c.iso === today ? 'font-bold text-brand' : ''}">{c.day}</span>
+						<span class="text-[0.8125rem] tabular-nums {c.iso === today ? 'font-bold text-brand' : ''}">{c.day}</span>
 						{#if on.length}
 							<span class="flex flex-wrap justify-center gap-0.5 px-1">
 								{#each [...new Set(on.map((e) => e.media_type))].slice(0, 4) as t (t)}
@@ -195,7 +195,7 @@
 			{#if picked}
 				{@const list = eventsOn(picked)}
 				<section class="mt-4" aria-label="Releases on {picked}">
-					<h3 class="mb-1.5 px-1 text-[14px] font-semibold">{heading(picked)}</h3>
+					<h3 class="mb-1.5 px-1 text-[0.875rem] font-semibold">{heading(picked)}</h3>
 					{#if list.length}
 						<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
 							{#each list as e, i (i)}{@render eventRow(e)}{/each}
@@ -210,13 +210,13 @@
 </PullToRefresh>
 
 <Sheet bind:open={subscribeOpen} title="Subscribe to your calendar">
-	<p class="mb-3 text-[14px] text-muted">
+	<p class="mb-3 text-[0.875rem] text-muted">
 		Add this private URL to Google Calendar, Apple Calendar or any app that reads .ics feeds. It updates by itself.
 	</p>
 	{#if feedUrl}
 		<CopyField value={feedUrl} label="calendar URL" />
 		<Button class="mt-3" variant="primary" full href={webcal}>Open in calendar app</Button>
-		<p class="mt-3 text-[12px] text-faint">Anyone with this URL can see your releases. You can regenerate it in Settings.</p>
+		<p class="mt-3 text-[0.75rem] text-faint">Anyone with this URL can see your releases. You can regenerate it in Settings.</p>
 	{:else}
 		<Skeleton class="h-11 w-full" />
 	{/if}

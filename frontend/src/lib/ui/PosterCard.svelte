@@ -51,7 +51,7 @@
 			/>
 			{#if score}
 				<span
-					class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur"
+					class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[0.75rem] font-semibold text-white backdrop-blur"
 				>
 					<Star class="size-3 fill-amber-300 text-amber-300" />{score}
 				</span>
@@ -70,11 +70,11 @@
 				</div>
 			{/if}
 		</div>
-		<p class="mt-2 line-clamp-2 text-[13px] leading-snug font-medium" aria-hidden="true">{title}</p>
+		<p class="mt-2 line-clamp-2 text-[0.8125rem] leading-snug font-medium" aria-hidden="true">{title}</p>
 		{#if status}
 			<StatusBadge {status} compact class="mt-0.5">{subtitle}</StatusBadge>
 		{:else if subtitle}
-			<p class="mt-0.5 truncate text-[11px] text-faint">{subtitle}</p>
+			<p class="mt-0.5 truncate text-[0.75rem] text-faint">{subtitle}</p>
 		{/if}
 	</a>
 	{#if overlay}<div class="absolute top-1.5 left-1.5">{@render overlay()}</div>{/if}

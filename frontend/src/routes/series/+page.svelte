@@ -89,7 +89,7 @@
 
 	{#if hits !== null || searching}
 		<section aria-label="Series search results" class="mb-8">
-			<h2 class="mb-2 px-1 text-[13px] font-semibold tracking-wide text-faint uppercase">Search results</h2>
+			<h2 class="mb-2 px-1 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase">Search results</h2>
 			{#if searching && !hits}
 				<div class="space-y-2" aria-hidden="true"><Skeleton class="h-16 w-full" /><Skeleton class="h-16 w-full" /></div>
 			{:else if hits && hits.length === 0}
@@ -100,8 +100,8 @@
 						<li>
 							<a href={hitHref(h)} class="flex min-h-14 items-center gap-3 px-4 py-2.5 hover:bg-ink/5 active:bg-ink/8">
 								<span class="min-w-0 flex-1">
-									<span class="block truncate text-[15px] font-medium">{h.name}</span>
-									<span class="block text-[13px] text-muted">
+									<span class="block truncate text-[0.9375rem] font-medium">{h.name}</span>
+									<span class="block text-[0.8125rem] text-muted">
 										{h.books_count} {h.books_count === 1 ? 'book' : 'books'}{h.tracked ? ` · ${h.tracked} tracked` : ''}{h.id == null ? ` · ${SOURCE_NAMES[h.source] ?? h.source}` : ''}
 									</span>
 								</span>
@@ -128,8 +128,8 @@
 					<a href="/series/{s.id}" class="flex items-center gap-3">
 						<Cover src={s.image} title={s.name} type="book" class="aspect-[2/3] w-14 shrink-0" />
 						<span class="min-w-0 flex-1">
-							<span class="line-clamp-2 text-[16px] leading-snug font-semibold">{s.name}</span>
-							<span class="mt-1 block text-[13px] text-muted tabular-nums">
+							<span class="line-clamp-2 text-[1rem] leading-snug font-semibold">{s.name}</span>
+							<span class="mt-1 block text-[0.8125rem] text-muted tabular-nums">
 								{s.completed} of {s.total} read{s.tracked > s.completed ? ` · ${s.tracked - s.completed} in your library` : ''}
 							</span>
 							<ProgressBar percent={s.total ? (s.completed / s.total) * 100 : 0} accent="var(--color-type-book)" label="{s.name} read" class="mt-2" />
@@ -138,9 +138,9 @@
 					{#if s.next}
 						<div class="mt-3 flex items-center gap-3 border-t border-line pt-3">
 							<div class="min-w-0 flex-1">
-								<p class="text-[11px] font-semibold tracking-wide text-faint uppercase">Next up</p>
-								<p class="truncate text-[14px] font-medium">{s.next.title}</p>
-								<p class="text-[12px] text-faint">Book {s.next.position}{s.next.status ? ` · ${s.next.status}` : ''}</p>
+								<p class="text-[0.75rem] font-semibold tracking-wide text-faint uppercase">Next up</p>
+								<p class="truncate text-[0.875rem] font-medium">{s.next.title}</p>
+								<p class="text-[0.75rem] text-faint">Book {s.next.position}{s.next.status ? ` · ${s.next.status}` : ''}</p>
 							</div>
 							{#if s.next.status === null}
 								<Button size="sm" variant="secondary" onclick={() => start(s, 'Planning')}>Track</Button>
@@ -152,7 +152,7 @@
 							{/if}
 						</div>
 					{:else}
-						<p class="mt-3 border-t border-line pt-3 text-[13px] text-muted">All caught up.</p>
+						<p class="mt-3 border-t border-line pt-3 text-[0.8125rem] text-muted">All caught up.</p>
 					{/if}
 				</li>
 			{/each}

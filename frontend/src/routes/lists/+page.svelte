@@ -57,14 +57,14 @@
 		>
 			<Cover src={l.image} title={l.name} type="movie" class="aspect-[2/3] w-12 shrink-0" />
 			<span class="min-w-0 flex-1">
-				<span class="block truncate text-[16px] font-semibold">{l.name}</span>
-				<span class="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
+				<span class="block truncate text-[1rem] font-semibold">{l.name}</span>
+				<span class="mt-0.5 flex items-center gap-1.5 text-[0.8125rem] text-muted">
 					{l.items_count} {l.items_count === 1 ? 'item' : 'items'}
 					<span aria-hidden="true">·</span>
 					{#if l.visibility === 'public'}<Globe class="size-3.5" /><span class="sr-only">Public</span>{:else}<Lock class="size-3.5" /><span class="sr-only">Private</span>{/if}
 					{#if !l.is_owner}<span aria-hidden="true">·</span>by {l.owner.username}{/if}
 				</span>
-				{#if l.description}<span class="mt-0.5 line-clamp-1 block text-[12px] text-faint">{l.description}</span>{/if}
+				{#if l.description}<span class="mt-0.5 line-clamp-1 block text-[0.75rem] text-faint">{l.description}</span>{/if}
 			</span>
 		</a>
 	</li>
@@ -98,7 +98,7 @@
 			</ul>
 		{/if}
 		{#if shared.length}
-			<h2 class="mt-8 mb-2 flex items-center gap-1.5 px-1 text-[13px] font-semibold tracking-wide text-faint uppercase"><Users class="size-3.5" />Shared with you</h2>
+			<h2 class="mt-8 mb-2 flex items-center gap-1.5 px-1 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase"><Users class="size-3.5" />Shared with you</h2>
 			<ul class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3" aria-label="Shared lists">
 				{#each shared as l (l.id)}{@render card(l)}{/each}
 			</ul>

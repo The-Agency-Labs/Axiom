@@ -54,8 +54,8 @@
 			<Icon class="size-5" />
 		</span>
 		<div class="min-w-0 flex-1">
-			<h2 class="text-[15px] font-semibold">{title}</h2>
-			<p class="text-[13px] text-muted">{subtitle}</p>
+			<h2 class="text-[0.9375rem] font-semibold">{title}</h2>
+			<p class="text-[0.8125rem] text-muted">{subtitle}</p>
 		</div>
 		{#if !configured}
 			<span class="inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs font-medium text-muted">
@@ -77,11 +77,11 @@
 	</header>
 
 	{#if !configured && hint}
-		<p class="mt-3 rounded-xl bg-raised px-3 py-2 text-[13px] text-muted">{hint}</p>
+		<p class="mt-3 rounded-xl bg-raised px-3 py-2 text-[0.8125rem] text-muted">{hint}</p>
 	{/if}
 
 	{#if status}
-		<div class="mt-3 text-[13px] text-muted">
+		<div class="mt-3 text-[0.8125rem] text-muted">
 			{#if status.last_event}
 				Last event <span class="text-ink">{relativeTime(status.last_event)}</span>{#if status.last_item}
 					: <span class="text-ink">{status.last_item}</span>{/if}

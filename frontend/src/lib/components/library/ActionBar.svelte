@@ -55,7 +55,7 @@
 			<button
 				type="button"
 				onclick={onstatus}
-				class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3 text-[15px] font-medium transition active:scale-[0.98]"
+				class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line-strong bg-surface px-3 text-[0.9375rem] font-medium transition active:scale-[0.98]"
 				aria-label="Status: {status}. Change"
 			>
 				<span class="size-2 shrink-0 rounded-full" style="background: {STATUS_COLOR[status]}"></span>
@@ -65,7 +65,7 @@
 			<button
 				type="button"
 				onclick={onscore}
-				class="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-line-strong bg-surface px-3 text-[15px] font-medium tabular-nums transition active:scale-[0.98]"
+				class="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-line-strong bg-surface px-3 text-[0.9375rem] font-medium tabular-nums transition active:scale-[0.98]"
 				aria-label={score ? `Score ${score}. Change` : 'Rate'}
 			>
 				<Star class="size-4 {score ? 'fill-amber-300 text-amber-300' : 'text-faint'}" />
@@ -83,7 +83,7 @@
 				</Button>
 			{:else if mode === 'steps' && step}
 				<div class="order-first flex w-full items-center justify-between gap-3">
-					<span class="min-w-0 truncate pl-1 text-[15px] font-medium tabular-nums">{step.display}</span>
+					<span class="min-w-0 truncate pl-1 text-[0.9375rem] font-medium tabular-nums">{step.display}</span>
 					<Stepper
 						display={step.short}
 						label={step.label}

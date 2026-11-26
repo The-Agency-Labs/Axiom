@@ -53,7 +53,7 @@
 				{#if ep.watched}<span class="absolute inset-0 grid place-items-center bg-black/45"><Check class="size-5 text-white" /></span>{/if}
 			</span>
 			<span class="min-w-0 flex-1">
-				<span class="flex items-baseline gap-2 text-[15px] font-medium">
+				<span class="flex items-baseline gap-2 text-[0.9375rem] font-medium">
 					<span class="shrink-0 text-faint tabular-nums">{ep.episode_number}</span>
 					<span class="truncate">{ep.title}</span>
 				</span>
@@ -61,7 +61,7 @@
 					{#if ep.air_date}<span>{ep.aired ? '' : 'Airs '}{formatDate(ep.air_date, { year: 'numeric' })}</span>{/if}
 					{#if ep.runtime}<span class="flex items-center gap-1"><Clock class="size-3" />{ep.runtime}m</span>{/if}
 					{#if ep.score}<span class="flex items-center gap-1"><Star class="size-3" />{ep.score.toFixed(1)}</span>{/if}
-					{#if KIND_LABEL[ep.kind]}<span class="rounded-full border border-line px-1.5 text-[10px] text-muted">{KIND_LABEL[ep.kind]}</span>{/if}
+					{#if KIND_LABEL[ep.kind]}<span class="rounded-full border border-line px-1.5 text-[0.75rem] text-muted">{KIND_LABEL[ep.kind]}</span>{/if}
 					{#if next}<span class="font-semibold text-brand">Up next</span>{/if}
 				</span>
 			</span>
@@ -83,7 +83,7 @@
 	</div>
 	{#if open}
 		<div class="pt-1 pb-2 pl-1">
-			{#if ep.overview}<p class="text-[13px] leading-relaxed text-muted">{ep.overview}</p>{/if}
+			{#if ep.overview}<p class="text-[0.8125rem] leading-relaxed text-muted">{ep.overview}</p>{/if}
 			{#if ep.watched && ep.watched_at}
 				<p class="mt-1 text-xs text-faint">
 					Watched {formatDate(ep.watched_at, { year: 'numeric' })}{ep.watch_count > 1 ? ` · ${ep.watch_count} times` : ''}

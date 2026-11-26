@@ -56,32 +56,32 @@
 	<div class="space-y-3" aria-hidden="true"><Skeleton class="h-20 w-full" /><Skeleton class="h-64 w-full" /></div>
 {:else}
 	<div class="mb-4 rounded-[var(--radius-card)] border border-line bg-surface p-4">
-		<p class="text-[13px] text-muted tabular-nums">{done} of {series.books_count} read</p>
+		<p class="text-[0.8125rem] text-muted tabular-nums">{done} of {series.books_count} read</p>
 		<ProgressBar percent={series.books_count ? (done / series.books_count) * 100 : 0} accent="var(--color-type-book)" label="Series progress" class="mt-2" />
 	</div>
 
 	{#if next}
 		<section class="mb-5" aria-label="Next up">
-			<h2 class="mb-2 px-1 text-[13px] font-semibold tracking-wide text-faint uppercase">Next up</h2>
+			<h2 class="mb-2 px-1 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase">Next up</h2>
 			<ul class="overflow-hidden rounded-[var(--radius-card)] border border-brand/40 bg-surface">
 				<SeriesBookRow book={next} highlight ontrack={(s) => track(next, s)} />
 			</ul>
 		</section>
 	{/if}
 
-	<h2 class="mb-2 px-1 text-[13px] font-semibold tracking-wide text-faint uppercase">All books</h2>
+	<h2 class="mb-2 px-1 text-[0.8125rem] font-semibold tracking-wide text-faint uppercase">All books</h2>
 	<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
 		{#each rows as row, i (i)}
 			{#if 'book' in row}
 				<SeriesBookRow book={row.book} highlight={row.book === next} ontrack={(s) => track(row.book, s)} />
 			{:else}
-				<li class="px-4 py-3 text-[13px] text-faint">
+				<li class="px-4 py-3 text-[0.8125rem] text-faint">
 					{row.gap === 1 ? `Book ${row.from} is not listed` : `Books ${row.from}–${row.from + row.gap - 1} are not listed`}
 				</li>
 			{/if}
 		{/each}
 		{#if unlisted}
-			<li class="px-4 py-3 text-[13px] text-faint">{unlisted} more {unlisted === 1 ? 'book is' : 'books are'} not listed yet</li>
+			<li class="px-4 py-3 text-[0.8125rem] text-faint">{unlisted} more {unlisted === 1 ? 'book is' : 'books are'} not listed yet</li>
 		{/if}
 	</ul>
 {/if}

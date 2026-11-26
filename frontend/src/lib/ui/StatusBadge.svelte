@@ -17,7 +17,7 @@
 
 <span
 	class="inline-flex max-w-full items-center gap-1.5 {compact
-		? 'text-[11px] text-faint'
+		? 'text-[0.75rem] text-faint'
 		: 'rounded-full border border-line bg-surface px-2.5 py-1 text-xs font-medium text-muted'} {className}"
 >
 	<span class="size-1.5 shrink-0 rounded-full" style="background: {STATUS_COLOR[status]}"></span>

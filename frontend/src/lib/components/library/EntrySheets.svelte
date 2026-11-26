@@ -72,7 +72,7 @@
 					type="button"
 					role="radio"
 					aria-checked={status === s}
-					class="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[15px] hover:bg-ink/5 {status === s ? 'font-semibold' : ''}"
+					class="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-[0.9375rem] hover:bg-ink/5 {status === s ? 'font-semibold' : ''}"
 					onclick={() => {
 						which = null;
 						if (s !== status) onstatus(s);
@@ -103,7 +103,7 @@
 			{#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as n (n)}
 				<button
 					type="button"
-					class="h-11 rounded-xl border text-[15px] font-medium tabular-nums transition active:scale-95 {Math.round(draftScore) === n && Number.isInteger(draftScore)
+					class="h-11 rounded-xl border text-[0.9375rem] font-medium tabular-nums transition active:scale-95 {Math.round(draftScore) === n && Number.isInteger(draftScore)
 						? 'border-transparent bg-brand text-on-brand'
 						: 'border-line bg-surface hover:bg-raised'}"
 					onclick={() => (draftScore = n)}>{n}</button
@@ -167,7 +167,7 @@
 </Sheet>
 
 <Sheet open={which === 'kind'} title={isAnime ? 'Not anime?' : 'This is anime?'} onclose={() => set('kind')(false)}>
-	<p class="pb-4 text-[15px] text-muted">
+	<p class="pb-4 text-[0.9375rem] text-muted">
 		Move <strong class="text-ink">{title}</strong> from {MEDIA[kind].plural} to {target ? MEDIA[target].plural : ''}. This changes the
 		title for everyone on this server.
 	</p>
@@ -187,7 +187,7 @@
 </Sheet>
 
 <Sheet open={which === 'delete'} title="Remove from library?" onclose={() => set('delete')(false)}>
-	<p class="pb-4 text-[15px] text-muted">
+	<p class="pb-4 text-[0.9375rem] text-muted">
 		<strong class="text-ink">{title}</strong> will be removed from your library, along with its progress, score and notes.
 	</p>
 	{#snippet footer()}

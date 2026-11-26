@@ -284,7 +284,7 @@
 			</span>
 			<div class="min-w-0 flex-1">
 				<h1 class="truncate text-xl font-semibold tracking-tight sm:text-2xl">{meta.plural}</h1>
-				<p class="h-4 text-[13px] text-faint">
+				<p class="h-4 text-[0.8125rem] text-faint">
 					{#if seasonView}{#if seasons}{seasonGroups.reduce((n, g) => n + g.list.length, 0)} seasons finished{/if}
 					{:else if entries}{counts.All} {year ? `active in ${year}` : 'tracked'}{/if}
 				</p>
@@ -485,7 +485,7 @@
 											/>
 										{/snippet}
 										{#snippet trailing()}
-											<span class="flex shrink-0 items-center gap-2 text-[13px] text-muted">
+											<span class="flex shrink-0 items-center gap-2 text-[0.8125rem] text-muted">
 												{#if entry.score}
 													<span class="flex items-center gap-1 tabular-nums">
 														<Star class="size-3.5 fill-amber-300 text-amber-300" />{entry.score}
@@ -520,7 +520,7 @@
 		>
 			<ChevronDown class="size-4 shrink-0 text-faint transition-transform {isOpen(label, i) ? '' : '-rotate-90'}" />
 			{label}
-			<span class="ml-auto text-[13px] font-normal text-faint tabular-nums">{count}</span>
+			<span class="ml-auto text-[0.8125rem] font-normal text-faint tabular-nums">{count}</span>
 		</button>
 	</h2>
 {/snippet}

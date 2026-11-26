@@ -12,7 +12,7 @@
 
 {#if info}
 	<span
-		class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold {onCover
+		class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold {onCover
 			? 'bg-black/70 text-white backdrop-blur'
 			: 'border border-line bg-surface/70 text-muted'} {klass}"
 		title="Series status: {info.label}"

@@ -47,7 +47,7 @@
 		</div>
 	</section>
 
-	<div class="shelf -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" role="tablist" aria-label="Seasons">
+	<div class="shelf -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 scroll-px-4 sm:scroll-px-0" role="tablist" aria-label="Seasons">
 		{#each s.ordered as x (x.season_number)}
 			{@const done = x.episode_count > 0 && x.watched >= x.episode_count}
 			<button
@@ -65,9 +65,9 @@
 				{#if done}
 					<Check class="size-3.5" style="color: {accent}" />
 				{:else if !x.episode_count}
-					<span class="text-[11px] text-faint">TBA</span>
+					<span class="text-[0.75rem] text-faint">TBA</span>
 				{:else if x.watched}
-					<span class="text-[11px] text-faint tabular-nums">{x.watched}/{x.episode_count}</span>
+					<span class="text-[0.75rem] text-faint tabular-nums">{x.watched}/{x.episode_count}</span>
 				{/if}
 			</button>
 		{/each}
@@ -81,7 +81,7 @@
 		{:else}
 			<div class="mb-2 flex items-center justify-between gap-3">
 				<div class="min-w-0">
-					<h3 class="truncate text-[15px] font-semibold">{season.title}</h3>
+					<h3 class="truncate text-[0.9375rem] font-semibold">{season.title}</h3>
 					<p class="text-xs text-faint">
 						{season.watched} of {season.total} watched{season.runtime_minutes ? ` · ${minutesLabel(season.runtime_minutes)}` : ''}
 					</p>

@@ -93,17 +93,17 @@
 		<dl class="mt-5 grid grid-cols-3 gap-2 text-center">
 			<div class="rounded-xl bg-raised py-2.5">
 				<dd class="text-lg font-semibold tabular-nums">{stats.totals.pages.toLocaleString()}</dd>
-				<dt class="text-[11px] text-faint">pages</dt>
+				<dt class="text-[0.75rem] text-faint">pages</dt>
 			</div>
 			<div class="rounded-xl bg-raised py-2.5">
 				<dd class="text-lg font-semibold tabular-nums">{minutesLabel(stats.totals.minutes)}</dd>
-				<dt class="text-[11px] text-faint">time</dt>
+				<dt class="text-[0.75rem] text-faint">time</dt>
 			</div>
 			<div class="rounded-xl bg-raised py-2.5">
 				<dd class="text-lg font-semibold tabular-nums">{stats.totals.days_read}<span class="text-xs font-normal text-faint">/{stats.totals.days_in_range}</span></dd>
-				<dt class="text-[11px] text-faint">days read</dt>
+				<dt class="text-[0.75rem] text-faint">days read</dt>
 			</div>
 		</dl>
-		<p class="mt-3 text-center text-[12px] text-faint">Longest streak {stats.longest_streak} days</p>
+		<p class="mt-3 text-center text-[0.75rem] text-faint">Longest streak {stats.longest_streak} days</p>
 	{/if}
 </Card>

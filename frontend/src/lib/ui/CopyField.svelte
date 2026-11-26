@@ -23,7 +23,7 @@
 		{value}
 		aria-label={label}
 		onfocus={(e) => e.currentTarget.select()}
-		class="input min-w-0 flex-1 truncate {mono ? 'font-mono text-[13px]' : ''}"
+		class="input min-w-0 flex-1 truncate {mono ? 'font-mono text-[0.8125rem]' : ''}"
 	/>
 	<button
 		type="button"

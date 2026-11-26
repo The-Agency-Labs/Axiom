@@ -42,13 +42,13 @@
 
 {#if rows.length}
 	<section>
-		<h2 class="mb-2 text-[15px] font-semibold">History</h2>
+		<h2 class="mb-2 text-[0.9375rem] font-semibold">History</h2>
 		<ol class="space-y-3 border-l border-line pl-5">
 			{#each all ? rows : rows.slice(0, LIMIT) as row, i (i)}
-				<li class="relative text-[15px]">
+				<li class="relative text-[0.9375rem]">
 					<span class="absolute top-2 -left-[1.5rem] size-2 rounded-full bg-line-strong"></span>
 					<span>{row.text}</span>
-					{#if row.sub}<span class="block truncate text-[13px] text-muted">{row.sub}</span>{/if}
+					{#if row.sub}<span class="block truncate text-[0.8125rem] text-muted">{row.sub}</span>{/if}
 					<span class="block text-xs text-faint" title={formatDate(row.at, { year: 'numeric' })}>{relativeTime(row.at)}</span>
 				</li>
 			{/each}

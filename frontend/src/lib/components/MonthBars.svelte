@@ -34,14 +34,14 @@
 			</div>
 		{/each}
 	</div>
-	<div class="mt-1.5 flex gap-1 text-[10px] text-faint">
+	<div class="mt-1.5 flex gap-1 text-[0.75rem] text-faint">
 		{#each MONTHS as month, i (month)}
 			<span class="flex-1 text-center {i === peak && values[peak] ? 'text-muted' : ''}">{month[0]}</span>
 		{/each}
 	</div>
 	{#if hover !== null}
 		<div
-			class="pointer-events-none absolute -top-8 z-10 -translate-x-1/2 rounded-md border border-line bg-raised px-2 py-1 text-[11px] whitespace-nowrap shadow-lg"
+			class="pointer-events-none absolute -top-8 z-10 -translate-x-1/2 rounded-md border border-line bg-raised px-2 py-1 text-[0.75rem] whitespace-nowrap shadow-lg"
 			style="left: {((hover + 0.5) / 12) * 100}%"
 		>
 			<span class="text-muted">{MONTHS[hover]}</span>

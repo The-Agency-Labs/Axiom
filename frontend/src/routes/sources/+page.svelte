@@ -154,9 +154,9 @@
 				>
 					{#snippet extra()}
 						{#if !hook.status}
-							<p class="mt-3 text-[13px] text-muted">No event received yet.</p>
+							<p class="mt-3 text-[0.8125rem] text-muted">No event received yet.</p>
 						{/if}
-						<p class="mt-1 text-[13px]"><a class="inline-flex min-h-11 items-center text-brand underline-offset-2 hover:underline" href="/settings#integrations">Get your webhook URL in Settings</a></p>
+						<p class="mt-1 text-[0.8125rem]"><a class="inline-flex min-h-11 items-center text-brand underline-offset-2 hover:underline" href="/settings#integrations">Get your webhook URL in Settings</a></p>
 					{/snippet}
 				</SourceCard>
 			{/if}
@@ -173,7 +173,7 @@
 				>
 					{#snippet extra()}
 						{#if preview}
-							<div class="mt-3 rounded-xl border border-line bg-raised p-3 text-[13px]">
+							<div class="mt-3 rounded-xl border border-line bg-raised p-3 text-[0.8125rem]">
 								<p class="font-medium">
 									Preview: {Object.entries(preview.counts).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k.replaceAll('_', ' ')}`).join(', ') || 'no changes'}
 								</p>

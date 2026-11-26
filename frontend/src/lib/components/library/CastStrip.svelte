@@ -92,7 +92,7 @@
 {:else if data.supported && cards.length}
 	<section>
 		<div class="mb-2 flex items-center justify-between gap-3">
-			<h2 class="text-[15px] font-semibold">{data.characters.length ? 'Characters & voice cast' : 'Cast & crew'}</h2>
+			<h2 class="text-[0.9375rem] font-semibold">{data.characters.length ? 'Characters & voice cast' : 'Cast & crew'}</h2>
 			{#if (data.languages?.length ?? 0) > 1}
 				<div class="flex gap-1.5">
 					{#each data.languages ?? [] as lang (lang)}
@@ -102,12 +102,12 @@
 			{/if}
 		</div>
 		{#if crewLine.length}
-			<p class="mb-3 text-[13px] text-muted">
+			<p class="mb-3 text-[0.8125rem] text-muted">
 				{#each crewLine as [label, names], i (label)}{#if i}<span class="text-faint"> · </span>{/if}{label}
 					<span class="text-ink">{names.slice(0, 3).join(', ')}</span>{/each}
 			</p>
 		{/if}
-		<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+		<div class="shelf -mx-4 flex gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0 scroll-px-4 sm:scroll-px-0">
 			{#each all ? cards : cards.slice(0, 20) as c (c.key)}
 				<a href="/people/{c.personId}" class="group flex w-24 shrink-0 flex-col items-center rounded-xl py-1 text-center">
 					{#if c.image}
@@ -115,13 +115,13 @@
 					{:else}
 						<span class="grid size-16 place-items-center rounded-full bg-raised text-faint ring-1 ring-line"><UserRound class="size-6" /></span>
 					{/if}
-					<span class="mt-2 line-clamp-1 w-full text-[13px] font-medium">{c.name}</span>
-					<span class="line-clamp-2 w-full text-[11px] leading-snug text-faint">{c.role}</span>
-					{#if c.sub}<span class="mt-0.5 line-clamp-1 w-full text-[10px]" style="color: {accent}">{c.sub}</span>{/if}
+					<span class="mt-2 line-clamp-1 w-full text-[0.8125rem] font-medium">{c.name}</span>
+					<span class="line-clamp-2 w-full text-[0.75rem] leading-snug text-faint">{c.role}</span>
+					{#if c.sub}<span class="mt-0.5 line-clamp-1 w-full text-[0.75rem]" style="color: {accent}">{c.sub}</span>{/if}
 				</a>
 			{/each}
 			{#if !all && cards.length > 20}
-				<button type="button" class="grid min-h-11 w-24 shrink-0 place-items-center text-[13px] font-medium text-muted hover:text-ink" onclick={() => (all = true)}>
+				<button type="button" class="grid min-h-11 w-24 shrink-0 place-items-center text-[0.8125rem] font-medium text-muted hover:text-ink" onclick={() => (all = true)}>
 					+{cards.length - 20} more
 				</button>
 			{/if}

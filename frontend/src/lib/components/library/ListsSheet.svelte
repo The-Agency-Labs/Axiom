@@ -66,7 +66,7 @@
 						>
 							{#if list.has_item}<Check class="size-4" />{/if}
 						</span>
-						<span class="min-w-0 flex-1 truncate text-[15px] font-medium">{list.name}</span>
+						<span class="min-w-0 flex-1 truncate text-[0.9375rem] font-medium">{list.name}</span>
 						<span class="text-xs text-faint tabular-nums">{list.items_count}</span>
 					</button>
 				</li>

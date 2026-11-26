@@ -142,8 +142,8 @@
 {:else if !list}
 	<div class="space-y-3" aria-hidden="true"><Skeleton class="h-10 w-2/3" /><Skeleton class="h-64 w-full" /></div>
 {:else}
-	{#if list.description}<p class="mb-3 px-1 text-[14px] text-muted">{list.description}</p>{/if}
-	<div class="mb-3 flex flex-wrap items-center gap-2 px-1 text-[13px] text-muted">
+	{#if list.description}<p class="mb-3 px-1 text-[0.875rem] text-muted">{list.description}</p>{/if}
+	<div class="mb-3 flex flex-wrap items-center gap-2 px-1 text-[0.8125rem] text-muted">
 		<span>{list.items_count} {list.items_count === 1 ? 'item' : 'items'}</span>
 		<span aria-hidden="true">·</span>
 		<span>by {list.owner.username}</span>
@@ -192,7 +192,7 @@
 			</ChipRow>
 		{/if}
 	{:else}
-		<p class="mt-3 px-1 text-[13px] text-muted">Use the arrows to reorder, or drag a row on a computer.</p>
+		<p class="mt-3 px-1 text-[0.8125rem] text-muted">Use the arrows to reorder, or drag a row on a computer.</p>
 	{/if}
 
 	<div class="mt-4">
@@ -227,8 +227,8 @@
 						<a href={href(i)} class="flex min-w-0 flex-1 items-center gap-3 py-1">
 							<Cover src={i.item.image} title={i.item.title} type={i.item.media_type} class="aspect-[2/3] w-10 shrink-0 !rounded-md" />
 							<span class="min-w-0">
-								<span class="line-clamp-2 text-[14px] leading-snug font-medium">{i.item.title}</span>
-								<span class="flex items-center gap-2 text-[12px] text-faint">
+								<span class="line-clamp-2 text-[0.875rem] leading-snug font-medium">{i.item.title}</span>
+								<span class="flex items-center gap-2 text-[0.75rem] text-faint">
 									{MEDIA[i.item.media_type].label}
 									{#if i.entry}<StatusBadge status={i.entry.status} compact />{/if}
 								</span>
