@@ -2,8 +2,8 @@
 	import type { Snippet } from 'svelte';
 
 	/**
-	 * Horizontally scrolling row of <Chip>s. `sticky` pins it under the safe area while the
-	 * page scrolls (it bleeds to the screen edges inside the page gutters).
+	 * Row of <Chip>s that wraps onto more lines (nothing on the page scrolls sideways).
+	 * `sticky` pins it under the safe area while the page scrolls.
 	 */
 	let {
 		sticky = true,
@@ -20,7 +20,7 @@
 		? 'sticky top-[env(safe-area-inset-top)]'
 		: ''} {className}"
 >
-	<div class="shelf flex gap-2 overflow-x-auto">
+	<div class="flex flex-wrap gap-2">
 		{@render children()}
 	</div>
 </div>

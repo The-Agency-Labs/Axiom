@@ -42,7 +42,7 @@
 	};
 	const sizes = { md: 'px-4 text-[0.9375rem]', sm: 'px-3 text-sm' };
 	const cls = $derived(
-		`inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-xl font-medium whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 ${styles[variant]} ${sizes[size]} ${full ? 'w-full' : ''} ${className}`
+		`inline-flex min-h-11 min-w-0 max-w-full select-none items-center justify-center gap-2 rounded-xl font-medium whitespace-nowrap transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 ${styles[variant]} ${sizes[size]} ${full ? 'w-full' : ''} ${className}`
 	);
 </script>
 

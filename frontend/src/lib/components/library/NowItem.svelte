@@ -102,7 +102,7 @@
 	}
 </script>
 
-<article class="rounded-[var(--radius-card)] border border-line bg-surface p-3">
+<article class="min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-3">
 	<a {href} class="flex gap-3 rounded-xl" aria-label={entry.title}>
 		<Cover src={entry.image} title={entry.title} type={kind} class="aspect-[2/3] w-16 shrink-0 sm:w-20" />
 		<span class="flex min-w-0 flex-1 flex-col py-0.5">
