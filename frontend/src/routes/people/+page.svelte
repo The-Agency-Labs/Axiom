@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { LoaderCircle, Search, UserRound, UsersRound } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
+	import CharacterBubble from '#lib/components/CharacterBubble.svelte';
 	import Cover from '#lib/components/Cover.svelte';
 	import { MEDIA } from '#lib/media.ts';
 	import type { LibraryPerson, Person } from '#lib/types.ts';
@@ -141,7 +142,13 @@
 										<Cover src={a.item.image} title={a.item.title} type={a.item.media_type} class="aspect-[2/3] w-5 shrink-0 !rounded-sm" />
 										<span class="min-w-0 truncate">
 											<span>{a.item.title}</span>
-											{#if a.characters.length}<span class="text-faint"> {ROLE_LABEL[a.role]} {a.characters.join(', ')}</span>{/if}
+											{#if a.characters.length}
+												<span class="text-faint"> {ROLE_LABEL[a.role]}</span>
+												{#if a.role !== 'crew'}
+													{#each a.characters.slice(0, 2) as name, i (name)}<CharacterBubble src={a.character_images?.[i]} {name} class="mr-0.5 ml-1 size-4" />{/each}
+												{/if}
+												<span class="text-faint">{a.characters.join(', ')}</span>
+											{/if}
 										</span>
 										<meta.icon class="ml-auto size-3 shrink-0" style="color: {meta.accent}" />
 									</li>

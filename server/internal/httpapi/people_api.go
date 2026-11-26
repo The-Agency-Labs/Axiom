@@ -181,7 +181,9 @@ type peopleAppearance struct {
 	Item       peopleItemJSON `json:"item"`
 	Entry      peopleEntryRef `json:"entry"`
 	Characters []string       `json:"characters"`
-	Role       string         `json:"role"`
+	// CharacterImages is aligned with Characters ("" where there is no picture).
+	CharacterImages []string `json:"character_images"`
+	Role            string   `json:"role"`
 }
 
 type peopleResult struct {
@@ -261,11 +263,13 @@ func (s *Server) peopleLibrary(w http.ResponseWriter, r *http.Request) (any, err
 		}
 		cur := a.index[c.ItemID]
 		if cur == nil {
-			cur = &peopleAppearance{Item: entry.item, Entry: entry.ref, Characters: []string{}, Role: peopleRoleOut(c.Role)}
+			cur = &peopleAppearance{Item: entry.item, Entry: entry.ref, Characters: []string{}, CharacterImages: []string{}, Role: peopleRoleOut(c.Role)}
 			a.index[c.ItemID] = cur
 			a.list = append(a.list, cur)
 		}
-		peopleAddLabel(&cur.Characters, firstNonEmptyPeople(c.Character, c.Job))
+		if peopleAddLabel(&cur.Characters, firstNonEmptyPeople(c.Character, c.Job)) {
+			cur.CharacterImages = append(cur.CharacterImages, c.CharacterImage)
+		}
 	}
 	results := make([]peopleResult, 0, len(top))
 	for _, t := range top {
@@ -368,8 +372,8 @@ func (s *Server) peoplePerson(w http.ResponseWriter, r *http.Request) (any, erro
 			b.index[c.ItemID] = cur
 			b.list = append(b.list, cur)
 		}
-		if peopleAddLabel(&cur.Characters, firstNonEmptyPeople(c.Character, c.Job)) && c.CharacterImage != "" {
-			cur.CharacterImages = append(cur.CharacterImages, c.CharacterImage)
+		if peopleAddLabel(&cur.Characters, firstNonEmptyPeople(c.Character, c.Job)) {
+			cur.CharacterImages = append(cur.CharacterImages, c.CharacterImage) // aligned with Characters ("" = none)
 		}
 	}
 	flat := func(b *bucket) []peopleTitleRole {

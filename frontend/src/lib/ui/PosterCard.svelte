@@ -21,7 +21,8 @@
 		status,
 		score,
 		progress,
-		overlay
+		overlay,
+		detail
 	}: {
 		href: string;
 		src?: string | null;
@@ -33,6 +34,8 @@
 		/** 0-100; shows a thin bar under the title. */
 		progress?: number | null;
 		overlay?: Snippet;
+		/** Replaces the one-line subtitle (e.g. characters with their pictures). */
+		detail?: Snippet;
 	} = $props();
 </script>
 
@@ -64,7 +67,10 @@
 			{/if}
 		</div>
 		<p class="mt-2 line-clamp-2 text-[0.8125rem] leading-snug font-medium" aria-hidden="true">{title}</p>
-		{#if status}
+		{#if detail}
+			<div class="mt-0.5 min-w-0 text-[0.75rem] text-faint">{@render detail()}</div>
+			{#if status}<StatusBadge {status} compact class="mt-0.5" />{/if}
+		{:else if status}
 			<StatusBadge {status} compact class="mt-0.5">{subtitle}</StatusBadge>
 		{:else if subtitle}
 			<p class="mt-0.5 truncate text-[0.75rem] text-faint">{subtitle}</p>

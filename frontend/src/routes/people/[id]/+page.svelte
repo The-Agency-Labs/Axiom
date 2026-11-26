@@ -2,6 +2,7 @@
 	import { ArrowLeft, ExternalLink, UserRound } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { get } from '#lib/api.ts';
+	import CharacterBubble from '#lib/components/CharacterBubble.svelte';
 	import { MEDIA } from '#lib/media.ts';
 	import type { Appearance, Person } from '#lib/types.ts';
 	import { EmptyState, IconButton, PosterCard, PosterGrid, Skeleton } from '#lib/ui/index.ts';
@@ -31,7 +32,22 @@
 {#snippet grid(items: Appearance[])}
 	<PosterGrid>
 		{#each items as a (a.item.id)}
-			<PosterCard href={href(a)} src={a.item.image} title={a.item.title} type={a.item.media_type} subtitle={sub(a)} status={a.entry?.status} />
+			<PosterCard href={href(a)} src={a.item.image} title={a.item.title} type={a.item.media_type} subtitle={sub(a)} status={a.entry?.status}>
+				{#snippet detail()}
+					{#if a.characters.length && a.role !== 'crew'}
+						<ul class="space-y-0.5">
+							{#each a.characters as name, i (name)}
+								<li class="flex min-w-0 items-center gap-1.5">
+									<CharacterBubble src={a.character_images?.[i]} {name} class="size-6" />
+									<span class="truncate">{ROLE[a.role]} {name}</span>
+								</li>
+							{/each}
+						</ul>
+					{:else}
+						<p class="truncate">{sub(a)}</p>
+					{/if}
+				{/snippet}
+			</PosterCard>
 		{/each}
 	</PosterGrid>
 {/snippet}
