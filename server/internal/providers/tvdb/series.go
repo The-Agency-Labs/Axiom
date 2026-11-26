@@ -19,7 +19,7 @@ const (
 	artworkHost      = "https://artworks.thetvdb.com"
 	seriesURL        = "https://thetvdb.com/dereferrer/series/"
 	personURL        = "https://thetvdb.com/dereferrer/people/"
-	extendedPrefix   = "tvdb_extended_v1_"
+	extendedPrefix   = "tvdb_extended_v2_" // v2: backdrop
 	translationPref  = "tvdb_translation_eng_"
 	episodesPrefix   = "tvdb_episodes_official_v1_"
 	personPrefix     = "tvdb_person_remote_ids_"
@@ -70,6 +70,7 @@ type extended struct {
 	Name             string         `json:"name"`
 	Overview         string         `json:"overview"`
 	Image            string         `json:"image"`
+	Backdrop         string         `json:"backdrop"` // best background art (type 3), textless preferred
 	FirstAired       string         `json:"first_aired"`
 	LastAired        string         `json:"last_aired"`
 	Status           string         `json:"status"`
@@ -84,6 +85,33 @@ type extended struct {
 	SeasonImages     map[int]string `json:"season_images"`
 	Characters       []Character    `json:"characters"`
 	Found            bool           `json:"found"`
+}
+
+// pickBackground chooses the series background (artwork type 3) to show as
+// the title page banner: textless art (no language) first, then English, each
+// by TVDB's score.
+func pickBackground(arts []map[string]any) string {
+	best, bestRank, bestScore := "", -1, -1
+	for _, a := range arts {
+		if fint(a, "type") != 3 {
+			continue
+		}
+		img := artwork(fstr(a, "image"))
+		if img == "" {
+			continue
+		}
+		rank := 0
+		switch fstr(a, "language") {
+		case "":
+			rank = 2
+		case "eng":
+			rank = 1
+		}
+		if score := fint(a, "score"); rank > bestRank || (rank == bestRank && score > bestScore) {
+			best, bestRank, bestScore = img, rank, score
+		}
+	}
+	return best
 }
 
 func (c *Client) get(ctx context.Context, path string, dst any) (bool, error) {
@@ -204,6 +232,7 @@ func (c *Client) extended(ctx context.Context, id string) (extended, error) {
 			}
 		}
 	}
+	x.Backdrop = pickBackground(flist(d, "artworks"))
 	for _, s := range flist(d, "seasons") {
 		if fstr(fmap(s, "type"), "type") != "official" {
 			continue
@@ -392,7 +421,7 @@ func (c *Client) Series(ctx context.Context, id string) (providers.Metadata, err
 	first := firstNonEmpty(x.FirstAired, firstAired(eps))
 	return providers.Metadata{
 		"media_id": id, "source": "tvdb", "source_url": seriesURL + id, "media_type": "tv",
-		"title": title, "native_title": native, "max_progress": regular, "image": x.Image,
+		"title": title, "native_title": native, "max_progress": regular, "image": x.Image, "backdrop": nilIfEmpty(x.Backdrop),
 		"synopsis": synopsis, "genres": genres, "score": nil, "score_count": nil,
 		"details": map[string]any{
 			"format": "TV", "first_air_date": nilIfEmpty(first), "last_air_date": nilIfEmpty(x.LastAired),

@@ -63,6 +63,15 @@ func GetImageURL(path any) string {
 	return imgNone
 }
 
+// backdropURL is a title's wide background art for the title page banner, or
+// nil when TMDB has none.
+func backdropURL(path any) any {
+	if s, ok := path.(string); ok && s != "" {
+		return "https://image.tmdb.org/t/p/w1280" + s
+	}
+	return nil
+}
+
 func getTitle(m obj) any {
 	if t, ok := m["title"]; ok {
 		return t

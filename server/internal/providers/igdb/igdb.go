@@ -225,7 +225,8 @@ func (c *Client) Search(ctx context.Context, query string, page int, showAdult b
 	return out, err
 }
 
-const gameFields = "fields name,cover.image_id,artworks.image_id," +
+const gameFields = "fields name,cover.image_id,artworks.image_id,artworks.width,artworks.height," +
+	"screenshots.image_id,screenshots.width,screenshots.height," +
 	"url,summary,game_type,first_release_date,total_rating,total_rating_count," +
 	"genres.name,themes.name,platforms.name,involved_companies.company.name," +
 	"parent_game.name,parent_game.cover.image_id," +
@@ -241,7 +242,7 @@ const gameFields = "fields name,cover.image_id,artworks.image_id," +
 // 404 ("No result found with ID ...").
 func (c *Client) Game(ctx context.Context, mediaID string) (providers.Metadata, error) {
 	var out providers.Metadata
-	key := "igdb_game_" + mediaID
+	key := "igdb_game3_" + mediaID // 3: backdrop from artworks/screenshots
 	err := c.base.Cached(ctx, key, cacheTTL, &out, func() (any, error) {
 		id, err := strconv.Atoi(strings.TrimSpace(mediaID))
 		if err != nil {
@@ -297,6 +298,7 @@ func (c *Client) Game(ctx context.Context, mediaID string) (providers.Metadata, 
 			"title":        g["name"],
 			"max_progress": nil,
 			"image":        imageURL(g),
+			"backdrop":     artworkURL(g),
 			"synopsis":     synopsis,
 			"genres":       nameList(g, "genres"),
 			"score":        score(g),
@@ -350,6 +352,37 @@ func imageURL(m map[string]any) string {
 		}
 	}
 	return ImgNone
+}
+
+// artworkURL is the game's banner for the title page: the largest wide key
+// art, else the first wide screenshot. Small or square art (logos, icons) is
+// skipped; nil when nothing fits.
+func artworkURL(m map[string]any) any {
+	pick := func(list []any) string {
+		best, bestW := "", 0
+		for _, a := range list {
+			art, _ := a.(map[string]any)
+			id, _ := art["image_id"].(string)
+			w, h := toInt(art["width"]), toInt(art["height"])
+			if id == "" || w < 1280 || h == 0 || float64(w)/float64(h) < 1.5 {
+				continue
+			}
+			if w > bestW {
+				best, bestW = id, w
+			}
+		}
+		return best
+	}
+	arts, _ := m["artworks"].([]any)
+	id := pick(arts)
+	if id == "" {
+		shots, _ := m["screenshots"].([]any)
+		id = pick(shots)
+	}
+	if id == "" {
+		return nil
+	}
+	return "https://images.igdb.com/igdb/image/upload/t_1080p/" + id + ".jpg"
 }
 
 var gameTypes = map[int]string{

@@ -94,7 +94,7 @@
 				</div>
 			{:else if mode === 'film' && film}
 				{#if !film.done}
-					<Button variant="primary" class="shrink-0" icon={Check} onclick={onwatched}>Watched</Button>
+					<Button variant="primary" class="order-first w-full" icon={Check} onclick={onwatched}>Watched</Button>
 				{/if}
 			{/if}
 		{/if}

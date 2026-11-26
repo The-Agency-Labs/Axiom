@@ -397,6 +397,7 @@
 {:else}
 	<PullToRefresh onrefresh={reload}>
 		<TitleHero
+			backdrop={md?.backdrop}
 			{kind}
 			{title}
 			nativeTitle={md?.native_title}

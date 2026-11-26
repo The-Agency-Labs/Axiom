@@ -184,7 +184,7 @@ func (c *Client) Find(ctx context.Context, externalID, externalSource string) (m
 // Movie ports movie().
 func (c *Client) Movie(ctx context.Context, mediaID string) (providers.Metadata, error) {
 	var data providers.Metadata
-	err := c.base.Cached(ctx, "tmdb_movie_"+mediaID, cacheTTL, &data, func() (any, error) {
+	err := c.base.Cached(ctx, "tmdb_movie2_"+mediaID, cacheTTL, &data, func() (any, error) {
 		return c.fetchMovie(ctx, mediaID)
 	})
 	return data, err
@@ -247,6 +247,7 @@ func (c *Client) fetchMovie(ctx context.Context, mediaID string) (any, error) {
 		"title":        resp["title"],
 		"max_progress": 1,
 		"image":        GetImageURL(resp["poster_path"]),
+		"backdrop":     backdropURL(resp["backdrop_path"]),
 		"synopsis":     getSynopsis(resp["overview"]),
 		"genres":       getGenres(resp["genres"]),
 		"score":        getScore(resp["vote_average"]),
@@ -304,7 +305,7 @@ func getCollection(collection obj) []any {
 	return out
 }
 
-func tvCacheKey(id string) string { return "tmdb_tv_" + id }
+func tvCacheKey(id string) string { return "tmdb_tv2_" + id }
 
 func seasonCacheKey(id string, n int) string { return fmt.Sprintf("tmdb_season_%s_%d", id, n) }
 
@@ -342,6 +343,7 @@ func processTV(resp obj) obj {
 		"title":        resp["name"],
 		"max_progress": numEpisodes,
 		"image":        GetImageURL(resp["poster_path"]),
+		"backdrop":     backdropURL(resp["backdrop_path"]),
 		"synopsis":     getSynopsis(resp["overview"]),
 		"genres":       getGenres(resp["genres"]),
 		"score":        getScore(resp["vote_average"]),

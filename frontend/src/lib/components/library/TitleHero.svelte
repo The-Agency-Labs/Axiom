@@ -12,6 +12,7 @@
 		title,
 		nativeTitle,
 		image,
+		backdrop,
 		year,
 		genres = [],
 		rating,
@@ -25,6 +26,8 @@
 		title: string;
 		nativeTitle?: string;
 		image?: string | null;
+		/** Wide background art from the provider (TMDB, TVDB, IGDB), when it has one. */
+		backdrop?: string | null;
 		year?: string | null;
 		genres?: string[];
 		rating?: number | null;
@@ -41,17 +44,23 @@
 </script>
 
 <header class="relative -mx-4 -mt-5 overflow-hidden px-4 pt-5 pb-4 sm:-mx-6 sm:px-6 lg:-mx-10 lg:-mt-10 lg:px-10 lg:pt-10">
-	{#if image && !image.includes('none.svg')}
+	{#if backdrop}
+		<!-- The provider's banner, sharp, fading into the page under the title. -->
+		<div class="pointer-events-none absolute inset-x-0 top-0 aspect-video max-h-[28rem] w-full" aria-hidden="true">
+			<img src={backdrop} alt="" class="h-full w-full object-cover object-top" />
+			<div class="absolute inset-0 bg-gradient-to-b from-canvas/30 via-canvas/10 to-canvas"></div>
+		</div>
+	{:else if image && !image.includes('none.svg')}
 		<div class="pointer-events-none absolute inset-0 opacity-35" aria-hidden="true">
 			<img src={image} alt="" class="h-full w-full scale-125 object-cover blur-2xl" />
 		</div>
+		<div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-canvas/60 to-canvas" aria-hidden="true"></div>
 	{/if}
-	<div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-canvas/60 to-canvas" aria-hidden="true"></div>
 
 	<div class="relative">
 		<IconButton icon={ArrowLeft} label="Back" variant="surface" class="-ml-1 bg-canvas/60 backdrop-blur" onclick={back} />
 
-		<div class="mt-3 grid grid-cols-[7.5rem_1fr] gap-4 sm:grid-cols-[9rem_1fr] lg:grid-cols-[12rem_1fr] lg:gap-8">
+		<div class="{backdrop ? 'mt-[22vw] sm:mt-40 lg:mt-56' : 'mt-3'} grid grid-cols-[7.5rem_1fr] gap-4 sm:grid-cols-[9rem_1fr] lg:grid-cols-[12rem_1fr] lg:gap-8">
 			<Cover
 				src={image}
 				{title}
