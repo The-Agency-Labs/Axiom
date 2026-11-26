@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Check, Clock, Link2 } from '@lucide/svelte';
+	import { Check, Clock } from '@lucide/svelte';
 	import { mutate } from '#lib/api.ts';
+	import AppLogo from '#lib/components/AppLogo.svelte';
 	import Cover from '#lib/components/Cover.svelte';
 	import { bookPosition, loadChapters } from '#lib/chapters.svelte.ts';
 	import { formatDate, hasEpisodes, MEDIA, minutesLabel, progressLabel, relativeTime, titleHref, todayISO } from '#lib/media.ts';
@@ -144,7 +145,7 @@
 			full
 			disabled={upcoming}
 			class="mt-3"
-			icon={upcoming ? Clock : tracker ? Link2 : Check}
+			icon={upcoming ? Clock : tracker ? undefined : Check}
 			onclick={markNext}
 			aria-label={upcoming
 				? `Episode ${entry.next.number} airs ${formatDate(entry.next.air_date)}`
@@ -155,7 +156,8 @@
 			{#if upcoming}
 				E{entry.next.number} airs {formatDate(entry.next.air_date)}
 			{:else if tracker}
-				<span class="truncate">E{entry.next.number} · from {tracker}</span>
+				{#each entry.linked ?? [] as app (app)}<AppLogo name={app} />{/each}
+				<span class="truncate">E{entry.next.number}</span>
 			{:else}
 				<span class="truncate">Watched E{entry.next.number}{entry.next.title ? ` · ${entry.next.title}` : ''}</span>
 			{/if}
@@ -163,7 +165,7 @@
 	{:else if canStep}
 		<div class="mt-3 flex items-center justify-between gap-3">
 			<span class="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-muted">
-				{#if tracker}<Link2 class="size-3.5 shrink-0" /><span class="truncate">From {tracker}</span>
+				{#if tracker}{#each entry.linked ?? [] as app (app)}<AppLogo name={app} class="h-8" />{/each}
 				{:else}{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}{/if}
 			</span>
 			<Stepper
