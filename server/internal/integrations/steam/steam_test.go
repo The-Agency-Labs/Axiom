@@ -147,10 +147,11 @@ func TestImportGames(t *testing.T) {
 	if tf := f.entry(t, "3"); tf.Status != library.Paused || tf.Progress != 500 {
 		t.Fatalf("tf2 = %+v", tf)
 	}
-	if res.Counts["games"] != 3 || res.Counts["unmatched"] != 1 {
+	// A game IGDB doesn't know is dropped quietly: no count, no warning.
+	if res.Counts["games"] != 3 || res.Counts["unmatched"] != 0 {
 		t.Fatalf("counts = %v", res.Counts)
 	}
-	if len(res.Warnings) != 1 || !strings.Contains(res.Warnings[0], "Unknown Game (999)") || !strings.Contains(res.Warnings[0], "Couldn't find a match in IGDB") {
+	if len(res.Warnings) != 0 {
 		t.Fatalf("warnings = %v", res.Warnings)
 	}
 }

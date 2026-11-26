@@ -280,9 +280,10 @@ func (im *Importer) importGame(ctx context.Context, userID int64, g game, name s
 	return nil
 }
 
-func (im *Importer) unmatched(res *Result, name string, appID int64) error {
-	res.Counts["unmatched"]++
-	res.Warnings = append(res.Warnings, fmt.Sprintf("%s (%d): Couldn't find a match in IGDB", name, appID))
+// unmatched skips a game IGDB doesn't know (tools, test builds, delisted
+// oddities): owner rule, it is dropped quietly, not reported as a problem.
+func (im *Importer) unmatched(_ *Result, name string, appID int64) error {
+	slog.Debug("steam: no IGDB match, skipped", "name", name, "appid", appID)
 	return nil
 }
 
