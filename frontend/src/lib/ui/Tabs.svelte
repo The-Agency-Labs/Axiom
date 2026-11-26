@@ -59,7 +59,7 @@
 	tabindex="-1"
 	class="flex {variant === 'segmented'
 		? 'gap-1 rounded-xl border border-line bg-surface p-1'
-		: 'gap-1 border-b border-line'} {full ? 'w-full' : 'w-fit max-w-full overflow-x-auto'} {className}"
+		: 'gap-1 border-b border-line'} {full ? 'w-full' : 'shelf w-fit max-w-full overflow-x-auto overflow-y-hidden'} {className}"
 >
 	{#each options as option (option.value)}
 		{@const active = option.value === value}
