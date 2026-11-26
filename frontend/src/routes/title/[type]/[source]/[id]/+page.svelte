@@ -9,6 +9,7 @@
 	import CountEpisodes from '#lib/components/library/CountEpisodes.svelte';
 	import EntrySheets, { type SheetName } from '#lib/components/library/EntrySheets.svelte';
 	import HistoryList from '#lib/components/library/HistoryList.svelte';
+	import { bookPosition, loadChapters } from '#lib/chapters.svelte.ts';
 	import { ShowState } from '#lib/components/library/show.svelte.ts';
 	import ShowEpisodes from '#lib/components/library/ShowEpisodes.svelte';
 	import TitleHero from '#lib/components/library/TitleHero.svelte';
@@ -205,6 +206,9 @@
 		return { label: show.show ? 'Caught up' : '…', disabled: true };
 	});
 
+	$effect(() => {
+		if (kind === 'book') loadChapters();
+	});
 	const stepDisplay = $derived(
 		!entry
 			? ''
@@ -212,6 +216,8 @@
 				? minutesLabel(entry.progress)
 				: kind === 'manga'
 					? progressLabel(kind, entry.progress, total)
+					: kind === 'book' && bookPosition(entry.item.id, entry.progress)
+						? (bookPosition(entry.item.id, entry.progress) as string)
 					: total
 					? `${entry.progress}/${total}`
 					: String(entry.progress)

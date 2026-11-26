@@ -565,6 +565,46 @@ func (q *Queries) ListSessionsForStats(ctx context.Context, arg ListSessionsForS
 	return items, nil
 }
 
+const listUserTOCs = `-- name: ListUserTOCs :many
+SELECT CAST(COALESCE(r.item_id, d.item_id) AS INTEGER) AS item_id, d.total_pages, t.chapters
+FROM reading_document_toc t
+JOIN reading_documents d ON d.id = t.document_id
+LEFT JOIN reading_documents r ON r.id = d.merged_into
+WHERE d.user_id = ? AND COALESCE(r.item_id, d.item_id) IS NOT NULL
+ORDER BY t.updated_at DESC
+`
+
+type ListUserTOCsRow struct {
+	ItemID     int64         `json:"item_id"`
+	TotalPages sql.NullInt64 `json:"total_pages"`
+	Chapters   string        `json:"chapters"`
+}
+
+// Every table of contents of the user's books, newest first, with the item
+// the document (or the document it was merged into) is linked to.
+func (q *Queries) ListUserTOCs(ctx context.Context, userID int64) ([]ListUserTOCsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUserTOCs, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUserTOCsRow
+	for rows.Next() {
+		var i ListUserTOCsRow
+		if err := rows.Scan(&i.ItemID, &i.TotalPages, &i.Chapters); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markReadingDocumentChecked = `-- name: MarkReadingDocumentChecked :exec
 UPDATE reading_documents SET link_checked_at = ? WHERE id = ?
 `
@@ -802,5 +842,21 @@ func (q *Queries) UpdateReadingDocumentProgress(ctx context.Context, arg UpdateR
 		arg.UpdatedAt,
 		arg.ID,
 	)
+	return err
+}
+
+const upsertDocumentTOC = `-- name: UpsertDocumentTOC :exec
+INSERT INTO reading_document_toc (document_id, chapters, updated_at) VALUES (?, ?, ?)
+ON CONFLICT (document_id) DO UPDATE SET chapters = excluded.chapters, updated_at = excluded.updated_at
+`
+
+type UpsertDocumentTOCParams struct {
+	DocumentID int64  `json:"document_id"`
+	Chapters   string `json:"chapters"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+func (q *Queries) UpsertDocumentTOC(ctx context.Context, arg UpsertDocumentTOCParams) error {
+	_, err := q.db.ExecContext(ctx, upsertDocumentTOC, arg.DocumentID, arg.Chapters, arg.UpdatedAt)
 	return err
 }

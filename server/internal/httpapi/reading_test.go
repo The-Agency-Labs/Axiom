@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -630,4 +631,39 @@ func TestBookNotesEndpoints(t *testing.T) {
 	readingWant(t, f.do("GET", "/api/v1"+path, nil, nil), 401)
 	readingWant(t, f.do("GET", "/api/v1"+path, nil, map[string]string{"Authorization": "Bearer " + f.roKey}), 200)
 	readingWant(t, f.do("PUT", "/api/v1"+path, `{"predict":"x"}`, map[string]string{"Authorization": "Bearer " + f.roKey}), 403)
+}
+
+// The plugin sends the open book's table of contents in KOReader's layout
+// (200 pages); the library shows the edition's pages (500). The chapter
+// follows the position, not the page number.
+func TestBookChapterFromKOReaderTOC(t *testing.T) {
+	f := newReadingFixture(t)
+	ctx := context.Background()
+	f.env.HC.Add(readingtestBook("1", "Dune", "Frank Herbert", 500))
+	item, err := f.env.Catalog.EnsureItem(ctx, "book", "hardcover", "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, _, _ := f.env.Reading.GetOrCreateDocument(ctx, f.env.User, "h1", readingDocFields("Dune"))
+	if _, err := f.env.Reading.LinkDocument(ctx, doc, item); err != nil {
+		t.Fatal(err)
+	}
+	toc := map[string]any{"md5": "h1", "title": "Dune", "total_pages": 200, "toc": []any{
+		map[string]any{"title": "Book One: Dune", "page": 1, "depth": 1},
+		map[string]any{"title": "Chapter 1", "page": 1, "depth": 2},
+		map[string]any{"title": "Chapter 2", "page": 51, "depth": 2},
+		map[string]any{"title": "Chapter 3: Arrakis", "page": 101, "depth": 2},
+	}}
+	readingWant(t, f.api("POST", "/reading/koreader/toc", toc), 200)
+	readingWant(t, f.api("POST", "/reading/koreader/toc", map[string]any{"md5": "h1"}), 422)
+
+	// Exactly at the start of chapter 3 is chapter 2's last page.
+	f.kosync("PUT", "/kosync/syncs/progress", map[string]any{"document": "h1", "progress": "p", "percentage": 0.5}, f.key)
+	if c, _ := f.api("GET", "/reading/chapters", nil).obj(t)[fmt.Sprint(item.ID)].(map[string]any); c["chapter"] != "Chapter 2" || c["page"] != float64(250) {
+		t.Fatalf("at 50%% = %v", c)
+	}
+	f.kosync("PUT", "/kosync/syncs/progress", map[string]any{"document": "h1", "progress": "p", "percentage": 0.6}, f.key)
+	if c, _ := f.api("GET", "/reading/chapters", nil).obj(t)[fmt.Sprint(item.ID)].(map[string]any); c["chapter"] != "Chapter 3" || c["page"] != float64(300) {
+		t.Fatalf("at 60%% = %v", c)
+	}
 }

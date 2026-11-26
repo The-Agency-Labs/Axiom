@@ -440,3 +440,44 @@ func (s *Server) readingDays(w http.ResponseWriter, r *http.Request) (any, error
 	}
 	return svc.Journal(r.Context(), auth.User(r.Context()).ID, start, end)
 }
+
+// readingUploadTOC stores the table of contents of the book open in
+// KOReader: {md5, title, authors, total_pages, toc: [{title, page, depth}]}.
+func (s *Server) readingUploadTOC(w http.ResponseWriter, r *http.Request) (any, error) {
+	var in struct {
+		MD5        string `json:"md5"`
+		Title      string `json:"title"`
+		Authors    string `json:"authors"`
+		TotalPages int64  `json:"total_pages"`
+		TOC        []struct {
+			Title string `json:"title"`
+			Page  int64  `json:"page"`
+			Depth int    `json:"depth"`
+		} `json:"toc"`
+	}
+	if err := DecodeJSON(r, &in); err != nil {
+		return nil, err
+	}
+	if in.MD5 == "" || in.TotalPages <= 0 {
+		return nil, Errorf(http.StatusUnprocessableEntity, "md5 and total_pages are required")
+	}
+	if len(in.TOC) > 5000 {
+		return nil, Errorf(http.StatusUnprocessableEntity, "toc is too long")
+	}
+	entries := make([]reading.TOCEntry, len(in.TOC))
+	for i, e := range in.TOC {
+		entries[i] = reading.TOCEntry{Title: e.Title, Page: e.Page, Depth: e.Depth}
+	}
+	tp := in.TotalPages
+	f := reading.DocFields{Title: in.Title, Authors: in.Authors, TotalPages: &tp}
+	if err := s.readingService().SaveTOC(r.Context(), auth.User(r.Context()).ID, in.MD5, f, in.TotalPages, entries); err != nil {
+		return nil, err
+	}
+	return map[string]any{"chapters": len(entries)}, nil
+}
+
+// readingChapters: the chapter each book being read is in, keyed by item id
+// ({"123": {"chapter": "Chapter 12", "page": 214}}).
+func (s *Server) readingChapters(w http.ResponseWriter, r *http.Request) (any, error) {
+	return s.readingService().Chapters(r.Context(), auth.User(r.Context()).ID)
+}

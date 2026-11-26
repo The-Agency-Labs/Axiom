@@ -14,6 +14,8 @@ func (s *Server) readingRoutes(mux *http.ServeMux) {
 	r := func(h HandlerFunc) http.Handler { return auth.Require(JSON(h)) }
 
 	mux.Handle("POST /api/v1/reading/koreader", w(s.readingUploadKOReader))
+	mux.Handle("POST /api/v1/reading/koreader/toc", w(s.readingUploadTOC))
+	mux.Handle("GET /api/v1/reading/chapters", r(s.readingChapters))
 	mux.Handle("GET /api/v1/reading/stats", r(s.readingStats))
 	mux.Handle("GET /api/v1/reading/days", r(s.readingDays))
 	mux.Handle("GET /api/v1/reading/sessions", r(s.readingListSessions))

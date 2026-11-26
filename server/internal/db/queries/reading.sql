@@ -118,3 +118,17 @@ ON CONFLICT (entry_id) DO NOTHING;
 UPDATE book_notes
 SET preview = ?, predict = ?, purpose = ?, purpose_note = ?, reflect = ?, updated_at = ?
 WHERE entry_id = ?;
+
+-- name: UpsertDocumentTOC :exec
+INSERT INTO reading_document_toc (document_id, chapters, updated_at) VALUES (?, ?, ?)
+ON CONFLICT (document_id) DO UPDATE SET chapters = excluded.chapters, updated_at = excluded.updated_at;
+
+-- name: ListUserTOCs :many
+-- Every table of contents of the user's books, newest first, with the item
+-- the document (or the document it was merged into) is linked to.
+SELECT CAST(COALESCE(r.item_id, d.item_id) AS INTEGER) AS item_id, d.total_pages, t.chapters
+FROM reading_document_toc t
+JOIN reading_documents d ON d.id = t.document_id
+LEFT JOIN reading_documents r ON r.id = d.merged_into
+WHERE d.user_id = ? AND COALESCE(r.item_id, d.item_id) IS NOT NULL
+ORDER BY t.updated_at DESC;

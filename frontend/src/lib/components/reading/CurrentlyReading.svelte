@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bookPosition, loadChapters } from '#lib/chapters.svelte.ts';
 	import { mutate, get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import { Skeleton, Stepper } from '#lib/ui/index.ts';
@@ -9,6 +10,7 @@
 
 	type BookEntry = Entry & { series?: { id: number; name: string; position: number } | null };
 	let books = $state<BookEntry[] | null>(null);
+	loadChapters(true);
 
 	$effect(() => {
 		void version;
@@ -45,7 +47,7 @@
 							<span class="line-clamp-2 text-[0.875rem] leading-snug font-medium"
 								>{bookTitle(b.item.title, b.series?.name, b.series?.position)}</span
 							>
-							<span class="text-[0.75rem] text-faint tabular-nums">Page {b.progress}</span>
+							<span class="block truncate text-[0.75rem] text-faint tabular-nums">{bookPosition(b.item.id, b.progress) ?? `Page ${b.progress}`}</span>
 						</span>
 					</a>
 					<Stepper display="{b.progress} p" label="pages of {b.item.title}" onstep={(d) => step(b, d)} canDecrement={b.progress > 0} />

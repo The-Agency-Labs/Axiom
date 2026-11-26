@@ -2,6 +2,7 @@
 	import { Check, Clock } from '@lucide/svelte';
 	import { mutate } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
+	import { bookPosition, loadChapters } from '#lib/chapters.svelte.ts';
 	import { formatDate, hasEpisodes, MEDIA, minutesLabel, progressLabel, relativeTime, titleHref, todayISO } from '#lib/media.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import type { MediaType, NowEntry } from '#lib/types.ts';
@@ -21,6 +22,12 @@
 	const percent = $derived(entry.total ? (entry.progress / entry.total) * 100 : null);
 	const atEnd = $derived(entry.total !== null && entry.progress >= entry.total);
 	const canStep = $derived(!episodic && meta.steppable);
+	$effect(() => {
+		if (kind === 'book') loadChapters();
+	});
+	const progressText = $derived(
+		(kind === 'book' && bookPosition(entry.item.id, entry.progress)) || progressLabel(kind, entry.progress, entry.total)
+	);
 
 	const subtitle = $derived.by(() => {
 		if (episodic) return `Season ${season}${entry.next ? '' : ' · caught up'}`;
@@ -109,7 +116,7 @@
 			<span class="line-clamp-2 text-[0.9375rem] leading-snug font-semibold">{entry.title}</span>
 			<span class="mt-0.5 line-clamp-1 text-[0.8125rem] text-muted">{subtitle}</span>
 			<span class="mt-auto flex items-baseline justify-between pt-2 text-xs">
-				<span class="font-medium tabular-nums">{progressLabel(kind, entry.progress, entry.total)}</span>
+				<span class="min-w-0 truncate font-medium tabular-nums">{progressText}</span>
 				{#if percent !== null}<span class="text-faint tabular-nums">{Math.round(percent)}%</span>{/if}
 			</span>
 			<ProgressBar {percent} accent={meta.accent} label="{entry.title} progress" class="mt-1" />

@@ -10,6 +10,11 @@ When it syncs:
     if Wi-Fi is up;
   * on resume and whenever Wi-Fi connects, to flush anything missed.
 
+It also sends the open book's table of contents (chapter titles and the
+pages they start on, as KOReader lays the book out) so Encompass can show
+"Chapter 12: Page 214". It's sent when it changes: a new book, or a new
+layout after a font change.
+
 Position sync is separate: use KOReader's built-in "Progress sync" pointed at
 <server>/kosync with your username and the same token as the password.
 --]]--
@@ -155,6 +160,59 @@ function Encompass:post(path, body)
     return tonumber(code), table.concat(response)
 end
 
+-- The open book's table of contents, ready to send, or nil (no book open,
+-- no TOC). `key` changes when the chapters or the layout change.
+function Encompass:currentTOC()
+    local ui = self.ui
+    if not (ui and ui.document and ui.toc) then return nil end
+    local ok = pcall(ui.toc.fillToc, ui.toc)
+    local toc = ok and ui.toc.toc
+    if not toc or #toc == 0 then return nil end
+    local md5 = ui.doc_settings and ui.doc_settings:readSetting("partial_md5_checksum")
+    if not md5 then
+        local util = require("util")
+        md5 = util.partialMD5 and util.partialMD5(ui.document.file)
+    end
+    local pages = ui.document:getPageCount()
+    if not md5 or not pages or pages <= 0 then return nil end
+    local entries = {}
+    for _, t in ipairs(toc) do
+        if t.title and tonumber(t.page) then
+            table.insert(entries, { title = t.title, page = tonumber(t.page), depth = tonumber(t.depth) or 1 })
+        end
+    end
+    if #entries == 0 then return nil end
+    local props = ui.doc_props or {}
+    return {
+        md5 = md5,
+        key = pages .. ":" .. #entries .. ":" .. entries[#entries].page,
+        payload = {
+            md5 = md5,
+            title = props.display_title or props.title or "",
+            authors = props.authors or "",
+            total_pages = pages,
+            toc = entries,
+        },
+    }
+end
+
+-- Send the open book's table of contents if Encompass doesn't have this
+-- version of it yet.
+function Encompass:sendTOC()
+    local ok, toc = pcall(self.currentTOC, self)
+    if not ok or not toc then return end
+    self.settings.toc_sent = self.settings.toc_sent or {}
+    if self.settings.toc_sent[toc.md5] == toc.key then return end
+    local okp, code = pcall(self.post, self, "/api/v1/reading/koreader/toc", json.encode(toc.payload))
+    if okp and code == 200 then
+        self.settings.toc_sent[toc.md5] = toc.key
+        self:save()
+        logger.info("encompass: sent table of contents", #toc.payload.toc)
+    else
+        logger.warn("encompass: table of contents upload failed", code)
+    end
+end
+
 -- Upload everything newer than the last successful sync. Returns rows sent.
 function Encompass:sync(reason, interactive)
     if self.syncing then return 0 end
@@ -202,6 +260,8 @@ function Encompass:sync(reason, interactive)
         if count < MAX_ROWS_PER_REQUEST then break end
     end
 
+    self:sendTOC()
+
     self.settings.watermark = watermark
     self.settings.last_sync = os.date("%Y-%m-%d %H:%M")
     self.settings.last_error = nil
@@ -217,6 +277,10 @@ end
 -- Events --------------------------------------------------------------------
 
 function Encompass:onSuspend() self:sync("suspend") end
+function Encompass:onReaderReady()
+    -- A book was opened: send its chapters soon (once the layout settles).
+    UIManager:scheduleIn(5, function() self:sync("open") end)
+end
 function Encompass:onCloseDocument() self:sync("close") end
 function Encompass:onExit()
     self:sync("exit")
