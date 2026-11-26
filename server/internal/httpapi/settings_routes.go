@@ -100,6 +100,8 @@ func (s *Server) settingsView(ctx context.Context, u db.User) (map[string]any, e
 	out["username"], out["is_admin"] = u.Username, u.IsAdmin != 0
 	out["timezone"], out["language"] = u.Timezone, u.Language
 	out["media_types"], out["jellyfin_users"], out["watched_percent"] = media, u.JellyfinUsers, u.WatchedPercent
+	prof := s.loadProfile(ctx, u.ID)
+	out["display_name"], out["avatar"] = prof.DisplayName, prof.Avatar
 	return out, nil
 }
 
@@ -115,6 +117,8 @@ func (s *Server) settingsPatch(r *http.Request) (any, error) {
 		Language       *string `json:"language"`
 		JellyfinUsers  *string `json:"jellyfin_users"`
 		WatchedPercent *int    `json:"watched_percent"`
+		DisplayName    *string `json:"display_name"`
+		Avatar         *string `json:"avatar"`
 		MediaTypes     []struct {
 			Kind    string  `json:"kind"`
 			Enabled *bool   `json:"enabled"`
@@ -152,6 +156,20 @@ func (s *Server) settingsPatch(r *http.Request) (any, error) {
 	}
 	if in.WatchedPercent != nil {
 		u.WatchedPercent = int64(overviewClamp(*in.WatchedPercent, 50, 100))
+	}
+	prof := s.loadProfile(ctx, u.ID)
+	if in.DisplayName != nil {
+		name, err := validateName(*in.DisplayName)
+		if err != nil {
+			return nil, err
+		}
+		prof.DisplayName = name
+	}
+	if in.Avatar != nil {
+		if err := validateAvatar(*in.Avatar); err != nil {
+			return nil, err
+		}
+		prof.Avatar = *in.Avatar
 	}
 	current, err := s.settingsMediaTypes(ctx, u.ID)
 	if err != nil {
@@ -194,6 +212,14 @@ func (s *Server) settingsPatch(r *http.Request) (any, error) {
 		Timezone: u.Timezone, Language: u.Language, JellyfinUsers: u.JellyfinUsers, WatchedPercent: u.WatchedPercent, ID: u.ID,
 	}); err != nil {
 		return nil, err
+	}
+	if in.DisplayName != nil || in.Avatar != nil {
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO user_profiles (user_id, display_name, avatar) VALUES (?, ?, ?)
+			ON CONFLICT(user_id) DO UPDATE SET display_name = excluded.display_name, avatar = excluded.avatar`,
+			u.ID, prof.DisplayName, prof.Avatar); err != nil {
+			return nil, err
+		}
 	}
 	for _, m := range current {
 		if !changed[m.Kind] {

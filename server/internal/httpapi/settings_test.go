@@ -193,3 +193,35 @@ func TestSettingsUsers(t *testing.T) {
 		t.Errorf("deactivated login: %d", code)
 	}
 }
+
+func TestSettingsProfile(t *testing.T) {
+	f := newOverviewFx(t)
+	s := getObj(t, f.c, "/api/v1/settings", nil)
+	if s["display_name"] != "" || s["avatar"] != "" {
+		t.Fatalf("defaults = %v %v", s["display_name"], s["avatar"])
+	}
+	pic := "data:image/jpeg;base64,/9j/4AAQSkZJRg=="
+	code, s, _ := f.c.do("PATCH", "/api/v1/settings", map[string]any{"display_name": "  Alice A  ", "avatar": pic}, nil)
+	if code != 200 || s["display_name"] != "Alice A" || s["avatar"] != pic {
+		t.Fatalf("patch: %d %v", code, s)
+	}
+	// Other patches leave the profile alone.
+	_, s, _ = f.c.do("PATCH", "/api/v1/settings", map[string]any{"language": "fr"}, nil)
+	if s["display_name"] != "Alice A" || s["avatar"] != pic {
+		t.Errorf("profile lost: %v", s)
+	}
+	for _, bad := range []map[string]any{
+		{"avatar": "data:text/html;base64,PGI+"},
+		{"avatar": "http://example.com/a.png"},
+		{"avatar": "data:image/png;base64,!!!"},
+		{"display_name": strings.Repeat("x", 61)},
+	} {
+		if code, _, _ := f.c.do("PATCH", "/api/v1/settings", bad, nil); code != 422 {
+			t.Errorf("%v: code %d, want 422", bad, code)
+		}
+	}
+	_, s, _ = f.c.do("PATCH", "/api/v1/settings", map[string]any{"display_name": "", "avatar": ""}, nil)
+	if s["display_name"] != "" || s["avatar"] != "" {
+		t.Errorf("cleared = %v", s)
+	}
+}

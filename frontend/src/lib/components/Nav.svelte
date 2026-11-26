@@ -6,20 +6,17 @@
 		CirclePlay,
 		Ellipsis,
 		LibraryBig,
-		LogOut,
 		Search,
-		Settings,
 		RefreshCw,
 		CalendarRange,
 		UsersRound
 	} from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { logout } from '#lib/api.ts';
-	import { auth } from '#lib/auth.svelte.ts';
 	import { MEDIA } from '#lib/media.ts';
-	import { enabledTypes, resetSettings } from '#lib/settings.svelte.ts';
+	import { enabledTypes } from '#lib/settings.svelte.ts';
 	import { net } from '#lib/offline.svelte.ts';
+	import ProfileMenu from './ProfileMenu.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	const path = $derived(page.url.pathname);
@@ -45,18 +42,10 @@
 		{ href: '/calendar', label: 'Calendar', icon: CalendarRange },
 		{ href: '/people', label: 'People', icon: UsersRound },
 		{ href: '/year', label: 'Year in review', icon: CalendarDays },
-		{ href: '/sources', label: 'Sources', icon: RefreshCw },
-		{ href: '/settings', label: 'Settings', icon: Settings }
+		{ href: '/sources', label: 'Sources', icon: RefreshCw }
 	];
 
 	const types = $derived(enabledTypes());
-
-	async function signOut() {
-		await logout();
-		auth.username = null;
-		resetSettings();
-		goto('/login');
-	}
 
 	/** Tapping the tab you are already on scrolls to top (or returns to the tab root). */
 	function tabClick(e: MouseEvent, tab: (typeof tabs)[number]) {
@@ -115,24 +104,9 @@
 		{/each}
 	</nav>
 
-	<div class="sticky bottom-0 mt-auto flex items-center justify-between gap-1 bg-canvas px-3 pt-3 pb-1">
-		<div class="flex min-w-0 items-center gap-2.5">
-			<span class="grid size-8 shrink-0 place-items-center rounded-full bg-brand/20 text-xs font-semibold text-brand uppercase">
-				{auth.username?.[0] ?? '?'}
-			</span>
-			<span class="truncate text-sm text-muted">{auth.username}</span>
-		</div>
-		<div class="flex items-center">
-			<ThemeToggle />
-			<button
-				onclick={signOut}
-				class="grid size-11 place-items-center rounded-full text-faint transition hover:text-ink"
-				title="Sign out"
-				aria-label="Sign out"
-			>
-				<LogOut class="size-4" />
-			</button>
-		</div>
+	<div class="sticky bottom-0 mt-auto flex items-center justify-between gap-1 bg-canvas pt-3 pb-1">
+		<ProfileMenu up class="min-w-0 flex-1" />
+		<ThemeToggle />
 	</div>
 </aside>
 
