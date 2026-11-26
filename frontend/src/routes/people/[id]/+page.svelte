@@ -38,8 +38,8 @@
 						<ul class="space-y-0.5">
 							{#each a.characters as name, i (name)}
 								<li class="flex min-w-0 items-center gap-1.5">
-									<CharacterBubble src={a.character_images?.[i]} {name} class="size-6" />
-									<span class="truncate">{ROLE[a.role]} {name}</span>
+									<CharacterBubble src={a.character_images?.[i]} {name} class="size-9" />
+									<span class="line-clamp-2 break-words">{name}</span>
 								</li>
 							{/each}
 						</ul>

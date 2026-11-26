@@ -193,6 +193,7 @@ func (c *Catalog) gatherCredits(ctx context.Context, item Item) ([]creditRow, er
 				slog.WarnContext(ctx, "catalog: voice actors unavailable", "item", item.ID, "err", err)
 			}
 			rows = append(rows, voices...)
+			fillCharacterArt(rows)
 		}
 	}
 	return rows, nil

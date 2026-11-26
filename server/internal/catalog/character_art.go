@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"log/slog"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -49,6 +50,58 @@ func (c *Catalog) tvdbCharacterArt(ctx context.Context, item Item) map[string]st
 		}
 	}
 	return art
+}
+
+// fillCharacterArt gives cast rows without a character picture (TMDB has
+// none) the one from the voice rows, so an anime film's TMDB cast shows its
+// characters too. A character is matched by name or, since romanisations
+// differ ("Tanjiro", "Tanjirou"), through the actor: the same person's voice
+// row, when it is their only character here or shares a word of the name.
+func fillCharacterArt(rows []creditRow) {
+	byCharacter := map[string]string{}
+	byActor := map[string][]creditRow{}
+	for _, r := range rows {
+		if r.role != RoleVoice || r.charImage == "" {
+			continue
+		}
+		if key := characterKey(r.character); key != "" && byCharacter[key] == "" {
+			byCharacter[key] = r.charImage
+		}
+		if key := characterKey(r.name); key != "" {
+			byActor[key] = append(byActor[key], r)
+		}
+	}
+	for i, r := range rows {
+		if r.role != RoleCast || r.charImage != "" {
+			continue
+		}
+		name := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(r.character), "(voice)"))
+		if name == "" {
+			continue
+		}
+		if img := byCharacter[characterKey(name)]; img != "" {
+			rows[i].charImage = img
+			continue
+		}
+		voiced := byActor[characterKey(r.name)]
+		for _, v := range voiced {
+			if sharesWord(name, v.character) {
+				rows[i].charImage = v.charImage
+				break
+			}
+		}
+	}
+}
+
+// sharesWord reports whether two names have a whole word in common.
+func sharesWord(a, b string) bool {
+	words := strings.Fields(characterKey(b))
+	for _, w := range strings.Fields(characterKey(a)) {
+		if slices.Contains(words, w) {
+			return true
+		}
+	}
+	return false
 }
 
 // characterKey normalises a character name so "Luffy, Monkey D." and

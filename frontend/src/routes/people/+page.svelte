@@ -140,14 +140,16 @@
 									{@const meta = MEDIA[a.item.media_type]}
 									<li class="flex items-center gap-2 text-xs">
 										<Cover src={a.item.image} title={a.item.title} type={a.item.media_type} class="aspect-[2/3] w-5 shrink-0 !rounded-sm" />
-										<span class="min-w-0 truncate">
-											<span>{a.item.title}</span>
-											{#if a.characters.length}
-												<span class="text-faint"> {ROLE_LABEL[a.role]}</span>
-												{#if a.role !== 'crew'}
-													{#each a.characters.slice(0, 2) as name, i (name)}<CharacterBubble src={a.character_images?.[i]} {name} class="mr-0.5 ml-1 size-4" />{/each}
-												{/if}
-												<span class="text-faint">{a.characters.join(', ')}</span>
+										<span class="min-w-0 flex-1">
+											<span class="block truncate">{a.item.title}</span>
+											{#if a.characters.length && a.role !== 'crew'}
+												<!-- The character gets its own line, so the picture never squeezes the name out. -->
+												<span class="mt-0.5 flex min-w-0 items-center gap-1.5 text-faint">
+													{#each a.characters.slice(0, 2) as name, i (name)}<CharacterBubble src={a.character_images?.[i]} {name} class="size-6" />{/each}
+													<span class="truncate">{ROLE_LABEL[a.role]} {a.characters.join(', ')}</span>
+												</span>
+											{:else if a.characters.length}
+												<span class="block truncate text-faint">{a.characters.join(', ')}</span>
 											{/if}
 										</span>
 										<meta.icon class="ml-auto size-3 shrink-0" style="color: {meta.accent}" />
