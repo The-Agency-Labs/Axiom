@@ -22,8 +22,6 @@ export interface Item {
 	image: string;
 	season_number: number | null;
 	episode_number: number | null;
-	/** Release status of the title itself: ongoing, hiatus, ended, cancelled, upcoming. */
-	release_status?: string;
 }
 
 /** A completed season, for the year view of shows (GET /library/seasons). */

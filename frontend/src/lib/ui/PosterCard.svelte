@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ReleaseBadge from './ReleaseBadge.svelte';
 	import { Star } from '@lucide/svelte';
 	import Cover from '#lib/components/Cover.svelte';
 	import StatusBadge from './StatusBadge.svelte';
@@ -22,7 +21,6 @@
 		status,
 		score,
 		progress,
-		release,
 		overlay
 	}: {
 		href: string;
@@ -34,8 +32,6 @@
 		score?: number | null;
 		/** 0-100; shows a thin bar under the title. */
 		progress?: number | null;
-		/** Release status of the title itself (catalog.ReleaseStatus). */
-		release?: string | null;
 		overlay?: Snippet;
 	} = $props();
 </script>
@@ -55,9 +51,6 @@
 				>
 					<Star class="size-3 fill-amber-300 text-amber-300" />{score}
 				</span>
-			{/if}
-			{#if release && progress == null}
-				<ReleaseBadge status={release} onCover class="absolute bottom-2 left-2" />
 			{/if}
 			{#if progress != null}
 				<div class="absolute inset-x-2 bottom-2">

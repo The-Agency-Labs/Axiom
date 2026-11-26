@@ -426,7 +426,6 @@
 									status={isGame || status !== 'All' ? undefined : entry.status}
 									subtitle={subtitle(entry)}
 									score={entry.score}
-									release={entry.item.release_status}
 								/>
 							{/each}
 						</PosterGrid>
