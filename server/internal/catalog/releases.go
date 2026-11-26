@@ -456,7 +456,9 @@ func (c *Catalog) RefreshAllReleases(ctx context.Context) (int, error) {
 		case HasEpisodes(item) && item.Source == SourceTVDB:
 			// TVDB has no change feed: a show that is not over is re-synced
 			// (at most daily, SyncSeasons throttles) and its releases rebuilt.
-			changed = showOngoing(item)
+			// An ended show is still re-read weekly: shows come back (a new
+			// season announced flips TVDB's status back and adds the season).
+			changed = showOngoing(item) || refreshedBefore(item, now.Add(-EndedShowRecheck))
 		case HasEpisodes(item):
 			_, changed = tvChanged[item.ExternalID]
 		case IsMovie(item.Kind) && item.Source == SourceTMDB:
@@ -506,6 +508,19 @@ func latestRelease(rows []db.Release) time.Time {
 
 // showOngoing reports whether a show may still get episodes: its stored TVDB
 // status is anything but Ended.
+// EndedShowRecheck is how often a show TVDB lists as ended is re-read.
+const EndedShowRecheck = 7 * 24 * time.Hour
+
+// refreshedBefore reports whether the item's metadata is older than t (or was
+// never refreshed).
+func refreshedBefore(item Item, t time.Time) bool {
+	if !item.RefreshedAt.Valid {
+		return true
+	}
+	at, err := time.Parse(time.RFC3339, item.RefreshedAt.String)
+	return err != nil || at.Before(t)
+}
+
 func showOngoing(item Item) bool {
 	var meta struct {
 		Details struct {

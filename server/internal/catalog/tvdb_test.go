@@ -213,4 +213,25 @@ func TestTVDBShowReleasesAndOngoingRefresh(t *testing.T) {
 			t.Errorf("an ended show was re-synced: %v", env.TVDB.Calls)
 		}
 	}
+
+	// ...but it is re-read weekly: the show comes back with a new season
+	// (TVDB flips it to Continuing) and Encompass picks both up.
+	env.TVDB.AddShow("7000", "Friends",
+		catalogtest.Season{Number: 1, AirDate: "2024-05-01", Episodes: []catalogtest.Episode{
+			{ID: 1, Number: 1, AirDate: "2024-05-01", Name: "a"}, {ID: 2, Number: 2, AirDate: "2024-07-01", Name: "b"},
+			{ID: 3, Number: 3, AirDate: "2024-07-08", Name: "c"},
+		}},
+		catalogtest.Season{Number: 2, AirDate: "2026-01-01", Episodes: []catalogtest.Episode{{ID: 4, Number: 1, AirDate: "2026-01-01", Name: "d"}}})
+	env.TVDB.SetStatus("7000", "Continuing")
+	env.Advance(6 * 24 * 60 * 60 * 1e9) // 8 days since the last refresh
+	if _, err := env.Catalog.RefreshAllReleases(ctx); err != nil {
+		t.Fatal(err)
+	}
+	fresh, _ := env.Catalog.GetItem(ctx, item.ID)
+	if catalog.ReleaseStatusOfMeta(fresh.Kind, fresh.Meta, env.Now()) != catalog.ReleaseOngoing {
+		t.Errorf("status not refreshed: %s", fresh.Meta)
+	}
+	if rel, _ = env.Catalog.ItemReleases(ctx, item.ID); len(rel) != 4 {
+		t.Errorf("releases after the show came back = %d, want 4", len(rel))
+	}
 }
