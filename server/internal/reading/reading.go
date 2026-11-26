@@ -225,6 +225,10 @@ func (s *Service) IngestKOReader(ctx context.Context, userID int64, b KOBook, de
 	if err != nil {
 		return res, err
 	}
+	// The layout may have changed even when no row is new.
+	if err := s.MatchDevicePages(ctx, res.Document); err != nil {
+		return res, err
+	}
 	if res.Added > 0 {
 		if err := s.SyncLibraryProgress(ctx, res.Document); err != nil {
 			return res, err
@@ -367,10 +371,50 @@ func (s *Service) Get(ctx context.Context, userID, id int64) (Document, error) {
 	return doc, err
 }
 
+// MatchDevicePages gives the book a document is linked to the page count the
+// device uses for it, so the library's pages are the ones on the reader's
+// screen. It does nothing for an unlinked document.
+func (s *Service) MatchDevicePages(ctx context.Context, doc Document) error {
+	root, err := s.root(ctx, doc)
+	if err != nil || !root.ItemID.Valid {
+		return err
+	}
+	return s.MatchItemPages(ctx, root.ItemID.Int64)
+}
+
+// MatchItemPages is MatchDevicePages by book.
+func (s *Service) MatchItemPages(ctx context.Context, itemID int64) error {
+	if s.Library == nil {
+		return nil
+	}
+	pages, err := s.Q.ItemDevicePages(ctx, itemID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return s.Library.SetPageCount(ctx, itemID, pages.Int64)
+}
+
+// MatchAllDevicePages applies MatchItemPages to every linked book.
+func (s *Service) MatchAllDevicePages(ctx context.Context) error {
+	ids, err := s.Q.ListDevicePagedItems(ctx)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if err := s.MatchItemPages(ctx, id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SyncLibraryProgress mirrors a linked document's position onto the user's
-// Book entry (ports sync_library_progress). The percentage is carried over to
-// the edition's page count; without a KOSync position it is derived from the
-// furthest page KOReader reported. A new book starts In progress; a Planning
+// Book entry (ports sync_library_progress). The book takes the device's page
+// count first, then the position in those pages: the KOSync percentage, or
+// without one the furthest point KOReader's page events reached. A new book starts In progress; a Planning
 // one moves to In progress; Completed entries are left alone, and the
 // library's never-lower rule applies because the source is "koreader".
 func (s *Service) SyncLibraryProgress(ctx context.Context, doc Document) error {
@@ -379,6 +423,9 @@ func (s *Service) SyncLibraryProgress(ctx context.Context, doc Document) error {
 	}
 	root, err := s.root(ctx, doc)
 	if err != nil || !root.ItemID.Valid {
+		return err
+	}
+	if err := s.MatchItemPages(ctx, root.ItemID.Int64); err != nil {
 		return err
 	}
 	item, err := s.Catalog.GetItem(ctx, root.ItemID.Int64)
@@ -453,17 +500,11 @@ func (s *Service) position(ctx context.Context, doc Document) (float64, int64) {
 	if doc.Percentage.Valid {
 		return math.Max(0, math.Min(doc.Percentage.Float64, 1)), deviceTotal
 	}
-	m, err := s.Q.MaxDocumentPage(ctx, doc.ID)
-	if err != nil {
+	furthest, err := s.Q.FurthestDocumentFraction(ctx, doc.ID)
+	if err != nil || furthest <= 0 {
 		return -1, deviceTotal
 	}
-	if deviceTotal <= 0 {
-		deviceTotal = m.TotalPages
-	}
-	if m.Page <= 0 || deviceTotal <= 0 {
-		return -1, deviceTotal
-	}
-	return math.Min(float64(m.Page)/float64(deviceTotal), 1), deviceTotal
+	return math.Min(furthest, 1), deviceTotal
 }
 
 // LinkDocument links a document to a library item, backfills its sessions

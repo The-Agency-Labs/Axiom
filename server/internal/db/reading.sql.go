@@ -33,6 +33,21 @@ func (q *Queries) FirstDocumentSessionStart(ctx context.Context, documentID sql.
 	return started_at, err
 }
 
+const furthestDocumentFraction = `-- name: FurthestDocumentFraction :one
+SELECT CAST(COALESCE(MAX(CAST(e.page AS REAL) / COALESCE(NULLIF(e.total_pages, 0), d.total_pages)), -1) AS REAL) AS fraction
+FROM page_events e JOIN reading_documents d ON d.id = e.document_id
+WHERE e.document_id = ?
+`
+
+// How far into the file reading has reached, 0..1 (-1 with no page events),
+// each page measured against the page count of its own layout.
+func (q *Queries) FurthestDocumentFraction(ctx context.Context, documentID int64) (float64, error) {
+	row := q.db.QueryRowContext(ctx, furthestDocumentFraction, documentID)
+	var fraction float64
+	err := row.Scan(&fraction)
+	return fraction, err
+}
+
 const getBookNotes = `-- name: GetBookNotes :one
 SELECT entry_id, preview, predict, purpose, purpose_note, reflect, updated_at FROM book_notes WHERE entry_id = ?
 `
@@ -285,6 +300,23 @@ func (q *Queries) InsertReadingSession(ctx context.Context, arg InsertReadingSes
 	return i, err
 }
 
+const itemDevicePages = `-- name: ItemDevicePages :one
+SELECT d.total_pages FROM reading_documents d
+LEFT JOIN reading_documents r ON r.id = d.merged_into
+WHERE COALESCE(r.item_id, d.item_id) = CAST(?1 AS INTEGER) AND d.total_pages > 0
+ORDER BY COALESCE((SELECT MAX(e.start_time) FROM page_events e WHERE e.document_id = d.id), '') DESC, d.updated_at DESC, d.id DESC
+LIMIT 1
+`
+
+// The page count the reader's device uses for a linked book: that of the file
+// (linked to it, or merged into one that is) read most recently.
+func (q *Queries) ItemDevicePages(ctx context.Context, itemID int64) (sql.NullInt64, error) {
+	row := q.db.QueryRowContext(ctx, itemDevicePages, itemID)
+	var total_pages sql.NullInt64
+	err := row.Scan(&total_pages)
+	return total_pages, err
+}
+
 const lastDocumentSessionEnd = `-- name: LastDocumentSessionEnd :one
 SELECT ended_at FROM reading_sessions
 WHERE document_id = ?1
@@ -297,6 +329,35 @@ func (q *Queries) LastDocumentSessionEnd(ctx context.Context, documentID sql.Nul
 	var ended_at string
 	err := row.Scan(&ended_at)
 	return ended_at, err
+}
+
+const listDevicePagedItems = `-- name: ListDevicePagedItems :many
+SELECT DISTINCT CAST(COALESCE(r.item_id, d.item_id) AS INTEGER) AS item_id FROM reading_documents d
+LEFT JOIN reading_documents r ON r.id = d.merged_into
+WHERE COALESCE(r.item_id, d.item_id) IS NOT NULL AND d.total_pages > 0
+`
+
+func (q *Queries) ListDevicePagedItems(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listDevicePagedItems)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var item_id int64
+		if err := rows.Scan(&item_id); err != nil {
+			return nil, err
+		}
+		items = append(items, item_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listDocumentsMergedInto = `-- name: ListDocumentsMergedInto :many
@@ -617,23 +678,6 @@ type MarkReadingDocumentCheckedParams struct {
 func (q *Queries) MarkReadingDocumentChecked(ctx context.Context, arg MarkReadingDocumentCheckedParams) error {
 	_, err := q.db.ExecContext(ctx, markReadingDocumentChecked, arg.LinkCheckedAt, arg.ID)
 	return err
-}
-
-const maxDocumentPage = `-- name: MaxDocumentPage :one
-SELECT CAST(COALESCE(MAX(page), 0) AS INTEGER) AS page, CAST(COALESCE(MAX(total_pages), 0) AS INTEGER) AS total_pages
-FROM page_events WHERE document_id = ?
-`
-
-type MaxDocumentPageRow struct {
-	Page       int64 `json:"page"`
-	TotalPages int64 `json:"total_pages"`
-}
-
-func (q *Queries) MaxDocumentPage(ctx context.Context, documentID int64) (MaxDocumentPageRow, error) {
-	row := q.db.QueryRowContext(ctx, maxDocumentPage, documentID)
-	var i MaxDocumentPageRow
-	err := row.Scan(&i.Page, &i.TotalPages)
-	return i, err
 }
 
 const readingDocumentTotals = `-- name: ReadingDocumentTotals :many

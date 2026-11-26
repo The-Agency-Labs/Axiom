@@ -151,6 +151,18 @@ func (c *Catalog) RefreshItem(ctx context.Context, item Item) (Item, error) {
 	}
 	f := describe(item.Kind, meta)
 	err = c.tx(ctx, func(q *db.Queries) error {
+		// A book read on a device keeps the device's page count, not the edition's.
+		if item.Kind == KindBook {
+			if _, err := q.ItemDevicePages(ctx, item.ID); err == nil {
+				current, err := q.GetItem(ctx, item.ID)
+				if err != nil {
+					return err
+				}
+				f.total = current.Total
+			} else if !errors.Is(err, sql.ErrNoRows) {
+				return err
+			}
+		}
 		if err := q.UpdateItemMetadata(ctx, db.UpdateItemMetadataParams{
 			Title: f.title, NativeTitle: f.native, Image: f.image, Year: f.year, Synopsis: f.synopsis,
 			Total: f.total, Meta: f.meta, RefreshedAt: sql.NullString{String: Stamp(c.now()), Valid: true}, ID: item.ID,

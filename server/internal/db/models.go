@@ -300,6 +300,12 @@ type UserMediaSetting struct {
 	Status  string `json:"status"`
 }
 
+type UserProfile struct {
+	UserID      int64  `json:"user_id"`
+	DisplayName string `json:"display_name"`
+	Avatar      string `json:"avatar"`
+}
+
 type Watch struct {
 	ID        int64         `json:"id"`
 	EntryID   int64         `json:"entry_id"`

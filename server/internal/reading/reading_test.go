@@ -136,7 +136,7 @@ func linkedBook(t *testing.T, env *readingtest.Env, pages int) (catalog.Item, re
 func TestLinkSyncsProgressWithNeverLowerRule(t *testing.T) {
 	env := readingtest.NewEnv(t, t0)
 	item, doc := linkedBook(t, env, 500)
-	// KOReader reports page 150 of 300: 50 %.
+	// KOReader reports page 150 of 300; the edition has 500 pages.
 	if _, err := env.Reading.IngestKOReader(ctx, env.User, reading.KOBook{MD5: "h1", TotalPages: ptr(int64(300)), PageStats: []reading.PageStat{stat(150, t0.Add(-time.Hour), 60)}}, "Kindle"); err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +147,7 @@ func TestLinkSyncsProgressWithNeverLowerRule(t *testing.T) {
 		t.Fatal(err)
 	}
 	entry, err := env.Library.CurrentEntry(ctx, env.User, item.ID)
-	if err != nil || entry.Status != library.InProgress || entry.Progress != 250 || !entry.StartedAt.Valid {
+	if err != nil || entry.Status != library.InProgress || entry.Progress != 150 || !entry.StartedAt.Valid {
 		t.Fatalf("after link: %+v %v", entry, err)
 	}
 	rows, _ := env.Reading.ListSessions(ctx, env.User, t0.AddDate(0, 0, -1), t0, 10)
@@ -159,24 +159,24 @@ func TestLinkSyncsProgressWithNeverLowerRule(t *testing.T) {
 	if _, err := env.Reading.UpdateProgress(ctx, env.User, "H1", "xp://1", 0.2, "Kindle", "dev"); err != nil {
 		t.Fatal(err)
 	}
-	if entry, _ = env.Library.CurrentEntry(ctx, env.User, item.ID); entry.Progress != 250 {
+	if entry, _ = env.Library.CurrentEntry(ctx, env.User, item.ID); entry.Progress != 150 {
 		t.Errorf("progress lowered to %d", entry.Progress)
 	}
 	// 60 %: moves up.
 	env.Reading.UpdateProgress(ctx, env.User, "h1", "xp://2", 0.6, "Kindle", "dev")
-	if entry, _ = env.Library.CurrentEntry(ctx, env.User, item.ID); entry.Progress != 300 {
-		t.Errorf("progress = %d, want 300", entry.Progress)
+	if entry, _ = env.Library.CurrentEntry(ctx, env.User, item.ID); entry.Progress != 180 {
+		t.Errorf("progress = %d, want 180", entry.Progress)
 	}
-	// Finished (>= 99 %): completes at the edition's page count.
+	// Finished (>= 99 %): completes at the device's page count.
 	env.Reading.UpdateProgress(ctx, env.User, "h1", "xp://3", 0.995, "Kindle", "dev")
 	entry, _ = env.Library.CurrentEntry(ctx, env.User, item.ID)
-	if entry.Status != library.Completed || entry.Progress != 500 {
+	if entry.Status != library.Completed || entry.Progress != 300 {
 		t.Fatalf("completed? %+v", entry)
 	}
 	// Re-opening the book doesn't regress a finished entry.
 	env.Reading.UpdateProgress(ctx, env.User, "h1", "xp://0", 0.01, "Kindle", "dev")
 	entry, _ = env.Library.CurrentEntry(ctx, env.User, item.ID)
-	if entry.Status != library.Completed || entry.Progress != 500 {
+	if entry.Status != library.Completed || entry.Progress != 300 {
 		t.Errorf("finished entry regressed: %+v", entry)
 	}
 }
@@ -195,7 +195,7 @@ func TestKOReaderSyncMovesPlanningBookToInProgress(t *testing.T) {
 		t.Fatal(err)
 	}
 	entry, _ := env.Library.CurrentEntry(ctx, env.User, item.ID)
-	if entry.Status != library.InProgress || entry.Progress != 4 { // 3/300 of 400
+	if entry.Status != library.InProgress || entry.Progress != 3 { // page 3 of the device's 300
 		t.Errorf("entry = %+v", entry)
 	}
 }
@@ -508,7 +508,7 @@ func TestOnePageOpenIsNotASession(t *testing.T) {
 	if len(days) != 1 || days[0].Pages != 2 || days[0].Minutes != 4 {
 		t.Fatalf("journal = %+v", days)
 	}
-	if m, err := env.Q.MaxDocumentPage(ctx, res.Document.ID); err != nil || m.Page != 42 {
-		t.Fatalf("page events: %+v %v", m, err)
+	if rows, err := env.Q.ListPageEvents(ctx, res.Document.ID); err != nil || len(rows) != 3 {
+		t.Fatalf("page events: %+v %v", rows, err)
 	}
 }

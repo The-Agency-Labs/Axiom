@@ -176,3 +176,6 @@ ORDER BY finished_at DESC, i.title, es.season;
 
 -- name: DeleteEntrySeason :exec
 DELETE FROM entry_seasons WHERE entry_id = ? AND season = ?;
+
+-- name: UpdateEntryEventValues :exec
+UPDATE entry_events SET old = ?, new = ? WHERE id = ?;

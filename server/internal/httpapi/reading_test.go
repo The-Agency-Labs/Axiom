@@ -252,7 +252,7 @@ func TestKOSyncProgressUpdatesLinkedBook(t *testing.T) {
 	}
 	f.kosync("PUT", "/kosync/syncs/progress", map[string]any{"document": "h1", "progress": "p", "percentage": 0.5}, f.key)
 	e, err := f.env.Library.CurrentEntry(context.Background(), f.env.User, item.ID)
-	if err != nil || e.Status != library.InProgress || e.Progress != 250 {
+	if err != nil || e.Status != library.InProgress || e.Progress != 150 {
 		t.Errorf("entry = %+v %v", e, err)
 	}
 }
@@ -634,8 +634,8 @@ func TestBookNotesEndpoints(t *testing.T) {
 }
 
 // The plugin sends the open book's table of contents in KOReader's layout
-// (200 pages); the library shows the edition's pages (500). The chapter
-// follows the position, not the page number.
+// (200 pages); the linked book takes that page count, not the edition's 500,
+// and the chapter follows the position in it.
 func TestBookChapterFromKOReaderTOC(t *testing.T) {
 	f := newReadingFixture(t)
 	ctx := context.Background()
@@ -659,11 +659,11 @@ func TestBookChapterFromKOReaderTOC(t *testing.T) {
 
 	// Exactly at the start of chapter 3 is chapter 2's last page.
 	f.kosync("PUT", "/kosync/syncs/progress", map[string]any{"document": "h1", "progress": "p", "percentage": 0.5}, f.key)
-	if c, _ := f.api("GET", "/reading/chapters", nil).obj(t)[fmt.Sprint(item.ID)].(map[string]any); c["chapter"] != "Chapter 2" || c["page"] != float64(250) {
+	if c, _ := f.api("GET", "/reading/chapters", nil).obj(t)[fmt.Sprint(item.ID)].(map[string]any); c["chapter"] != "Chapter 2" || c["page"] != float64(100) {
 		t.Fatalf("at 50%% = %v", c)
 	}
 	f.kosync("PUT", "/kosync/syncs/progress", map[string]any{"document": "h1", "progress": "p", "percentage": 0.6}, f.key)
-	if c, _ := f.api("GET", "/reading/chapters", nil).obj(t)[fmt.Sprint(item.ID)].(map[string]any); c["chapter"] != "Chapter 3" || c["page"] != float64(300) {
+	if c, _ := f.api("GET", "/reading/chapters", nil).obj(t)[fmt.Sprint(item.ID)].(map[string]any); c["chapter"] != "Chapter 3" || c["page"] != float64(120) {
 		t.Fatalf("at 60%% = %v", c)
 	}
 }

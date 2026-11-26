@@ -32,6 +32,31 @@ func (s *Server) libraryMetadata(ctx context.Context, kind, source, id string, s
 	return s.Catalog.Reg.Metadata(ctx, kind, source, id)
 }
 
+// useDevicePages shows a book's length as the reader's device counts it.
+func (s *Server) useDevicePages(ctx context.Context, source, id string, meta catalog.Metadata) error {
+	item, err := s.Queries.GetItemByKey(ctx, db.GetItemByKeyParams{Source: source, ExternalID: id, Kind: catalog.KindBook})
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	pages, err := s.Queries.ItemDevicePages(ctx, item.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	meta["max_progress"] = pages.Int64
+	if d, ok := meta["details"].(map[string]any); ok {
+		if _, has := d["number_of_pages"]; has {
+			d["number_of_pages"] = pages.Int64
+		}
+	}
+	return nil
+}
+
 // libraryEntryOf loads an entry of the user and checks it is of the media type in the URL.
 func (s *Server) libraryEntryOf(ctx context.Context, userID int64, kind string, id int64) (db.Entry, db.Item, error) {
 	row, err := s.Queries.GetEntryWithItem(ctx, db.GetEntryWithItemParams{ID: id, UserID: userID})
@@ -100,6 +125,11 @@ func (s *Server) libraryRegisterEntries(mux *http.ServeMux) {
 		meta, err := s.libraryMetadata(r.Context(), kind, source, r.PathValue("media_id"), season)
 		if err != nil {
 			return nil, libraryError(err, source)
+		}
+		if kind == catalog.KindBook {
+			if err := s.useDevicePages(r.Context(), source, r.PathValue("media_id"), meta); err != nil {
+				return nil, err
+			}
 		}
 		if season == nil {
 			if d, ok := meta["details"].(map[string]any); ok {

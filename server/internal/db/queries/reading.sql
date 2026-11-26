@@ -57,10 +57,6 @@ ON CONFLICT (document_id, page, start_time) DO NOTHING;
 -- name: ListPageEvents :many
 SELECT * FROM page_events WHERE document_id = ? ORDER BY start_time, id;
 
--- name: MaxDocumentPage :one
-SELECT CAST(COALESCE(MAX(page), 0) AS INTEGER) AS page, CAST(COALESCE(MAX(total_pages), 0) AS INTEGER) AS total_pages
-FROM page_events WHERE document_id = ?;
-
 -- name: DeleteKOReaderSessions :exec
 DELETE FROM reading_sessions WHERE document_id = ? AND source = 'koreader';
 
@@ -132,3 +128,24 @@ JOIN reading_documents d ON d.id = t.document_id
 LEFT JOIN reading_documents r ON r.id = d.merged_into
 WHERE d.user_id = ? AND COALESCE(r.item_id, d.item_id) IS NOT NULL
 ORDER BY t.updated_at DESC;
+
+-- name: ItemDevicePages :one
+-- The page count the reader's device uses for a linked book: that of the file
+-- (linked to it, or merged into one that is) read most recently.
+SELECT d.total_pages FROM reading_documents d
+LEFT JOIN reading_documents r ON r.id = d.merged_into
+WHERE COALESCE(r.item_id, d.item_id) = CAST(sqlc.arg(item_id) AS INTEGER) AND d.total_pages > 0
+ORDER BY COALESCE((SELECT MAX(e.start_time) FROM page_events e WHERE e.document_id = d.id), '') DESC, d.updated_at DESC, d.id DESC
+LIMIT 1;
+
+-- name: ListDevicePagedItems :many
+SELECT DISTINCT CAST(COALESCE(r.item_id, d.item_id) AS INTEGER) AS item_id FROM reading_documents d
+LEFT JOIN reading_documents r ON r.id = d.merged_into
+WHERE COALESCE(r.item_id, d.item_id) IS NOT NULL AND d.total_pages > 0;
+
+-- name: FurthestDocumentFraction :one
+-- How far into the file reading has reached, 0..1 (-1 with no page events),
+-- each page measured against the page count of its own layout.
+SELECT CAST(COALESCE(MAX(CAST(e.page AS REAL) / COALESCE(NULLIF(e.total_pages, 0), d.total_pages)), -1) AS REAL) AS fraction
+FROM page_events e JOIN reading_documents d ON d.id = e.document_id
+WHERE e.document_id = ?;

@@ -117,6 +117,10 @@ func serve() error {
 	// Kindle documents never tried against the book providers get linked in the background.
 	readingSvc := reading.New(conn, queries, cat, lib)
 	readingSvc.RegisterJobs(jobMgr)
+	// Books read on a device carry its page count (idempotent; covers books linked before it did).
+	if err := readingSvc.MatchAllDevicePages(ctx); err != nil {
+		slog.Warn("matching device page counts", "err", err)
+	}
 	jobMgr.Every("session-cleanup", time.Hour, func(ctx context.Context) error {
 		_, err := authSvc.CleanupSessions(ctx)
 		return err

@@ -1211,6 +1211,21 @@ func (q *Queries) UpdateEntry(ctx context.Context, arg UpdateEntryParams) error 
 	return err
 }
 
+const updateEntryEventValues = `-- name: UpdateEntryEventValues :exec
+UPDATE entry_events SET old = ?, new = ? WHERE id = ?
+`
+
+type UpdateEntryEventValuesParams struct {
+	Old sql.NullString `json:"old"`
+	New sql.NullString `json:"new"`
+	ID  int64          `json:"id"`
+}
+
+func (q *Queries) UpdateEntryEventValues(ctx context.Context, arg UpdateEntryEventValuesParams) error {
+	_, err := q.db.ExecContext(ctx, updateEntryEventValues, arg.Old, arg.New, arg.ID)
+	return err
+}
+
 const updateWatchNotes = `-- name: UpdateWatchNotes :exec
 UPDATE watches SET notes = ? WHERE id = ?
 `

@@ -54,13 +54,18 @@ func (s *Service) SaveTOC(ctx context.Context, userID int64, md5 string, f DocFi
 	if err != nil {
 		return err
 	}
-	return s.tx(ctx, func(q *db.Queries) error {
-		doc, _, err := getOrCreateDocument(ctx, q, userID, md5, f, s.now())
-		if err != nil {
+	var doc Document
+	err = s.tx(ctx, func(q *db.Queries) error {
+		var err error
+		if doc, _, err = getOrCreateDocument(ctx, q, userID, md5, f, s.now()); err != nil {
 			return err
 		}
 		return q.UpsertDocumentTOC(ctx, db.UpsertDocumentTOCParams{DocumentID: doc.ID, Chapters: string(raw), UpdatedAt: Stamp(s.now())})
 	})
+	if err != nil {
+		return err
+	}
+	return s.MatchDevicePages(ctx, doc) // this upload carries the current page count
 }
 
 // ChapterAt is the chapter a book in progress is in, at the page the library
