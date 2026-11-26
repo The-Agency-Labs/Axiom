@@ -4,7 +4,7 @@
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import SortSheet from '#lib/components/library/SortSheet.svelte';
-	import { hasEpisodes, isMediaType, MEDIA, progressLabel, STATUS_COLOR, STATUSES, titleHref } from '#lib/media.ts';
+	import { hasEpisodes, isMediaType, MEDIA, NO_STATUS, progressLabel, STATUS_COLOR, STATUSES, titleHref, yearView } from '#lib/media.ts';
 	import { onSynced } from '#lib/offline.svelte.ts';
 	import { settings, typeDefaults } from '#lib/settings.svelte.ts';
 	import type { Entry, LibraryResponse, MediaType, SeasonFinished, Status } from '#lib/types.ts';
@@ -28,7 +28,8 @@
 	const valid = $derived(isMediaType(type));
 	const meta = $derived(valid ? MEDIA[type] : MEDIA.tv);
 	// Games are just a list: no status, and "the year" is the year added.
-	const isGame = $derived(type === 'game');
+	const isGame = $derived(NO_STATUS.has(type)); // games and board games: no status
+	const yv = $derived(yearView(type));
 
 	let entries = $state<Entry[] | null>(null);
 	let years = $state<number[]>([]);
@@ -43,7 +44,24 @@
 	// Keep the user's choices once they touch a control; otherwise follow the per-type defaults.
 	let touched = $state(false);
 	// Shows by year are by season: each season under the year it was finished, with its own art.
-	const seasonView = $derived((type === 'tv' || type === 'anime') && sort === 'year');
+	const hasSeasons = $derived((type === 'tv' || type === 'anime') && sort === 'year');
+	let bySeason = $state(false);
+	const seasonView = $derived(hasSeasons && bySeason);
+	$effect(() => {
+		try {
+			bySeason = localStorage.getItem(`encompass-by-season-${type}`) === '1';
+		} catch {
+			bySeason = false;
+		}
+	});
+	function setBySeason(v: boolean) {
+		bySeason = v;
+		try {
+			localStorage.setItem(`encompass-by-season-${type}`, v ? '1' : '0');
+		} catch {
+			/* storage unavailable */
+		}
+	}
 	let seasons = $state<SeasonFinished[] | null>(null);
 	// Year headings fold: the newest year starts open, the rest closed; choices are kept per type.
 	let folds = $state<Record<string, boolean>>({});
@@ -213,14 +231,14 @@
 	const visible = $derived(sorted.slice(0, shown));
 
 	/** The date that files an entry under a year: finished, or added for games. */
-	const yearDate = (e: Entry) => (isGame ? e.created_at : e.end_date);
+	const yearDate = (e: Entry) => (yv.added ? e.created_at : e.end_date);
 	/** With the "year" sort the list is split under year headings (newest first). */
 	const groups = $derived.by(() => {
 		if (sort !== 'year') return [{ label: '', entries: visible }];
 		const out: { label: string; entries: Entry[] }[] = [];
 		for (const e of sorted) {
 			const d = yearDate(e);
-			const label = d ? d.slice(0, 4) : 'No finish date';
+			const label = d ? d.slice(0, 4) : yv.missing;
 			if (out.at(-1)?.label !== label) out.push({ label, entries: [] });
 			out.at(-1)!.entries.push(e);
 		}
@@ -312,6 +330,19 @@
 			{/if}
 		</div>
 
+		{#if hasSeasons}
+			<div class="mt-3 inline-flex rounded-xl border border-line bg-surface p-0.5 text-sm" role="radiogroup" aria-label="Show">
+				{#each [[false, 'Shows'], [true, 'Seasons']] as const as [v, label] (label)}
+					<button
+						type="button"
+						role="radio"
+						aria-checked={bySeason === v}
+						class="min-h-9 rounded-[10px] px-3 font-medium {bySeason === v ? 'bg-ink/10 text-ink' : 'text-muted hover:text-ink'}"
+						onclick={() => setBySeason(v)}>{label}</button
+					>
+				{/each}
+			</div>
+		{/if}
 		{#if !isGame && !seasonView}<ChipRow label="Status">
 			{#each CHIPS as s (s)}
 				<Chip
@@ -476,7 +507,7 @@
 		</div>
 	</PullToRefresh>
 
-	<SortSheet bind:open={sortOpen} bind:value={sort} onpick={() => (touched = true)} />
+	<SortSheet bind:open={sortOpen} bind:value={sort} kind={type} onpick={() => (touched = true)} />
 {/if}
 
 {#snippet yearHeader(label: string, count: number, i: number)}

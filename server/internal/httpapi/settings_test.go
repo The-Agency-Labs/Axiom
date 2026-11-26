@@ -18,7 +18,7 @@ func TestSettingsGetDefaults(t *testing.T) {
 		mm := m.(map[string]any)
 		kinds = append(kinds, mm["kind"].(string))
 		wantStatus := "Completed" // finished titles by year finished
-		if mm["kind"] == "game" {
+		if mm["kind"] == "game" || mm["kind"] == "boardgame" {
 			wantStatus = "All" // games have no status
 		}
 		if mm["enabled"] != true || mm["sort"] != "year" || mm["status"] != wantStatus {

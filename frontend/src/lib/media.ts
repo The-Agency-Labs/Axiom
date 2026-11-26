@@ -267,6 +267,27 @@ export const RELEASE_STATUS: Record<string, { label: string; color: string }> = 
 	upcoming: { label: 'Coming soon', color: '#60a5fa' }
 };
 
+/** Kinds with no status: you don't finish a game or a board game, you own and play them. */
+export const NO_STATUS = new Set<string>(['game', 'boardgame']);
+
+/** What "year" means in each kind's year view, and the heading for entries without that date. */
+export function yearView(kind: string): { label: string; missing: string; added: boolean } {
+	switch (kind) {
+		case 'movie':
+		case 'anime_movie':
+			return { label: 'Year watched', missing: 'Not watched yet', added: false };
+		case 'book':
+		case 'manga':
+		case 'comic':
+			return { label: 'Year read', missing: 'Not finished', added: false };
+		case 'game':
+		case 'boardgame':
+			return { label: 'Year added', missing: '', added: true };
+		default:
+			return { label: 'Year finished', missing: 'Not finished', added: false };
+	}
+}
+
 export const SORTS: [string, string][] = [
   ["year", "Year finished"],
   ["activity", "Recent activity"],

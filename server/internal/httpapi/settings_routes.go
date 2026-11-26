@@ -73,8 +73,8 @@ func (s *Server) settingsMediaTypes(ctx context.Context, userID int64) ([]settin
 	out := make([]settingsMedia, 0, len(catalog.Kinds))
 	for _, k := range catalog.Kinds {
 		m := settingsMedia{Kind: k, Enabled: true, Sort: settingsDefaultSort, Status: settingsDefaultStatus}
-		if k == catalog.KindGame {
-			m.Status = "All"
+		if k == catalog.KindGame || k == catalog.KindBoardgame {
+			m.Status = "All" // no status: games and board games are owned and played, not finished
 		}
 		if r, ok := have[k]; ok {
 			m = settingsMedia{Kind: k, Enabled: r.Enabled != 0, Sort: r.Sort, Status: r.Status}
