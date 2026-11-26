@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { BookOpen, CalendarDays, CheckCheck, Clock, Flame, Layers, Share2, Star } from '@lucide/svelte';
+	import { BookOpen, CalendarDays, CheckCheck, Clock, Flame, Hourglass, Layers, Share2, Star } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { get } from '#lib/api.ts';
@@ -72,6 +72,12 @@
 				icon: Clock
 			},
 			{
+				label: 'Time reading',
+				value: r?.minutes ? minutesLabel(r.minutes).replace(/ \d+m$/, '') : '-',
+				sub: r?.minutes ? `${minutesLabel(r.minutes)} · ${r.sessions} session${r.sessions === 1 ? '' : 's'}` : 'no reading time logged',
+				icon: Hourglass
+			},
+			{
 				label: 'Pages read',
 				value: r ? r.pages.toLocaleString() : '-',
 				sub: r ? `${r.days_read} days · best streak ${r.longest_streak}` : 'no reading logged',
@@ -130,14 +136,14 @@
 	{#if error}
 		<EmptyState icon={CalendarDays} title="Could not build this year" description={error} />
 	{:else if !data}
-		<div class="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-hidden="true">
-			{#each [0, 1, 2, 3] as i (i)}<Skeleton class="h-28 w-full" />{/each}
+		<div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5" aria-hidden="true">
+			{#each [0, 1, 2, 3, 4] as i (i)}<Skeleton class="h-28 w-full" />{/each}
 		</div>
 		<Skeleton class="mt-6 h-64 w-full" />
 	{:else if !sections.length && !data.reading?.pages}
 		<EmptyState icon={CalendarDays} title="Nothing tracked in {year}" description="Finish or progress something and it will show up here." />
 	{:else}
-		<div class="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+		<div class="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
 			{#each headline as card (card.label)}
 				<div class="rounded-[var(--radius-card)] border border-line bg-surface p-4">
 					<p class="flex items-center gap-1.5 text-xs text-muted"><card.icon class="size-3.5" />{card.label}</p>

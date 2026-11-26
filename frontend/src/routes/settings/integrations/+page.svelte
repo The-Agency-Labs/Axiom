@@ -27,6 +27,7 @@
 	let busy = $state<string | null>(null);
 	let preview = $state<DryRun | null>(null);
 	let steamId = $state('');
+	let malUser = $state('');
 	let fileInput = $state<HTMLInputElement>();
 	let poll: ReturnType<typeof setTimeout> | undefined;
 
@@ -36,6 +37,7 @@
 	const anilist = $derived(by('anilist'));
 	const goodreads = $derived(by('goodreads'));
 	const steam = $derived(by('steam'));
+	const mal = $derived(by('mal'));
 	const lastRun = (name: string) => by(name)?.status?.last_run ?? '';
 
 	async function load() {
@@ -43,7 +45,7 @@
 			sources = await get<Source[]>('/sources');
 			error = '';
 		} catch {
-			error = 'Could not load sources.';
+			error = 'Could not load integrations.';
 		}
 	}
 
@@ -97,6 +99,11 @@
 		await run('steam-id', 'Steam import', 'steam', () => post('/imports/steam', { steam_id: steamId.trim() }));
 	}
 
+	async function importMal(e: SubmitEvent) {
+		e.preventDefault();
+		await run('mal', 'MyAnimeList import', 'mal', () => post('/imports/mal', { username: malUser.trim() }));
+	}
+
 	async function pickFile(e: Event) {
 		const file = (e.currentTarget as HTMLInputElement).files?.[0];
 		if (!file) return;
@@ -112,13 +119,13 @@
 	});
 </script>
 
-<svelte:head><title>Sources · Encompass</title></svelte:head>
+<svelte:head><title>Integrations · Encompass</title></svelte:head>
 
-<a href="/more" class="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-muted hover:text-ink lg:hidden">
-	<ChevronLeft class="size-4" /> More
+<a href="/settings" class="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-muted hover:text-ink">
+	<ChevronLeft class="size-4" /> Settings
 </a>
-<h1 class="mb-1 text-3xl font-semibold tracking-tight">Sources</h1>
-<p class="mb-6 text-sm text-muted">Where your library gets its data from, and how the last import went.</p>
+<h1 class="mb-1 text-3xl font-semibold tracking-tight">Integrations</h1>
+<p class="mb-6 text-sm text-muted">Import media from other services, and see how the last import went.</p>
 
 <PullToRefresh onrefresh={load}>
 	{#if error}
@@ -156,7 +163,7 @@
 						{#if !hook.status}
 							<p class="mt-3 text-[0.8125rem] text-muted">No event received yet.</p>
 						{/if}
-						<p class="mt-1 text-[0.8125rem]"><a class="inline-flex min-h-11 items-center text-brand underline-offset-2 hover:underline" href="/settings#integrations">Get your webhook URL in Settings</a></p>
+						<p class="mt-1 text-[0.8125rem]"><a class="inline-flex min-h-11 items-center text-brand underline-offset-2 hover:underline" href="/settings#webhooks">Get your webhook URL in Settings</a></p>
 					{/snippet}
 				</SourceCard>
 			{/if}
@@ -192,6 +199,28 @@
 					{#snippet actions()}
 						<Button icon={RefreshCw} loading={busy === 'anilist'} onclick={syncAnilist}>Sync now</Button>
 						<Button variant="ghost" icon={Eye} loading={busy === 'anilist-preview'} onclick={previewAnilist}>Preview changes</Button>
+					{/snippet}
+				</SourceCard>
+			{/if}
+
+			{#if mal}
+				<SourceCard
+					title="MyAnimeList"
+					subtitle="Import your public anime and manga list"
+					icon={Sparkles}
+					accent="var(--color-type-anime)"
+					configured={mal.configured}
+					status={mal.status}
+					hint="Ask the server admin to set MAL_API."
+				>
+					{#snippet extra()}
+						{#if mal.configured}
+							<form onsubmit={importMal} class="mt-3 flex gap-2">
+								<input class="input min-w-0 flex-1" bind:value={malUser} required minlength="2" maxlength="16" placeholder="MyAnimeList username" aria-label="MyAnimeList username" autocapitalize="none" autocomplete="off" />
+								<Button type="submit" variant="primary" icon={Upload} loading={busy === 'mal'}>Import</Button>
+							</form>
+							<p class="mt-2 text-[0.75rem] text-faint">Your list must be public. Re-importing only adds entries and moves progress forward.</p>
+						{/if}
 					{/snippet}
 				</SourceCard>
 			{/if}

@@ -284,7 +284,7 @@ func TestPeoplePerson(t *testing.T) {
 		t.Fatalf("elsewhere %v", out)
 	}
 	planned := obj(out[0])
-	if obj(planned["entry"])["status"] != "Planning" || planned["language"] != "" || len(arr(planned["character_images"])) != 0 {
+	if obj(planned["entry"])["status"] != "Planning" || planned["language"] != "" || len(arr(planned["character_images"])) != len(arr(planned["characters"])) {
 		t.Errorf("planned row %v", planned)
 	}
 

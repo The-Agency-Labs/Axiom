@@ -8,6 +8,7 @@ import (
 	"github.com/the-agency-labs/encompass/server/internal/integrations"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/anilist"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/goodreads"
+	"github.com/the-agency-labs/encompass/server/internal/integrations/mal"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/sourcestatus"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/steam"
 )
@@ -40,6 +41,7 @@ func (s *Server) sourcesRoutes(mux *http.ServeMux) {
 			{Name: "jellyfin_webhook", Kinds: showKinds, Configured: true}, // every user has a webhook token
 			{Name: anilist.SourceName, Kinds: []string{"anime", "anime_movie", "manga"},
 				Configured: sourcestatus.HasLocal(sourcestatus.ParsePairs(cfg.AniListUsers), user.Username)},
+			{Name: mal.SourceName, Kinds: []string{"anime", "anime_movie", "manga"}, Configured: cfg.MALKey != ""},
 			{Name: goodreads.SourceName, Kinds: []string{"book"}, Configured: true},
 			{Name: steam.SourceName, Kinds: []string{"game"}, Configured: cfg.SteamKey != ""},
 		}

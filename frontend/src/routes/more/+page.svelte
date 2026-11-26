@@ -2,9 +2,7 @@
 	import {
 		Activity,
 		CalendarDays,
-		CalendarRange,
 		LogOut,
-		RefreshCw,
 		Settings,
 		UsersRound
 	} from '@lucide/svelte';
@@ -20,15 +18,13 @@
 		{
 			title: 'Account',
 			links: [
-				{ href: '/settings', label: 'Settings', sub: 'Media types, theme, tokens, integrations', icon: Settings, tint: 'var(--color-brand)' },
-				{ href: '/sources', label: 'Sources', sub: 'Jellyfin, AniList, Goodreads, Steam', icon: RefreshCw, tint: 'var(--color-type-tv)' }
+				{ href: '/settings', label: 'Settings', sub: 'Media types, theme, tokens, integrations and imports', icon: Settings, tint: 'var(--color-brand)' }
 			]
 		},
 		{
 			title: 'Explore',
 			links: [
 				{ href: '/activity', label: 'Activity', sub: 'Everything you logged, newest first', icon: Activity, tint: 'var(--color-type-game)' },
-				{ href: '/calendar', label: 'Calendar', sub: 'Upcoming episodes and releases', icon: CalendarRange, tint: 'var(--color-type-manga)' },
 				{ href: '/people', label: 'People', sub: 'Actors and voice actors in your library', icon: UsersRound, tint: 'var(--color-type-boardgame)' },
 				{ href: '/year', label: 'Year in review', sub: 'Your year in numbers', icon: CalendarDays, tint: 'var(--color-type-anime)' }
 			]

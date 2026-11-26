@@ -89,6 +89,15 @@ type entry struct {
 	Media       media     `json:"media"`
 }
 
+// Entry, Media and FuzzyDate are the list shapes importers of other services
+// fill in to reuse this importer (statuses are AniList's: CURRENT, REPEATING,
+// COMPLETED, PAUSED, DROPPED, PLANNING).
+type (
+	Entry     = entry
+	Media     = media
+	FuzzyDate = fuzzyDate
+)
+
 type media struct {
 	ID       int64  `json:"id"`
 	IDMal    *int64 `json:"idMal"`
@@ -181,6 +190,9 @@ type Options struct {
 	Since *time.Time
 	// DryRun computes what would change and writes nothing to the library.
 	DryRun bool
+	// Source labels the history the run writes (default "anilist"); the MyAnimeList
+	// importer reuses this one and sets "mal".
+	Source string
 }
 
 // Change is one thing a dry run would do.
@@ -238,6 +250,13 @@ type run struct {
 	latest time.Time
 }
 
+func (r *run) src() string {
+	if r.opts.Source != "" {
+		return r.opts.Source
+	}
+	return Source
+}
+
 func (r *run) warn(format string, args ...any) {
 	r.res.Warnings = append(r.res.Warnings, fmt.Sprintf(format, args...))
 }
@@ -261,6 +280,12 @@ func (im *Importer) Run(ctx context.Context, userID int64, username string, opts
 	if err != nil {
 		return nil, err
 	}
+	return im.RunEntries(ctx, userID, anime, manga, opts)
+}
+
+// RunEntries imports already-fetched list entries (see Entry). It is what Run
+// does after reading AniList, and what the MyAnimeList importer feeds.
+func (im *Importer) RunEntries(ctx context.Context, userID int64, anime, manga []Entry, opts Options) (*Result, error) {
 	r := &run{
 		im: im, userID: userID, opts: opts, now: im.now(), loc: im.loc(),
 		res:      &Result{DryRun: opts.DryRun, Counts: map[string]int{}, Warnings: []string{}},
@@ -364,9 +389,11 @@ func (r *run) isNew(e entry) bool {
 
 // mapping finds the Fribb row of a media by AniList id, then MAL id.
 func (r *run) mapping(ctx context.Context, m media) (*mappings.Mapping, error) {
-	row, err := r.im.Mappings.Lookup(ctx, "anilist", strconv.FormatInt(m.ID, 10))
-	if err != nil || row != nil {
-		return row, err
+	if m.ID != 0 {
+		row, err := r.im.Mappings.Lookup(ctx, "anilist", strconv.FormatInt(m.ID, 10))
+		if err != nil || row != nil {
+			return row, err
+		}
 	}
 	if m.IDMal != nil && *m.IDMal != 0 {
 		return r.im.Mappings.Lookup(ctx, "mal", strconv.FormatInt(*m.IDMal, 10))
@@ -483,7 +510,7 @@ func (r *run) importShow(ctx context.Context, e entry, m *mappings.Mapping) (boo
 		}
 		r.change("show", item.Title, "start tracking as "+status)
 		if !r.opts.DryRun {
-			if entryRow, err = r.im.Library.Track(ctx, r.userID, item.ID, status, Source, r.now); err != nil {
+			if entryRow, err = r.im.Library.Track(ctx, r.userID, item.ID, status, r.src(), r.now); err != nil {
 				return false, err
 			}
 			hasEntry = true
@@ -533,7 +560,7 @@ func (r *run) importShow(ctx context.Context, e entry, m *mappings.Mapping) (boo
 			continue
 		}
 		at := func(ep db.ItemEpisode) time.Time { return r.watchDate(e, parseDay(ep.AirDate.String)) }
-		n, err := r.im.Library.WatchPositions(ctx, r.userID, item.ID, season, positions, at, Source)
+		n, err := r.im.Library.WatchPositions(ctx, r.userID, item.ID, season, positions, at, r.src())
 		r.count("episodes", n)
 		if err != nil {
 			return true, err
@@ -567,7 +594,7 @@ func (r *run) finishShows(ctx context.Context) {
 		if !watching {
 			continue
 		}
-		if err := r.im.Library.SetStatus(ctx, r.userID, item.ID, library.InProgress, Source, r.now); err != nil {
+		if err := r.im.Library.SetStatus(ctx, r.userID, item.ID, library.InProgress, r.src(), r.now); err != nil {
 			r.warn("%s: %v", item.Title, err)
 		}
 	}
@@ -606,7 +633,7 @@ func (r *run) importMovie(ctx context.Context, e entry, tmdbID int64) error {
 		return nil
 	}
 	if done {
-		res, err := r.im.Library.WatchMovie(ctx, r.userID, item.ID, r.watchDate(e, e.Media.StartDate.day()), Source, library.WatchOptions{Import: true})
+		res, err := r.im.Library.WatchMovie(ctx, r.userID, item.ID, r.watchDate(e, e.Media.StartDate.day()), r.src(), library.WatchOptions{Import: true})
 		if err != nil {
 			return err
 		}
@@ -615,7 +642,7 @@ func (r *run) importMovie(ctx context.Context, e entry, tmdbID int64) error {
 		}
 		return nil
 	}
-	changed, err := r.im.Library.SyncEntry(ctx, r.userID, item.ID, library.SyncValues{Status: status}, Source, r.now)
+	changed, err := r.im.Library.SyncEntry(ctx, r.userID, item.ID, library.SyncValues{Status: status}, r.src(), r.now)
 	if err != nil {
 		return err
 	}
@@ -692,7 +719,10 @@ func (r *run) countItem(ctx context.Context, e entry, kind string) (*catalog.Ite
 		return nil, err
 	}
 	// Both ids resolve to the item.
-	ids := [][2]string{{catalog.SourceAniList, strconv.FormatInt(e.Media.ID, 10)}}
+	var ids [][2]string
+	if e.Media.ID != 0 {
+		ids = append(ids, [2]string{catalog.SourceAniList, strconv.FormatInt(e.Media.ID, 10)})
+	}
 	if e.Media.IDMal != nil && *e.Media.IDMal != 0 {
 		ids = append(ids, [2]string{catalog.SourceMAL, strconv.FormatInt(*e.Media.IDMal, 10)})
 	}
@@ -746,7 +776,7 @@ func (r *run) syncCount(ctx context.Context, e entry, kind string) error {
 		}
 		return nil
 	}
-	_, err = r.im.Library.SyncEntry(ctx, r.userID, item.ID, v, Source, at)
+	_, err = r.im.Library.SyncEntry(ctx, r.userID, item.ID, v, r.src(), at)
 	return err
 }
 

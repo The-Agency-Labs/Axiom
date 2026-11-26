@@ -1,17 +1,16 @@
 <script lang="ts">
-	import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Tv } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
 	import { isoDate, parseDay } from '#lib/components/reading/format.ts';
 	import type { CalendarEvent } from '#lib/components/reading/types.ts';
-	import { MEDIA, LIBRARY_TYPES, titleHref } from '#lib/media.ts';
+	import { MEDIA, titleHref } from '#lib/media.ts';
 	import { loadSettings, settings } from '#lib/settings.svelte.ts';
-	import type { MediaType } from '#lib/types.ts';
-	import { Button, Chip, ChipRow, CopyField, EmptyState, IconButton, PullToRefresh, Sheet, Skeleton, Tabs } from '#lib/ui/index.ts';
+	import type { SearchResult } from '#lib/types.ts';
+	import { Button, Chip, ChipRow, CopyField, EmptyState, IconButton, PosterCard, PosterGrid, PullToRefresh, Sheet, Skeleton, Tabs } from '#lib/ui/index.ts';
 
 	let view = $state('agenda');
 	let events = $state<CalendarEvent[] | null>(null);
-	let hidden = $state<Set<MediaType>>(new Set());
 	let showPast = $state(false);
 	let subscribeOpen = $state(false);
 
@@ -35,7 +34,67 @@
 		return { start: isoDate(s), end: isoDate(e) };
 	}
 
+	interface SeasonRef {
+		season: string;
+		year: number;
+		label: string;
+	}
+	interface SeasonalTitle extends SearchResult {
+		episodes: number | null;
+		score: number | null;
+		studio?: string;
+		start_date: string | null;
+	}
+	let seasons = $state<SeasonRef[] | null>(null);
+	let picked_season = $state<SeasonRef | null>(null);
+	let titles = $state<SeasonalTitle[] | null>(null);
+	let seasonalError = $state(false);
+	let seasonChips = $state<HTMLElement>();
+
+	async function loadSeasons() {
+		try {
+			const d = await get<{ current: SeasonRef; seasons: SeasonRef[] }>('/seasonal/seasons');
+			seasons = d.seasons;
+			picked_season ??= d.seasons.find((x) => x.label === d.current.label) ?? d.seasons[0] ?? null;
+		} catch {
+			seasonalError = true;
+			seasons = [];
+		}
+	}
+	async function loadTitles(pick: SeasonRef) {
+		titles = null;
+		seasonalError = false;
+		try {
+			const d = await get<{ results: SeasonalTitle[] }>('/seasonal' + qs({ season: pick.season, year: pick.year }));
+			if (picked_season?.label === pick.label) titles = d.results;
+		} catch {
+			if (picked_season?.label === pick.label) {
+				seasonalError = true;
+				titles = [];
+			}
+		}
+	}
+	$effect(() => {
+		if (view !== 'seasonal') return;
+		if (!seasons) void loadSeasons();
+	});
+	$effect(() => {
+		if (view === 'seasonal' && picked_season) void loadTitles(picked_season);
+	});
+	// Bring the chosen season into view in the chip strip (it is long: 7+ years).
+	$effect(() => {
+		void seasons;
+		void view;
+		void picked_season;
+		queueMicrotask(() => seasonChips?.querySelector('[aria-pressed="true"]')?.scrollIntoView({ inline: 'center', block: 'nearest' }));
+	});
+
 	async function load() {
+		if (view === 'seasonal') {
+			seasons = null;
+			titles = null;
+			return;
+		}
 		const { start, end } = range();
 		try {
 			const list = await get<CalendarEvent[]>('/calendar' + qs({ start, end }));
@@ -48,6 +107,7 @@
 		void view;
 		void month;
 		void showPast;
+		if (view === 'seasonal') return;
 		events = null;
 		load();
 	});
@@ -55,21 +115,14 @@
 		loadSettings();
 	});
 
-	const types = $derived([...new Set((events ?? []).map((e) => e.media_type))].sort((a, b) => LIBRARY_TYPES.indexOf(a) - LIBRARY_TYPES.indexOf(b)));
-	const shown = $derived((events ?? []).filter((e) => !hidden.has(e.media_type)));
+	const shown = $derived(events ?? []);
 	const byDay = $derived.by(() => {
 		const map = new Map<string, CalendarEvent[]>();
 		for (const e of shown) map.set(e.date, [...(map.get(e.date) ?? []), e]);
 		return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
 	});
 
-	function toggle(t: MediaType) {
-		const next = new Set(hidden);
-		if (next.has(t)) next.delete(t);
-		else next.add(t);
-		hidden = next;
-	}
-
+	const formatShort = (iso: string) => parseDay(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 	const heading = (iso: string) => {
 		if (iso === today) return 'Today';
 		const d = parseDay(iso);
@@ -115,26 +168,63 @@
 	</li>
 {/snippet}
 
-<svelte:head><title>Calendar · Encompass</title></svelte:head>
+<svelte:head><title>Upcoming · Encompass</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
 	<header class="mb-3 flex items-center justify-between gap-3">
-		<h1 class="text-3xl font-semibold tracking-tight">Calendar</h1>
+		<h1 class="text-3xl font-semibold tracking-tight">Upcoming</h1>
 		<Button variant="secondary" icon={CalendarPlus} onclick={() => (subscribeOpen = true)}>Subscribe</Button>
 	</header>
 
-	<Tabs label="Calendar view" bind:value={view} options={[{ value: 'agenda', label: 'Agenda' }, { value: 'month', label: 'Month' }]} />
+	<Tabs
+		label="Upcoming view"
+		bind:value={view}
+		options={[
+			{ value: 'agenda', label: 'Agenda' },
+			{ value: 'month', label: 'Month' },
+			{ value: 'seasonal', label: 'Seasonal anime' }
+		]}
+	/>
 
-	{#if types.length > 1}
-		<ChipRow label="Filter by type">
-			{#each types as t (t)}
-				{@const meta = MEDIA[t]}
-				<Chip selected={!hidden.has(t)} color={meta.accent} onclick={() => toggle(t)}>{meta.plural}</Chip>
-			{/each}
-		</ChipRow>
-	{/if}
-
-	{#if events === null}
+	{#if view === 'seasonal'}
+		<section class="mt-3" aria-label="Seasonal anime">
+			{#if seasons === null}
+				<Skeleton class="h-10 w-full" />
+			{:else if seasons.length}
+				<div bind:this={seasonChips} class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0" role="group" aria-label="Season">
+					{#each seasons as sn, i (sn.label)}
+						{#if i === 0 || seasons[i - 1].year !== sn.year}<span class="shrink-0 self-center pl-2 text-xs font-semibold text-faint first:pl-0">{sn.year}</span>{/if}
+						<Chip selected={picked_season?.label === sn.label} onclick={() => (picked_season = sn)}>{sn.season[0].toUpperCase() + sn.season.slice(1)}</Chip>
+					{/each}
+				</div>
+			{/if}
+			{#if picked_season}<h2 class="mt-2 mb-3 text-lg font-semibold">{picked_season.label}</h2>{/if}
+			{#if titles === null}
+				<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6" aria-hidden="true">{#each Array(12) as _, i (i)}<Skeleton class="aspect-[2/3] w-full" />{/each}</div>
+			{:else if titles.length === 0}
+				<EmptyState
+					icon={Tv}
+					title={seasonalError ? 'Could not load this season' : 'No anime announced yet'}
+					description={seasonalError ? 'AniList may be down or rate-limited. Try again in a moment.' : 'Nothing is listed for this season so far.'}
+				>
+					{#snippet actions()}{#if seasonalError && picked_season}<Button variant="primary" onclick={() => picked_season && loadTitles(picked_season)}>Retry</Button>{/if}{/snippet}
+				</EmptyState>
+			{:else}
+				<PosterGrid>
+					{#each titles as t (t.source + t.media_id)}
+						<PosterCard
+							href={titleHref(t, t.media_type)}
+							src={t.image}
+							title={t.title}
+							type={t.media_type}
+							score={t.score ? Math.round(t.score) / 10 : null}
+							subtitle={[t.studio, t.start_date ? formatShort(t.start_date) : ''].filter(Boolean).join(' · ') || (t.episodes ? `${t.episodes} episodes` : 'TBA')}
+						/>
+					{/each}
+				</PosterGrid>
+			{/if}
+		</section>
+	{:else if events === null}
 		<div class="mt-4 space-y-3" aria-hidden="true"><Skeleton class="h-6 w-40" /><Skeleton class="h-40 w-full" /></div>
 	{:else if view === 'agenda'}
 		<div class="mt-3">

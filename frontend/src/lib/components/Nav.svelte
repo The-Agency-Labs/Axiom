@@ -9,8 +9,6 @@
 		LogOut,
 		Search,
 		Settings,
-		RefreshCw,
-		CalendarRange,
 		UsersRound
 	} from '@lucide/svelte';
 	import { goto } from '$app/navigation';
@@ -35,17 +33,15 @@
 			href: '/more',
 			label: 'More',
 			icon: Ellipsis,
-			match: () => under('/more', '/settings', '/sources', '/activity', '/people', '/year', '/calendar')
+			match: () => under('/more', '/settings', '/activity', '/people', '/year')
 		}
 	];
 
 	/** Sidebar "More" group (also the links on the More page). */
 	const more = [
 		{ href: '/activity', label: 'Activity', icon: Activity },
-		{ href: '/calendar', label: 'Calendar', icon: CalendarRange },
 		{ href: '/people', label: 'People', icon: UsersRound },
 		{ href: '/year', label: 'Year in review', icon: CalendarDays },
-		{ href: '/sources', label: 'Sources', icon: RefreshCw },
 		{ href: '/settings', label: 'Settings', icon: Settings }
 	];
 
@@ -110,7 +106,6 @@
 			<a href={link.href} class={sideLink(under(link.href))} aria-current={under(link.href) ? 'page' : undefined}>
 				<link.icon class="size-4" />
 				{link.label}
-				{#if link.href === '/sources' && net.pending > 0}<span class="ml-auto text-xs text-faint">{net.pending}</span>{/if}
 			</a>
 		{/each}
 	</nav>

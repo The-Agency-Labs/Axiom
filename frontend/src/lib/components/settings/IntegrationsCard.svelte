@@ -21,7 +21,7 @@
 			await saveSettings({ jellyfin_users: jellyfinUsers, watched_percent: Number(watched) });
 			jellyfinUsers = settings.data?.jellyfin_users ?? jellyfinUsers;
 			watched = settings.data?.watched_percent ?? watched;
-			toast('Integration settings saved', { kind: 'success' });
+			toast('Settings saved', { kind: 'success' });
 		} catch (err) {
 			toast(err instanceof Error ? err.message : 'Could not save', { kind: 'error' });
 		} finally {
@@ -55,7 +55,7 @@
 	}
 </script>
 
-<Card id="integrations" title="Integrations" description="Jellyfin matching and the private URLs for webhooks and calendar apps." icon={Plug}>
+<Card id="webhooks" title="Webhooks and feeds" description="Jellyfin matching and the private URLs for webhooks and calendar apps." icon={Plug}>
 	<form onsubmit={save} class="space-y-4">
 		<label class="block">
 			<span class="mb-1 block text-sm font-medium">Jellyfin users</span>

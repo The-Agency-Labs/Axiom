@@ -8,10 +8,12 @@ import (
 
 	"github.com/the-agency-labs/encompass/server/internal/auth"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/goodreads"
+	"github.com/the-agency-labs/encompass/server/internal/integrations/mal"
 	"github.com/the-agency-labs/encompass/server/internal/integrations/steam"
 )
 
 func (s *Server) importsRoutes(mux *http.ServeMux) {
+	s.malImportRoute(mux)
 	// POST /imports/goodreads: multipart upload of the Goodreads export (field "file", 10 MB).
 	// The import runs as a background job; its result lands in the goodreads source status.
 	mux.Handle("POST /api/v1/imports/goodreads", auth.RequireWrite(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
@@ -70,6 +72,34 @@ func (s *Server) importsRoutes(mux *http.ServeMux) {
 			return nil, err
 		}
 		id, err := s.Jobs.Enqueue(r.Context(), steam.JobKind, user.ID, nil)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]int64{"job_id": id}, nil
+	})))
+}
+
+func (s *Server) malImportRoute(mux *http.ServeMux) {
+	// POST /imports/mal {"username"}: imports a public MyAnimeList anime and manga list in the background.
+	mux.Handle("POST /api/v1/imports/mal", auth.RequireWrite(JSON(func(w http.ResponseWriter, r *http.Request) (any, error) {
+		user := auth.User(r.Context())
+		var body struct {
+			Username string `json:"username"`
+		}
+		if err := DecodeJSON(r, &body); err != nil {
+			return nil, err
+		}
+		body.Username = strings.TrimSpace(body.Username)
+		if body.Username == "" {
+			return nil, Errorf(http.StatusUnprocessableEntity, "username is required")
+		}
+		if err := s.integrations().MAL.Preflight(body.Username); err != nil {
+			if errors.Is(err, mal.ErrNoKey) {
+				return nil, Errorf(http.StatusBadRequest, err.Error())
+			}
+			return nil, Errorf(http.StatusUnprocessableEntity, err.Error())
+		}
+		id, err := s.Jobs.Enqueue(r.Context(), mal.JobKind, user.ID, map[string]string{"username": body.Username})
 		if err != nil {
 			return nil, err
 		}

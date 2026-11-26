@@ -654,6 +654,16 @@ func TestLibrarySearchAndMetadata(t *testing.T) {
 	if m := le.expect(code, 200, body, "search mal"); m["total_pages"] == nil || m["page"] == nil {
 		t.Fatalf("search mal: %v", m)
 	}
+	code, body = le.get("/api/v1/search?media_type=all&q=plain&types=tv,movie")
+	if m := le.expect(code, 200, body, "search all"); m["results"] == nil || m["total_pages"] == nil {
+		t.Fatalf("search all: %v", m)
+	} else {
+		for _, r := range m["results"].([]any) {
+			if k := r.(map[string]any)["media_type"]; k != "tv" && k != "movie" {
+				t.Errorf("search all returned kind %v", k)
+			}
+		}
+	}
 	for _, tc := range []struct {
 		path string
 		want int

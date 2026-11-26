@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Check, Plus, Search, SearchX, X } from '@lucide/svelte';
+	import { Check, LayoutGrid, Plus, Search, SearchX, X } from '@lucide/svelte';
 	import { page } from '$app/state';
 	import { get, qs } from '#lib/api.ts';
 	import Cover from '#lib/components/Cover.svelte';
@@ -18,7 +18,8 @@
 
 	const types = $derived(enabledTypes());
 	const initial = page.url.searchParams.get('type') ?? '';
-	let type = $state<MediaType>(isMediaType(initial) ? initial : 'tv');
+	/** 'all' (the default) searches every enabled type at once; a type chip narrows it. */
+	let type = $state<MediaType | 'all'>(isMediaType(initial) ? initial : 'all');
 	let query = $state(page.url.searchParams.get('q') ?? '');
 	let results = $state<SearchResult[] | null>(null);
 	let pages = $state({ page: 1, total: 1 });
@@ -31,7 +32,7 @@
 
 	// Fall back to the first enabled type when the remembered one is switched off.
 	$effect(() => {
-		if (types.length && !types.includes(type)) type = types[0];
+		if (types.length && type !== 'all' && !types.includes(type)) type = 'all';
 	});
 
 	const key = (r: SearchResult) => `${r.media_type}:${r.source}:${r.media_id}`;
@@ -48,9 +49,11 @@
 		loading = true;
 		error = false;
 		try {
-			const data = await get<SearchPage>('/search' + qs({ media_type: type, q, page: next }));
+			const data = await get<SearchPage>(
+				'/search' + qs({ media_type: type, q, page: next, types: type === 'all' ? types.join(',') : undefined })
+			);
 			if (mine !== seq) return;
-			const list = (data.results ?? []).map((r) => ({ ...r, media_type: r.media_type ?? type }));
+			const list = (data.results ?? []).map((r) => ({ ...r, media_type: r.media_type ?? (type === 'all' ? 'tv' : type) }));
 			results = next > 1 ? [...(results ?? []), ...list] : list;
 			pages = { page: next, total: data.total_pages ?? 1 };
 		} catch {
@@ -85,7 +88,7 @@
 		if (matchMedia('(pointer: fine)').matches) input?.focus();
 	});
 
-	const meta = $derived(MEDIA[type]);
+	const what = $derived(type === 'all' ? 'everything' : MEDIA[type].plural.toLowerCase());
 	const subtitle = (r: SearchResult) =>
 		[r.release_year, MEDIA[r.media_type]?.label ?? r.media_type, SOURCE_NAMES[r.source] ?? r.source].filter(Boolean).join(' · ');
 </script>
@@ -109,8 +112,8 @@
 		type="search"
 		enterkeyhint="search"
 		autocomplete="off"
-		aria-label="Search {meta.plural.toLowerCase()}"
-		placeholder="Search {meta.plural.toLowerCase()}"
+		aria-label="Search {what}"
+		placeholder="Search {what}"
 		class="h-12 w-full rounded-2xl border border-line bg-surface pr-12 pl-12 outline-none transition focus:border-line-strong focus:ring-4 focus:ring-ink/5"
 	/>
 	{#if query}
@@ -126,7 +129,8 @@
 	{/if}
 </form>
 
-<ChipRow label="Search in">
+<ChipRow label="Filter by type">
+	<Chip selected={type === 'all'} icon={LayoutGrid} onclick={() => (type = 'all')}>All</Chip>
 	{#each types as t (t)}
 		{@const m = MEDIA[t]}
 		<Chip selected={type === t} icon={m.icon} color={m.accent} onclick={() => (type = t)}>{m.plural}</Chip>
@@ -137,7 +141,7 @@
 	{#if !net.online}
 		<EmptyState icon={SearchX} title="You are offline" description="Search needs a connection. Your library still works." />
 	{:else if results === null && !loading}
-		<EmptyState icon={Search} title="Find something to track" description="Search {meta.plural.toLowerCase()} by title." class="py-16" />
+		<EmptyState icon={Search} title="Find something to track" description="Search {what} by title." class="py-16" />
 	{:else if results === null || (loading && !results?.length)}
 		<div class="space-y-1" aria-busy="true">
 			{#each Array(6) as _, i (i)}
@@ -151,7 +155,7 @@
 		<EmptyState
 			icon={SearchX}
 			title={error ? 'Search failed' : `No results for "${query}"`}
-			description={error ? 'The provider may be down or rate-limited. Try again in a moment.' : 'Check the spelling or try another section.'}
+			description={error ? 'The provider may be down or rate-limited. Try again in a moment.' : 'Check the spelling or try a different filter.'}
 		>
 			{#snippet actions()}{#if error}<Button variant="primary" onclick={() => run()}>Retry</Button>{/if}{/snippet}
 		</EmptyState>
