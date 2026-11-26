@@ -152,7 +152,8 @@ func (q *Queries) ListUserProgressEvents(ctx context.Context, userID int64) ([]L
 
 const listUserReadingSessions = `-- name: ListUserReadingSessions :many
 SELECT id, user_id, source, document_id, item_id, title, started_at, ended_at, duration_seconds, pages_read, start_page, end_page, chapters_read, device FROM reading_sessions
-WHERE user_id = ?1 AND started_at >= ?2 AND started_at < ?3
+WHERE reading_sessions.user_id = ?1 AND started_at >= ?2 AND started_at < ?3
+  AND (document_id IS NULL OR document_id NOT IN (SELECT id FROM reading_documents WHERE ignored = 1))
 ORDER BY started_at, id
 `
 

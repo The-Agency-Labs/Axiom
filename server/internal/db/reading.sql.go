@@ -441,7 +441,8 @@ func (q *Queries) ListPageEvents(ctx context.Context, documentID int64) ([]PageE
 
 const listReadSessionStarts = `-- name: ListReadSessionStarts :many
 SELECT started_at FROM reading_sessions
-WHERE user_id = ? AND (pages_read > 0 OR chapters_read > 0)
+WHERE reading_sessions.user_id = ? AND (pages_read > 0 OR chapters_read > 0)
+  AND (document_id IS NULL OR document_id NOT IN (SELECT id FROM reading_documents WHERE ignored = 1))
 `
 
 func (q *Queries) ListReadSessionStarts(ctx context.Context, userID int64) ([]string, error) {
@@ -582,7 +583,8 @@ func (q *Queries) ListReadingSessions(ctx context.Context, arg ListReadingSessio
 const listSessionsForStats = `-- name: ListSessionsForStats :many
 SELECT started_at, pages_read, chapters_read, duration_seconds
 FROM reading_sessions
-WHERE user_id = ? AND started_at >= ? AND started_at < ?
+WHERE reading_sessions.user_id = ? AND started_at >= ? AND started_at < ?
+  AND (document_id IS NULL OR document_id NOT IN (SELECT id FROM reading_documents WHERE ignored = 1))
 `
 
 type ListSessionsForStatsParams struct {

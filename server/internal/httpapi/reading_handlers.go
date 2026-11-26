@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -109,14 +110,14 @@ func (s *Server) readingStats(w http.ResponseWriter, r *http.Request) (any, erro
 	}
 	today := svc.Today().Format("2006-01-02")
 	var todayRow *reading.Day
-	var pages, chapters, minutes, sessions, daysRead int64
+	var pages, chapters, seconds, sessions, daysRead int64
 	for i, d := range days {
 		if d.Date == today {
 			todayRow = &days[i]
 		}
 		pages += d.Pages
 		chapters += d.Chapters
-		minutes += d.Minutes
+		seconds += d.Seconds
 		sessions += d.Sessions
 		if d.Pages > 0 || d.Chapters > 0 {
 			daysRead++
@@ -128,7 +129,7 @@ func (s *Server) readingStats(w http.ResponseWriter, r *http.Request) (any, erro
 		"today":          todayRow,
 		"current_streak": current, "longest_streak": longest,
 		"totals": map[string]any{
-			"pages": pages, "chapters": chapters, "minutes": minutes, "sessions": sessions,
+			"pages": pages, "chapters": chapters, "minutes": int64(math.RoundToEven(float64(seconds) / 60)), "sessions": sessions,
 			"days_read": daysRead, "days_in_range": len(days),
 		},
 		"days": days,

@@ -1,109 +1,122 @@
 <script lang="ts">
+	import { BookOpen, CalendarCheck, Clock, Flame } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import { minutesLabel } from '#lib/media.ts';
-	import { Card, Skeleton, Tabs } from '#lib/ui/index.ts';
+	import { Skeleton, Tabs } from '#lib/ui/index.ts';
 	import type { ReadingStats } from '#lib/types.ts';
 	import BarChart from './BarChart.svelte';
 	import type { Bar } from './types.ts';
-	import { isoDaysAgo, parseDay } from './format.ts';
+	import { isoDate, isoDaysAgo, parseDay } from './format.ts';
 
 	let range = $state('30');
 	let metric = $state('pages');
 	let stats = $state<ReadingStats | null>(null);
 
+	/** The first day of a range; a year is this month and the eleven before it. */
+	function startOf(r: string) {
+		if (r !== '365') return isoDaysAgo(Number(r) - 1);
+		const now = new Date();
+		return isoDate(new Date(now.getFullYear(), now.getMonth() - 11, 1));
+	}
+
 	$effect(() => {
 		const r = range;
 		stats = null;
-		get<ReadingStats>('/reading/stats' + qs({ start: isoDaysAgo(Number(r) - 1) })).then((s) => {
+		get<ReadingStats>('/reading/stats' + qs({ start: startOf(r) })).then((s) => {
 			if (r === range) stats = s;
 		});
 	});
 
-	const value = (d: { pages: number; minutes: number }) => (metric === 'pages' ? d.pages : d.minutes);
-
+	const per = $derived(range === '365' ? 'month' : range === '90' ? 'week' : 'day');
 	const bars = $derived.by<Bar[]>(() => {
 		if (!stats) return [];
-		const days = stats.days;
-		if (Number(range) <= 30) {
-			return days.map((d, i) => {
-				const dt = parseDay(d.date);
-				return {
-					tick: range === '7' ? dt.toLocaleDateString(undefined, { weekday: 'short' }) : dt.getDate() % 5 === 0 || i === 0 ? String(dt.getDate()) : '',
-					label: dt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
-					value: value(d)
-				};
-			});
-		}
-		// Longer ranges: weekly (90 days) or monthly (a year) buckets.
 		const out = new Map<string, Bar>();
-		for (const d of days) {
+		const days = stats.days;
+		days.forEach((d, i) => {
 			const dt = parseDay(d.date);
-			let key: string, tick: string, label: string;
-			if (range === '90') {
+			const short: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+			let key = d.date;
+			let tick = '';
+			let label = dt.toLocaleDateString(undefined, { weekday: 'short', ...short });
+			if (per === 'day') {
+				// A week of weekdays, or a date every seven days clear of both edges.
+				if (days.length <= 7) tick = dt.toLocaleDateString(undefined, { weekday: 'short' });
+				else if ((days.length - 1 - i) % 7 === 3) tick = dt.toLocaleDateString(undefined, short);
+			} else if (per === 'week') {
 				const monday = new Date(dt);
 				monday.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));
-				key = monday.toISOString().slice(0, 10);
+				key = isoDate(monday);
 				tick = monday.getDate() <= 7 ? monday.toLocaleDateString(undefined, { month: 'short' }) : '';
-				label = 'Week of ' + monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+				label = 'Week of ' + monday.toLocaleDateString(undefined, short);
 			} else {
 				key = d.date.slice(0, 7);
-				tick = dt.toLocaleDateString(undefined, { month: 'narrow' });
+				// Every other month, ending on the current one.
+				const now = new Date();
+				const ago = (now.getFullYear() - dt.getFullYear()) * 12 + now.getMonth() - dt.getMonth();
+				tick = ago % 2 === 0 ? dt.toLocaleDateString(undefined, { month: 'short' }) : '';
 				label = dt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 			}
-			const b = out.get(key) ?? { tick, label, value: 0 };
-			b.value += value(d);
-			out.set(key, b);
-		}
+			const bar = out.get(key) ?? { tick, label, value: 0 };
+			bar.value += metric === 'pages' ? d.pages : d.minutes;
+			out.set(key, bar);
+		});
 		return [...out.values()];
+	});
+
+	const tiles = $derived.by(() => {
+		if (!stats) return [];
+		const t = stats.totals;
+		const each = (n: number) => Math.round(n / Math.max(1, t.days_read));
+		return [
+			{ label: 'Pages', icon: BookOpen, value: t.pages.toLocaleString(), sub: `${each(t.pages)} per reading day` },
+			{ label: 'Time', icon: Clock, value: minutesLabel(t.minutes), sub: `${minutesLabel(each(t.minutes))} per reading day` },
+			{ label: 'Days read', icon: CalendarCheck, value: String(t.days_read), sub: `of ${t.days_in_range} days` },
+			{ label: 'Streak', icon: Flame, value: `${stats.current_streak}d`, sub: `best ever ${stats.longest_streak} days` }
+		];
 	});
 </script>
 
-<Card title="Reading stats" description="Daily pages and time">
-	<div class="flex flex-wrap gap-2">
-		<Tabs
-			label="Range"
-			bind:value={range}
-			options={[
-				{ value: '7', label: '7d' },
-				{ value: '30', label: '30d' },
-				{ value: '90', label: '90d' },
-				{ value: '365', label: '1y' }
-			]}
-		/>
-		<Tabs
-			label="Metric"
-			bind:value={metric}
-			options={[
-				{ value: 'pages', label: 'Pages' },
-				{ value: 'minutes', label: 'Minutes' }
-			]}
-		/>
-	</div>
+<section class="space-y-3" aria-label="Reading statistics">
+	<Tabs
+		label="Range"
+		full
+		bind:value={range}
+		options={[
+			{ value: '7', label: '7 days' },
+			{ value: '30', label: '30 days' },
+			{ value: '90', label: '90 days' },
+			{ value: '365', label: '12 months' }
+		]}
+	/>
+
 	{#if !stats}
-		<Skeleton class="mt-4 h-40 w-full" />
+		<Skeleton class="h-52 w-full" />
+		<Skeleton class="h-52 w-full" />
 	{:else}
-		<div class="mt-5">
-			<BarChart
-				{bars}
-				unit={metric === 'pages' ? 'pages' : 'min'}
-				title="{metric === 'pages' ? 'Pages' : 'Minutes'} read per {range === '365' ? 'month' : range === '90' ? 'week' : 'day'}"
-				tickEvery={1}
-			/>
-		</div>
-		<dl class="mt-5 grid grid-cols-3 gap-2 text-center">
-			<div class="rounded-xl bg-raised py-2.5">
-				<dd class="text-lg font-semibold tabular-nums">{stats.totals.pages.toLocaleString()}</dd>
-				<dt class="text-[0.75rem] text-faint">pages</dt>
-			</div>
-			<div class="rounded-xl bg-raised py-2.5">
-				<dd class="text-lg font-semibold tabular-nums">{minutesLabel(stats.totals.minutes)}</dd>
-				<dt class="text-[0.75rem] text-faint">time</dt>
-			</div>
-			<div class="rounded-xl bg-raised py-2.5">
-				<dd class="text-lg font-semibold tabular-nums">{stats.totals.days_read}<span class="text-xs font-normal text-faint">/{stats.totals.days_in_range}</span></dd>
-				<dt class="text-[0.75rem] text-faint">days read</dt>
-			</div>
+		<dl class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+			{#each tiles as tile (tile.label)}
+				<div class="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+					<dt class="flex items-center gap-1.5 text-[0.75rem] text-muted"><tile.icon class="size-3.5 text-type-book" />{tile.label}</dt>
+					<dd class="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{tile.value}</dd>
+					<dd class="text-[0.75rem] text-faint">{tile.sub}</dd>
+				</div>
+			{/each}
 		</dl>
-		<p class="mt-3 text-center text-[0.75rem] text-faint">Longest streak {stats.longest_streak} days</p>
+
+		<div class="rounded-[var(--radius-card)] border border-line bg-surface p-4">
+			<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+				<h2 class="text-[0.9375rem] font-semibold">{metric === 'pages' ? 'Pages' : 'Minutes'} per {per}</h2>
+				<Tabs
+					label="Metric"
+					bind:value={metric}
+					options={[
+						{ value: 'pages', label: 'Pages' },
+						{ value: 'minutes', label: 'Minutes' }
+					]}
+				/>
+			</div>
+			<BarChart {bars} unit={metric === 'pages' ? 'pages' : 'min'} title="{metric === 'pages' ? 'Pages' : 'Minutes'} read per {per}" height={160} />
+		</div>
+		<p class="px-1 text-[0.75rem] text-faint">From your Kindle. A page opened on its own, with nothing read around it, isn't counted.</p>
 	{/if}
-</Card>
+</section>

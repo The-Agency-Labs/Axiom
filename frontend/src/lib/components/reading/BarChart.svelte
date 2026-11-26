@@ -20,17 +20,15 @@
 </script>
 
 <figure class="relative m-0" aria-label={title}>
-	<div class="relative pl-9">
-		<span class="absolute top-0 left-0 w-8 text-right text-[0.75rem] leading-none text-faint tabular-nums"
-			>{max.toLocaleString()}</span
-		>
-		<span class="absolute bottom-0 left-0 w-8 text-right text-[0.75rem] leading-none text-faint tabular-nums">0</span>
+	<div class="relative pt-2 pl-10">
 		<div
 			class="relative flex items-end gap-[3px] border-b border-line-strong"
 			style="height: {height}px"
 			role="presentation"
 		>
 			<div class="pointer-events-none absolute inset-x-0 top-0 border-t border-dashed border-line"></div>
+			<span class="absolute top-0 right-full mr-1 -translate-y-1/2 text-[0.75rem] leading-none text-faint tabular-nums">{max.toLocaleString()}</span>
+			<span class="absolute right-full bottom-0 mr-1 translate-y-1/2 text-[0.75rem] leading-none text-faint tabular-nums">0</span>
 			{#each bars as bar, i (i)}
 				<button
 					type="button"

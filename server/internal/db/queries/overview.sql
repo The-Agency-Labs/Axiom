@@ -1,7 +1,8 @@
 -- Reading sessions of a user whose start lies in [from_at, to_at), oldest first.
 -- name: ListUserReadingSessions :many
 SELECT * FROM reading_sessions
-WHERE user_id = sqlc.arg(user_id) AND started_at >= sqlc.arg(from_at) AND started_at < sqlc.arg(to_at)
+WHERE reading_sessions.user_id = sqlc.arg(user_id) AND started_at >= sqlc.arg(from_at) AND started_at < sqlc.arg(to_at)
+  AND (document_id IS NULL OR document_id NOT IN (SELECT id FROM reading_documents WHERE ignored = 1))
 ORDER BY started_at, id;
 
 -- name: GetLastReadingSession :one

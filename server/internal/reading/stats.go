@@ -21,6 +21,7 @@ type Day struct {
 	Chapters int64  `json:"chapters"`
 	Minutes  int64  `json:"minutes"`
 	Sessions int64  `json:"sessions"`
+	Seconds  int64  `json:"-"` // summed before rounding totals
 }
 
 // Today is the current date in the service's zone.
@@ -87,7 +88,7 @@ func (s *Service) DailyStats(ctx context.Context, userID int64, start, end time.
 	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
 		k := d.Format("2006-01-02")
 		a := by[k]
-		days = append(days, Day{Date: k, Pages: a.pages, Chapters: a.chapters, Minutes: int64(math.RoundToEven(float64(a.seconds) / 60)), Sessions: a.sessions})
+		days = append(days, Day{Date: k, Pages: a.pages, Chapters: a.chapters, Minutes: int64(math.RoundToEven(float64(a.seconds) / 60)), Sessions: a.sessions, Seconds: a.seconds})
 	}
 	return days, nil
 }
