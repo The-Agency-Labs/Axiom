@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
 	import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Tv } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
 	import ReleaseCard from '#lib/components/ReleaseCard.svelte';
+	import SeasonPicker, { type SeasonRef } from '#lib/components/SeasonPicker.svelte';
 	import SectionHead from '#lib/components/SectionHeader.svelte';
 	import { isoDate, parseDay } from '#lib/components/reading/format.ts';
 	import type { CalendarEvent } from '#lib/components/reading/types.ts';
@@ -36,11 +36,6 @@
 		return { start: isoDate(s), end: isoDate(e) };
 	}
 
-	interface SeasonRef {
-		season: string;
-		year: number;
-		label: string;
-	}
 	interface SeasonalTitle extends SearchResult {
 		episodes: number | null;
 		score: number | null;
@@ -49,6 +44,7 @@
 	}
 	let seasons = $state<SeasonRef[] | null>(null);
 	let picked_season = $state<SeasonRef | null>(null);
+	let current_season = $state<SeasonRef | null>(null);
 	let titles = $state<SeasonalTitle[] | null>(null);
 	let seasonalError = $state(false);
 
@@ -56,6 +52,7 @@
 		try {
 			const d = await get<{ current: SeasonRef; seasons: SeasonRef[] }>('/seasonal/seasons');
 			seasons = d.seasons;
+			current_season = d.current;
 			picked_season ??= d.seasons.find((x) => x.label === d.current.label) ?? d.seasons[0] ?? null;
 		} catch {
 			seasonalError = true;
@@ -82,25 +79,10 @@
 	$effect(() => {
 		if (view === 'seasonal' && picked_season) void loadTitles(picked_season);
 	});
-	// A year picker plus four season tabs: nothing to scroll sideways, however many years there are.
-	const SEASONS = ['winter', 'spring', 'summer', 'fall'];
-	const years = $derived([...new Set((seasons ?? []).map((s) => s.year))]);
-	const seasonOptions = $derived(
-		SEASONS.map((name) => ({
-			value: name,
-			label: name[0].toUpperCase() + name.slice(1),
-			disabled: !seasons?.some((s) => s.year === picked_season?.year && s.season === name)
-		}))
-	);
-	function pickSeason(name: string) {
-		const next = seasons?.find((s) => s.year === picked_season?.year && s.season === name);
-		if (next) picked_season = next;
-	}
-	/** Same season in another year, or that year's closest one at either end of the range. */
-	function pickYear(year: number) {
-		const inYear = seasons?.filter((s) => s.year === year) ?? [];
-		const at = SEASONS.indexOf(picked_season?.season ?? 'winter');
-		const next = [...inYear].sort((a, b) => Math.abs(SEASONS.indexOf(a.season) - at) - Math.abs(SEASONS.indexOf(b.season) - at))[0];
+	/** Where the chosen season sits in the list, for the arrows. */
+	const seasonAt = $derived(seasons?.findIndex((x) => x.label === picked_season?.label) ?? -1);
+	function stepSeason(by: number) {
+		const next = seasons?.[seasonAt + by];
 		if (next) picked_season = next;
 	}
 
@@ -171,14 +153,14 @@
 	};
 
 	const monthName = $derived(month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
-	/** The line under the title: what the chosen view is showing. */
+	/** The count beside the title: what the chosen view is showing. */
 	const summary = $derived.by(() => {
 		const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
-		if (view === 'seasonal') return picked_season ? `${picked_season.label}${titles ? ` · ${count(titles.length, 'title')}` : ''}` : '';
+		if (view === 'seasonal') return titles ? count(titles.length, 'title') : '';
 		if (!events) return '';
 		if (view === 'agenda') return `${events.filter((e) => e.date >= today).length} in the next 90 days`;
 		const prefix = isoDate(month).slice(0, 7);
-		return count(events.filter((e) => e.date.startsWith(prefix)).length, 'release'); // the month is named beside it
+		return count(events.filter((e) => e.date.startsWith(prefix)).length, 'release');
 	});
 
 	// Month grid cells (6 weeks, Monday first).
@@ -206,43 +188,11 @@
 
 <svelte:head><title>Upcoming · Axiom</title></svelte:head>
 
-{#snippet stepper(what: string, previous: (() => void) | null, next: (() => void) | null, label: Snippet)}
-	<div class="flex shrink-0 items-center justify-between gap-1 rounded-xl border border-line bg-surface p-1" role="group" aria-label={what}>
-		<IconButton icon={ChevronLeft} label="Previous {what}" disabled={!previous} onclick={() => previous?.()} class="!rounded-lg" />
-		{@render label()}
-		<IconButton icon={ChevronRight} label="Next {what}" disabled={!next} onclick={() => next?.()} class="!rounded-lg" />
-	</div>
-{/snippet}
-
-{#snippet monthLabel()}
-	<span class="min-w-36 text-center text-sm font-semibold" aria-live="polite">{monthName}</span>
-{/snippet}
-
-{#snippet yearLabel()}
-	<select
-		class="h-11 min-w-24 cursor-pointer appearance-none rounded-lg bg-transparent px-3 text-center text-sm font-semibold tabular-nums hover:bg-ink/5"
-		aria-label="Year"
-		value={picked_season?.year}
-		onchange={(e) => pickYear(Number(e.currentTarget.value))}
-	>
-		{#each years as y (y)}<option value={y}>{y}</option>{/each}
-	</select>
-{/snippet}
-
 <PullToRefresh onrefresh={load}>
-	<header class="mb-4 flex items-end justify-between gap-3">
-		<div class="min-w-0">
-			<h1 class="truncate text-2xl font-semibold tracking-tight sm:text-3xl">Upcoming</h1>
-			<p class="mt-1 h-5 truncate text-[0.8125rem] text-faint">{summary}</p>
-		</div>
-		<Button variant="secondary" icon={CalendarPlus} onclick={() => (subscribeOpen = true)} class="shrink-0">Subscribe</Button>
-	</header>
-
-	<div class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+	<header class="mb-5">
 		<Tabs
 			label="Upcoming view"
-			full
-			class="sm:!w-fit"
+			variant="pills"
 			bind:value={view}
 			options={[
 				{ value: 'agenda', label: 'Agenda' },
@@ -250,25 +200,42 @@
 				{ value: 'seasonal', label: 'Seasonal anime' }
 			]}
 		/>
-
-		{#if view === 'seasonal' && picked_season}
-			{@const year = picked_season.year}
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-				{@render stepper('year', year > years[0] ? () => pickYear(year - 1) : null, year < years[years.length - 1] ? () => pickYear(year + 1) : null, yearLabel)}
-				<Tabs label="Season" full class="sm:!w-fit" value={picked_season.season} options={seasonOptions} onchange={pickSeason} />
+		<!-- On a phone the count drops under the title, so the arrows stay beside it. -->
+		<div class="mt-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 sm:flex sm:gap-x-4">
+			{#if view === 'seasonal' && picked_season && seasons}
+				<SeasonPicker {seasons} value={picked_season} current={current_season} onpick={(s) => (picked_season = s)} />
+			{:else}
+				<h1 class="flex min-h-11 items-center text-2xl font-semibold tracking-tight whitespace-nowrap sm:text-3xl">
+					{#if view === 'month'}<span class="sm:hidden">{month.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span><span class="max-sm:hidden">{monthName}</span>
+					{:else}Upcoming{/if}
+				</h1>
+			{/if}
+			<p class="order-last col-span-2 min-h-5 text-[0.8125rem] text-faint sm:order-none" aria-live="polite">{summary}</p>
+			<div class="flex items-center gap-1.5 justify-self-end sm:ml-auto sm:gap-2">
+				{#if view === 'seasonal'}
+					<IconButton variant="surface" icon={ChevronLeft} label="Previous season" disabled={seasonAt <= 0} onclick={() => stepSeason(-1)} />
+					<IconButton variant="surface" icon={ChevronRight} label="Next season" disabled={seasonAt < 0 || seasonAt >= (seasons?.length ?? 0) - 1} onclick={() => stepSeason(1)} />
+					<span class="mx-1 h-6 w-px bg-line max-sm:hidden" aria-hidden="true"></span>
+				{:else if view === 'month'}
+					<IconButton variant="surface" icon={ChevronLeft} label="Previous month" onclick={() => shift(-1)} />
+					<IconButton variant="surface" icon={ChevronRight} label="Next month" onclick={() => shift(1)} />
+					<span class="mx-1 h-6 w-px bg-line max-sm:hidden" aria-hidden="true"></span>
+				{:else if !showPast}
+					<Button variant="ghost" onclick={() => (showPast = true)}>Last 30 days</Button>
+				{/if}
+				<button
+					type="button"
+					class="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full bg-ink px-3 text-sm font-semibold text-canvas transition hover:opacity-90 active:scale-95 sm:px-5"
+					onclick={() => (subscribeOpen = true)}
+				>
+					<CalendarPlus class="size-4" /><span class="max-sm:sr-only">Subscribe</span>
+				</button>
 			</div>
-		{:else if view === 'month'}
-			{@render stepper('month', () => shift(-1), () => shift(1), monthLabel)}
-		{:else if view === 'agenda' && !showPast}
-			<Button variant="secondary" onclick={() => (showPast = true)} class="self-start lg:self-auto">Show the last 30 days</Button>
-		{/if}
-	</div>
+		</div>
+	</header>
 
 	{#if view === 'seasonal'}
 		<section aria-label="Seasonal anime">
-			{#if seasons === null}
-				<Skeleton class="mb-4 h-10 w-full" />
-			{/if}
 			{#if titles === null}
 				<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6" aria-hidden="true">{#each Array(12) as _, i (i)}<Skeleton class="aspect-[2/3] w-full" />{/each}</div>
 			{:else if titles.length === 0}

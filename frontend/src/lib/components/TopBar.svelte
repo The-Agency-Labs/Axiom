@@ -5,9 +5,10 @@
 	const active = $derived(page.url.pathname === '/upcoming' || page.url.pathname.startsWith('/upcoming/'));
 </script>
 
-<!-- Phone top bar: the app mark and Upcoming. Wider screens have both in the sidebar. -->
+<!-- Phone top bar: the app mark and Upcoming. Wider screens have both in the sidebar.
+     It is solid and reaches the top of the screen, so nothing scrolls past under the clock. -->
 <header
-	class="sticky top-[env(safe-area-inset-top)] z-20 flex h-12 items-center justify-between gap-3 border-b border-line bg-canvas/85 px-4 backdrop-blur-xl sm:px-6 lg:hidden"
+	class="sticky top-0 z-20 flex h-(--topbar) items-center justify-between gap-3 border-b border-line bg-canvas px-4 pt-(--topbar-pad) sm:px-6 lg:hidden"
 >
 	<a href="/" class="flex items-center gap-2" aria-label="Axiom home">
 		<img src="/icon.svg" alt="" class="size-7 rounded-md" />

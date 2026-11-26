@@ -7,7 +7,8 @@
 	}
 
 	/**
-	 * Tabs / segmented control. variant "segmented" is a pill switch, "underline" a classic tab strip.
+	 * Tabs / segmented control. variant "segmented" is a pill switch, "underline" a classic tab strip,
+ * "pills" small rounded labels with no frame.
 	 * Arrow keys move between tabs. Bind `value`; `onchange` fires on user changes.
 	 */
 	let {
@@ -21,7 +22,7 @@
 	}: {
 		options: TabOption[];
 		value: string;
-		variant?: 'segmented' | 'underline';
+		variant?: 'segmented' | 'underline' | 'pills';
 		label?: string;
 		full?: boolean;
 		onchange?: (value: string) => void;
@@ -59,7 +60,9 @@
 	tabindex="-1"
 	class="flex {variant === 'segmented'
 		? 'gap-1 rounded-xl border border-line bg-surface p-1'
-		: 'gap-1 border-b border-line'} {full ? 'w-full' : 'shelf w-fit max-w-full overflow-x-auto overflow-y-hidden'} {className}"
+		: variant === 'pills'
+			? 'gap-1'
+			: 'gap-1 border-b border-line'} {full ? 'w-full' : 'shelf w-fit max-w-full overflow-x-auto overflow-y-hidden'} {className}"
 >
 	{#each options as option (option.value)}
 		{@const active = option.value === value}
@@ -71,11 +74,13 @@
 			tabindex={active ? 0 : -1}
 			disabled={option.disabled}
 			onclick={() => select(option.value)}
-			class="inline-flex min-h-11 items-center justify-center gap-1.5 text-sm font-medium whitespace-nowrap transition disabled:opacity-40 {full
+			class="inline-flex {variant === 'pills' ? 'min-h-9' : 'min-h-11'} items-center justify-center gap-1.5 text-sm font-medium whitespace-nowrap transition disabled:opacity-40 {full
 				? 'flex-1 px-2'
 				: 'px-3.5'} {variant === 'segmented'
 				? `rounded-lg ${active ? 'bg-ink/12 text-ink' : 'text-muted hover:text-ink'}`
-				: `-mb-px border-b-2 ${active ? 'border-brand text-ink' : 'border-transparent text-muted hover:text-ink'}`}"
+				: variant === 'pills'
+					? `rounded-full ${active ? 'bg-ink/12 text-ink' : 'text-muted hover:text-ink'}`
+					: `-mb-px border-b-2 ${active ? 'border-brand text-ink' : 'border-transparent text-muted hover:text-ink'}`}"
 		>
 			{option.label}
 			{#if option.count !== undefined}<span class="text-xs text-faint tabular-nums">{option.count}</span>{/if}

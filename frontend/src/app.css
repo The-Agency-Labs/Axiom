@@ -101,6 +101,15 @@
 	color-scheme: dark;
 }
 
+:root {
+	--safe-top: env(safe-area-inset-top, 0px);
+	/* Space above the phone top bar's content: the status area, plus a little
+	   room below it where iOS fades what is underneath. Zero without a notch. */
+	--topbar-pad: calc(var(--safe-top) + min(var(--safe-top), 0.5rem));
+	/* Where sticky rows sit under the phone top bar. */
+	--topbar: calc(var(--topbar-pad) + 3rem);
+}
+
 html {
 	/* Everything is rem-based (Tailwind type and spacing), so this makes 100% browser zoom look like the old 120%. */
 	font-size: 120%;
