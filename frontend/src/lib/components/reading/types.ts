@@ -126,6 +126,9 @@ export interface CalendarEvent {
 	time: string | null;
 	all_day: boolean;
 	title: string;
+	/** The show or book alone, and the episode's own title ("" when unknown). */
+	name: string;
+	episode_title: string;
 	media_type: MediaType;
 	item_id: number;
 	source: string;

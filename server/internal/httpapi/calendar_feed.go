@@ -200,6 +200,7 @@ func (s *Server) calendarJSON(_ http.ResponseWriter, r *http.Request) (any, erro
 		}
 		out = append(out, map[string]any{
 			"date": date, "time": tm, "all_day": e.allDay, "title": e.summary(), "media_type": e.row.Kind,
+			"name": e.row.Title, "episode_title": e.row.EpisodeTitle,
 			"item_id": e.row.ItemID, "source": e.row.Source, "media_id": e.row.ExternalID, "season": season, "episode": episode, "image": e.row.Image,
 		})
 	}

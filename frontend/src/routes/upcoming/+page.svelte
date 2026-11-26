@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Tv } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
-	import Cover from '#lib/components/Cover.svelte';
+	import ReleaseCard from '#lib/components/ReleaseCard.svelte';
+	import SectionHead from '#lib/components/SectionHeader.svelte';
 	import { isoDate, parseDay } from '#lib/components/reading/format.ts';
 	import type { CalendarEvent } from '#lib/components/reading/types.ts';
 	import { MEDIA, titleHref } from '#lib/media.ts';
@@ -143,8 +144,30 @@
 		if (Math.round((d.getTime() - t.getTime()) / 864e5) === 1) return 'Tomorrow';
 		return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
 	};
-	const timeOf = (e: CalendarEvent) =>
-		e.all_day || !e.time ? '' : new Date(e.time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+	// The agenda is grouped by week, then month, so cards fill the grid as they do on Now.
+	const byPeriod = $derived.by(() => {
+		const t = parseDay(today);
+		const sunday = new Date(t);
+		sunday.setDate(t.getDate() + (6 - ((t.getDay() + 6) % 7)));
+		const nextSunday = new Date(sunday);
+		nextSunday.setDate(sunday.getDate() + 7);
+		const period = (iso: string) => {
+			if (iso < today) return 'Last 30 days';
+			if (iso <= isoDate(sunday)) return 'This week';
+			if (iso <= isoDate(nextSunday)) return 'Next week';
+			const d = parseDay(iso);
+			return d.toLocaleDateString(undefined, { month: 'long', ...(d.getFullYear() === t.getFullYear() ? {} : { year: 'numeric' }) });
+		};
+		const map = new Map<string, CalendarEvent[]>();
+		for (const [iso, list] of byDay) map.set(period(iso), [...(map.get(period(iso)) ?? []), ...list]);
+		return [...map.entries()];
+	});
+	const when = (iso: string) => {
+		if (iso === today) return 'Today';
+		const d = parseDay(iso);
+		if (Math.round((d.getTime() - parseDay(today).getTime()) / 864e5) === 1) return 'Tomorrow';
+		return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+	};
 
 	// Month grid cells (6 weeks, Monday first).
 	const cells = $derived.by(() => {
@@ -168,25 +191,18 @@
 	const webcal = $derived(feedUrl.replace(/^https?:/, 'webcal:'));
 </script>
 
-{#snippet eventRow(e: CalendarEvent)}
-	{@const meta = MEDIA[e.media_type]}
-	<li>
-	<a href={titleHref(e)} class="flex min-h-14 items-center gap-3 px-3 py-2 active:bg-ink/5">
-		<Cover src={e.image} title={e.title} type={e.media_type} class="aspect-[2/3] w-9 shrink-0 !rounded-md" />
-		<div class="min-w-0 flex-1">
-			<p class="line-clamp-2 text-[0.875rem] leading-snug font-medium">{e.title}</p>
-			<p class="flex items-center gap-1 text-[0.75rem] text-faint"><meta.icon class="size-3" style="color: {meta.accent}" />{meta.label}{timeOf(e) ? ` · ${timeOf(e)}` : ''}</p>
-		</div>
-	</a>
-	</li>
-{/snippet}
 
 <svelte:head><title>Upcoming · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
-	<header class="mb-3 flex items-center justify-between gap-3">
-		<h1 class="text-3xl font-semibold tracking-tight">Upcoming</h1>
-		<Button variant="secondary" icon={CalendarPlus} onclick={() => (subscribeOpen = true)}>Subscribe</Button>
+	<header class="mb-5 flex items-end justify-between gap-3">
+		<div class="min-w-0">
+			<h1 class="truncate text-2xl font-semibold tracking-tight sm:text-3xl">Upcoming</h1>
+			<p class="mt-1 h-5 text-[0.8125rem] text-faint">
+				{#if view === 'agenda' && events}{events.filter((e) => e.date >= today).length} in the next 90 days{/if}
+			</p>
+		</div>
+		<Button variant="secondary" icon={CalendarPlus} onclick={() => (subscribeOpen = true)} class="shrink-0">Subscribe</Button>
 	</header>
 
 	<Tabs
@@ -245,20 +261,20 @@
 	{:else if events === null}
 		<div class="mt-4 space-y-3" aria-hidden="true"><Skeleton class="h-6 w-40" /><Skeleton class="h-40 w-full" /></div>
 	{:else if view === 'agenda'}
-		<div class="mt-3">
+		<div class="mt-5">
 			{#if !showPast}
-				<Button variant="ghost" size="sm" onclick={() => (showPast = true)} class="mb-2">Show the last 30 days</Button>
+				<Button variant="secondary" size="sm" onclick={() => (showPast = true)} class="mb-5">Show the last 30 days</Button>
 			{/if}
 			{#if byDay.length === 0}
 				<EmptyState icon={CalendarDays} title="Nothing coming up" description="Upcoming episodes and releases for what you track will show up here." />
 			{:else}
-				<div class="space-y-5">
-					{#each byDay as [iso, list] (iso)}
-						<section aria-label={heading(iso)}>
-							<h2 class="mb-1.5 px-1 text-[0.875rem] font-semibold {iso === today ? 'text-brand' : ''} {iso < today ? 'text-muted' : ''}">{heading(iso)}</h2>
-							<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-								{#each list as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}{@render eventRow(e)}{/each}
-							</ul>
+				<div class="space-y-8">
+					{#each byPeriod as [period, list] (period)}
+						<section aria-label={period}>
+							<SectionHead title={period} icon={CalendarDays} accent="var(--color-brand)" count={list.length} />
+							<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+								{#each list as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}<ReleaseCard event={e} when={when(e.date)} />{/each}
+							</div>
 						</section>
 					{/each}
 				</div>
@@ -305,9 +321,9 @@
 				<section class="mt-4" aria-label="Releases on {picked}">
 					<h3 class="mb-1.5 px-1 text-[0.875rem] font-semibold">{heading(picked)}</h3>
 					{#if list.length}
-						<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-							{#each list as e, i (i)}{@render eventRow(e)}{/each}
-						</ul>
+						<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+							{#each list as e, i (i)}<ReleaseCard event={e} />{/each}
+						</div>
 					{:else}
 						<p class="text-sm text-muted">Nothing on this day.</p>
 					{/if}
