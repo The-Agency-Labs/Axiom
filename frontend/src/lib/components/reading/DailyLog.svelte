@@ -68,7 +68,7 @@
 	});
 
 	const pageRange = (b: { from_page: number | null; to_page: number | null }) =>
-		b.from_page != null && b.to_page != null && b.to_page > b.from_page ? `p. ${b.from_page}–${b.to_page}` : '';
+		b.from_page == null || b.to_page == null ? '' : b.to_page > b.from_page ? `p. ${b.from_page}–${b.to_page}` : `p. ${b.to_page}`;
 </script>
 
 {#if !loaded}

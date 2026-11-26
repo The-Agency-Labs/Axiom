@@ -276,7 +276,11 @@ func rebuildSessions(ctx context.Context, q *db.Queries, doc Document, device st
 	for _, g := range groupEvents(events) {
 		pages := map[int64]bool{}
 		var seconds int64
+		// The range is the lowest to the highest page seen: flipping back and
+		// returning must not collapse it to "from 188 to 188".
+		low, high := g[0].Page, g[0].Page
 		for _, e := range g {
+			low, high = min(low, e.Page), max(high, e.Page)
 			pages[e.Page] = true
 			seconds += e.DurationSeconds
 		}
@@ -289,7 +293,7 @@ func rebuildSessions(ctx context.Context, q *db.Queries, doc Document, device st
 			Title: doc.Title, StartedAt: g[0].StartTime,
 			EndedAt:         Stamp(parseStamp(last.StartTime).Add(time.Duration(last.DurationSeconds) * time.Second)),
 			DurationSeconds: seconds, PagesRead: int64(len(pages)),
-			StartPage: nullInt(g[0].Page, true), EndPage: nullInt(last.Page, true), Device: device,
+			StartPage: nullInt(low, true), EndPage: nullInt(high, true), Device: device,
 		})
 		if err != nil {
 			return err

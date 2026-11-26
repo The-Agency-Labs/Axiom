@@ -40,8 +40,9 @@
 		<h2 class="mb-2 px-1 text-[0.9375rem] font-semibold">Currently reading</h2>
 		<ul class="space-y-2">
 			{#each books as b (b.id)}
-				<li class="flex items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-3">
-					<a href="/item/book/{b.id}" class="flex min-w-0 flex-1 items-center gap-3">
+				<!-- The stepper drops to its own line when the title would be squeezed. -->
+				<li class="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 rounded-[var(--radius-card)] border border-line bg-surface p-3">
+					<a href="/item/book/{b.id}" class="flex min-w-[min(13rem,100%)] flex-1 items-center gap-3">
 						<Cover src={b.item.image} title={b.item.title} type="book" class="aspect-[2/3] w-12 shrink-0" />
 						<span class="min-w-0">
 							<span class="line-clamp-2 text-[0.875rem] leading-snug font-medium"

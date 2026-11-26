@@ -41,7 +41,7 @@
 		<Button href="/series" size="sm" variant="secondary">Series</Button>
 	</header>
 
-	<div class="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
+	<div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
 		<div class="space-y-4">
 			{#if stats}<TodayCard {stats} />{:else}<Skeleton class="h-48 w-full" />{/if}
 			<CurrentlyReading {version} />
