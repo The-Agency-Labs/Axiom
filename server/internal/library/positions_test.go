@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // Ported from test_import_anilist_shows.py: episodes are marked by position, so a

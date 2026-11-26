@@ -31,7 +31,7 @@ local json = require("json")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
-local SETTINGS_KEY = "encompass"
+local SETTINGS_KEY = "axiom"
 -- Resend this much history each time, in case the statistics plugin flushed
 -- rows after our last upload. The server ignores duplicates.
 local OVERLAP_SECONDS = 6 * 3600
@@ -39,7 +39,7 @@ local MAX_ROWS_PER_REQUEST = 4000
 local TIMEOUT_SECONDS = 8
 
 local Axiom = WidgetContainer:extend{
-    name = "encompass",
+    name = "axiom",
     is_doc_only = false,
 }
 
@@ -88,7 +88,7 @@ function Axiom:flushStatistics()
     local stats = self.ui and self.ui.statistics
     if stats and stats.insertDB then
         local ok, err = pcall(stats.insertDB, stats)
-        if not ok then logger.warn("encompass: statistics flush failed", err) end
+        if not ok then logger.warn("axiom: statistics flush failed", err) end
     end
 end
 
@@ -97,7 +97,7 @@ function Axiom:readRows(since)
     local db_path = DataStorage:getSettingsDir() .. "/statistics.sqlite3"
     local ok, conn = pcall(SQ3.open, db_path)
     if not ok or not conn then
-        logger.warn("encompass: cannot open", db_path)
+        logger.warn("axiom: cannot open", db_path)
         return nil
     end
 
@@ -208,7 +208,7 @@ function Axiom:captureTOC()
     if not (self.ui and self.ui.document) then return end
     local ok, toc = pcall(self.currentTOC, self)
     if not ok then
-        logger.warn("encompass: reading table of contents failed", toc)
+        logger.warn("axiom: reading table of contents failed", toc)
         self:reload()
         self.settings.toc_status = T(_("Chapters: error %1"), tostring(toc):sub(1, 60))
         self:save()
@@ -235,11 +235,11 @@ function Axiom:sendTOCs()
             self.settings.toc_sent[md5] = item.key
             self.settings.toc_status = T(_("Chapters: sent %1 for %2 at %3"), #item.payload.toc,
                 (item.payload.title or ""):sub(1, 24), os.date("%H:%M"))
-            logger.info("encompass: sent table of contents", md5, #item.payload.toc)
+            logger.info("axiom: sent table of contents", md5, #item.payload.toc)
         else
             local why = okp and (tostring(code) .. " " .. tostring(body):sub(1, 60)) or tostring(code)
             self.settings.toc_status = T(_("Chapters: failed %1"), why)
-            logger.warn("encompass: table of contents upload failed", why)
+            logger.warn("axiom: table of contents upload failed", why)
         end
     end
     self.settings.toc_pending = pending
@@ -256,7 +256,7 @@ function Axiom:sync(reason, interactive)
         return 0
     end
     if not isOnline() then
-        logger.dbg("encompass: offline, will retry later (" .. reason .. ")")
+        logger.dbg("axiom: offline, will retry later (" .. reason .. ")")
         if interactive then
             UIManager:show(InfoMessage:new{ text = _("Not connected to Wi-Fi.") })
         end
@@ -282,7 +282,7 @@ function Axiom:sync(reason, interactive)
             if ok and code == nil then
                 -- Server not reachable yet (Wi-Fi or Tailscale still coming
                 -- up, e.g. right after KOReader starts): not an error, retry.
-                logger.info("encompass: server unreachable, retrying in 60 s (" .. reason .. ")")
+                logger.info("axiom: server unreachable, retrying in 60 s (" .. reason .. ")")
                 if not self.retry_scheduled then
                     self.retry_scheduled = true
                     UIManager:scheduleIn(60, function()
@@ -295,7 +295,7 @@ function Axiom:sync(reason, interactive)
                 end
                 return total
             end
-            logger.warn("encompass: upload failed", code, body)
+            logger.warn("axiom: upload failed", code, body)
             self.settings.last_error = T(_("HTTP %1 at %2"), tostring(code), os.date("%Y-%m-%d %H:%M"))
             self:save()
             if interactive then
@@ -317,7 +317,7 @@ function Axiom:sync(reason, interactive)
     self.settings.last_error = nil
     self:save()
     self.syncing = false
-    logger.info("encompass: synced", total, "rows (" .. reason .. ")")
+    logger.info("axiom: synced", total, "rows (" .. reason .. ")")
     if interactive then
         UIManager:show(InfoMessage:new{ text = T(_("Synced %1 page views."), total) })
     end
@@ -374,7 +374,7 @@ function Axiom:editSetting(key, title, hint)
 end
 
 function Axiom:addToMainMenu(menu_items)
-    menu_items.encompass = {
+    menu_items.axiom = {
         text = _("Axiom sync"),
         sorting_hint = "tools",
         sub_item_table = {
@@ -386,14 +386,14 @@ function Axiom:addToMainMenu(menu_items)
                 text = _("Server URL"),
                 keep_menu_open = true,
                 callback = function()
-                    self:editSetting("server", _("Server URL"), "https://encompass.your-tailnet.ts.net")
+                    self:editSetting("server", _("Server URL"), "https://axiom.your-tailnet.ts.net")
                 end,
             },
             {
                 text = _("API token (write)"),
                 keep_menu_open = true,
                 callback = function()
-                    self:editSetting("token", _("API token"), "enc_…")
+                    self:editSetting("token", _("API token"), "axm_…")
                 end,
             },
             {

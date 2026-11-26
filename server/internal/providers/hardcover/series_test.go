@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 func TestBookSeries(t *testing.T) {

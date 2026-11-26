@@ -10,10 +10,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/the-agency-labs/encompass/server/internal/calendar"
-	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/calendar"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/catalogtest"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/library"
 )
 
 type calFx struct {
@@ -146,7 +146,7 @@ func TestCalendarFeed(t *testing.T) {
 	for _, e := range parseEvents(lines) {
 		byUID[e["UID"]] = e
 	}
-	uid := func(it db.Item, s, n string) string { return itoa(int(it.ID)) + "-" + s + "-" + n + "@encompass" }
+	uid := func(it db.Item, s, n string) string { return itoa(int(it.ID)) + "-" + s + "-" + n + "@axiom" }
 
 	e := byUID[uid(show, "1", "1")]
 	if e == nil {
@@ -317,7 +317,7 @@ func TestCalendarJSON(t *testing.T) {
 func TestICalEncoder(t *testing.T) {
 	long := strings.Repeat("é", 100) // 2 octets each
 	out := string(calendar.Encode("-//T//EN", "Name, with; chars", time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC), []calendar.Event{
-		{UID: "1-n-n@encompass", Summary: "a,b;c\\d\r\ne\nf" + long, Start: time.Date(2024, 3, 4, 11, 59, 59, 0, time.UTC), AllDay: true},
+		{UID: "1-n-n@axiom", Summary: "a,b;c\\d\r\ne\nf" + long, Start: time.Date(2024, 3, 4, 11, 59, 59, 0, time.UTC), AllDay: true},
 	}))
 	for _, l := range strings.Split(strings.TrimSuffix(out, "\r\n"), "\r\n") {
 		if len(l) > 75 {

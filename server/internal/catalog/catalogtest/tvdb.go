@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
 )
 
 // TVDB is a scriptable fake of the TVDB client: series with aired seasons,

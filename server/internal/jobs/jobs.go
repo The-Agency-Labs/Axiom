@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 const (

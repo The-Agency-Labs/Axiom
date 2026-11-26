@@ -37,9 +37,9 @@ type Config struct {
 
 	JellyfinURL            string
 	JellyfinKey            string
-	JellyfinUsers          []string // "jellyfin user:encompass user"
+	JellyfinUsers          []string // "jellyfin user:axiom user"
 	JellyfinWatchedPercent int
-	AniListUsers           []string // "anilist user:encompass user"
+	AniListUsers           []string // "anilist user:axiom user"
 
 	SessionDays int
 }
@@ -48,7 +48,7 @@ type Config struct {
 func Load() (Config, error) {
 	c := Config{
 		Addr:                   env("ADDR", ":8000"),
-		DatabasePath:           env("DATABASE_PATH", "/data/encompass.db"),
+		DatabasePath:           env("DATABASE_PATH", "/data/axiom.db"),
 		SecretKey:              secret("SECRET"),
 		TimeZone:               env("TZ", "UTC"),
 		BaseURLs:               list("URLS"),

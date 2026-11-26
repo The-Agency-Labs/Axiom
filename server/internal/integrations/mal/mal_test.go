@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 func TestPreflight(t *testing.T) {

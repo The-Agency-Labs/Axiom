@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // countItem inserts a count-based item (manga, game, ...) with a total.

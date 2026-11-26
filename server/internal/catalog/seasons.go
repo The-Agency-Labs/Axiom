@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // SeasonsMaxAge is how long synced seasons and episodes are trusted.

@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/library"
 )
 
 // TOCEntry is one line of a book's table of contents as KOReader lists it:

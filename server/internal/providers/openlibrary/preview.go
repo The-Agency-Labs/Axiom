@@ -3,7 +3,7 @@ package openlibrary
 import (
 	"strings"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // TOCEntry is one table-of-contents line.

@@ -3,7 +3,7 @@ package httpapi
 import (
 	"net/http"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
 )
 
 // readingRoutes registers the reading, KOSync, KOReader, book linking and

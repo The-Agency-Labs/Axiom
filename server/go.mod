@@ -1,4 +1,4 @@
-module github.com/the-agency-labs/encompass/server
+module github.com/the-agency-labs/axiom/server
 
 go 1.27.4
 

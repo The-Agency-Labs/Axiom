@@ -28,8 +28,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // ErrTargetNotEmpty is returned when the target already holds entries and
@@ -121,7 +121,7 @@ func (r *Report) Summary() string {
 		}
 	}
 	if len(r.Deferred) > 0 {
-		fmt.Fprintf(&b, "assumed seasons NOT applied, no episode data (%d shows; rerun with TMDB access: encompass migrate-django --assumed-only):\n", len(r.Deferred))
+		fmt.Fprintf(&b, "assumed seasons NOT applied, no episode data (%d shows; rerun with TMDB access: axiom migrate-django --assumed-only):\n", len(r.Deferred))
 		for _, a := range r.Deferred {
 			fmt.Fprintf(&b, "  %s [%s]: first watched season %d, would assume seasons %v\n", a.Title, a.Kind, a.FirstSeason, a.Seasons)
 		}

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/library"
 )
 
 // overviewLoc is the user's time zone (UTC when unset or unknown).

@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // This file has the read side the API needs: plain functions returning

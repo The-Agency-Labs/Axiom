@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
 )
 
 // readingDateRange parses ?start= and ?end= (YYYY-MM-DD) with the defaults of

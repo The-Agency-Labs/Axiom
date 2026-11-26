@@ -7,13 +7,13 @@
 #   TZ=<IANA zone>
 #   URLS=<public URL(s), comma separated>
 #   TMDB_API=... and the other provider keys
-#   ENCOMPASS_TAG=<short sha or v* tag>   # optional pin; default latest
+#   AXIOM_TAG=<short sha or v* tag>   # optional pin; default latest
 #
 # Create the first account:
-#   docker compose exec -T encompass /encompass createuser <name> --admin <<< "<password>"
+#   docker compose exec -T axiom /axiom createuser <name> --admin <<< "<password>"
 services:
-  encompass:
-    image: ghcr.io/the-agency-labs/encompass:${ENCOMPASS_TAG:-latest}
+  axiom:
+    image: ghcr.io/the-agency-labs/axiom:${AXIOM_TAG:-latest}
     env_file: .env
     volumes:
       - ./data:/data

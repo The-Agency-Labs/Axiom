@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/library"
 )
 
 // AssumedShow is a migrated show the assumed-earlier-seasons rule applies to.

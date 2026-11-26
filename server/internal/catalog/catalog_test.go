@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
-	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/catalogtest"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers/anilist"
 )
 
 var (

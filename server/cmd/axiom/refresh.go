@@ -7,10 +7,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/cache"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/cache"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
 )
 
 // refreshItems re-reads provider metadata for every item of one source, e.g.
@@ -22,7 +22,7 @@ func refreshItems(args []string, out io.Writer) error {
 		return err
 	}
 	if *source == "" || fs.NArg() > 0 {
-		return fmt.Errorf("usage: encompass refresh-items --source <source>")
+		return fmt.Errorf("usage: axiom refresh-items --source <source>")
 	}
 	cfg, err := config.Load()
 	if err != nil {

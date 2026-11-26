@@ -22,15 +22,15 @@ COPY --from=web /frontend/build ./web/dist
 ARG VERSION=dev
 # timetzdata embeds the zoneinfo database so TZ works without files in the image.
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -tags timetzdata \
-    -ldflags "-s -w" -o /encompass ./cmd/encompass
+    -ldflags "-s -w" -o /axiom ./cmd/axiom
 
 # --- Runtime ---
 FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=build /encompass /encompass
-ENV ADDR=:8000 DATABASE_PATH=/data/encompass.db
+COPY --from=build /axiom /axiom
+ENV ADDR=:8000 DATABASE_PATH=/data/axiom.db
 # /data must be writable by uid 65532 (nonroot), e.g. chown 65532:65532 ./data.
 VOLUME /data
 EXPOSE 8000
 HEALTHCHECK --interval=45s --timeout=10s --start-period=15s --retries=5 \
-    CMD ["/encompass", "healthcheck"]
-ENTRYPOINT ["/encompass"]
+    CMD ["/axiom", "healthcheck"]
+ENTRYPOINT ["/axiom"]

@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
 )
 
 // Job kinds of the durable queue; the payload is {"item_id": N}.

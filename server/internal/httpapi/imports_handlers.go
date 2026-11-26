@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/goodreads"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/mal"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/steam"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/goodreads"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/mal"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/steam"
 )
 
 func (s *Server) importsRoutes(mux *http.ServeMux) {

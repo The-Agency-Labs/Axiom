@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
 )
 
 // kosyncContentType is what KOReader's sync client expects.

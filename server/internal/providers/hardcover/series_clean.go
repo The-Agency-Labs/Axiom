@@ -9,7 +9,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // Cleaning of Hardcover series lists.

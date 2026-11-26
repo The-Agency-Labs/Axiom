@@ -3,7 +3,7 @@ package catalog
 import (
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 func series(name string, books ...string) providers.BookSeries {

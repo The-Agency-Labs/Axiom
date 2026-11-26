@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
-	"github.com/the-agency-labs/encompass/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/catalogtest"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
 )
 
 // seriesEnv is a library env whose Hardcover knows the Red Rising trilogy

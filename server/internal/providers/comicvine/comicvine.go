@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 const (

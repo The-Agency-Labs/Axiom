@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // StepSize is how far Step moves progress: games count minutes in half hours,

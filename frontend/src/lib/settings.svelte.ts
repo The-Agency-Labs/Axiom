@@ -28,7 +28,7 @@ export interface UserSettings {
 
 export const settings = $state<{ data: UserSettings | null; loaded: boolean }>({ data: null, loaded: false });
 
-const CACHE_KEY = 'encompass-settings';
+const CACHE_KEY = 'axiom-settings';
 
 /** Fetch settings; falls back to the last copy in localStorage when offline. */
 export async function loadSettings(force = false) {

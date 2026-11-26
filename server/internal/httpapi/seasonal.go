@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
 )
 
 // Seasonal anime: what aired (or is announced to air) in a Winter/Spring/

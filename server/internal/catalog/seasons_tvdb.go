@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // syncTVDB replaces the seasons and episodes of a TVDB show with TVDB's aired

@@ -4,17 +4,17 @@
 package integrations
 
 import (
-	"github.com/the-agency-labs/encompass/server/internal/cache"
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/anilist"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/goodreads"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/mal"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/steam"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
-	"github.com/the-agency-labs/encompass/server/internal/library"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/cache"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/anilist"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/goodreads"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/mal"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/steam"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // Deps are what the importers are built on.

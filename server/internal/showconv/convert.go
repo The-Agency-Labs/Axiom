@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
 )
 
 // Statuses of a season, as the library names them.

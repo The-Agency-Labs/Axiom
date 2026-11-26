@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/library"
-	"github.com/the-agency-labs/encompass/server/internal/reading"
-	"github.com/the-agency-labs/encompass/server/internal/reading/readingtest"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/internal/reading/readingtest"
 )
 
 var (

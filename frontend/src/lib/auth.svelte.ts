@@ -2,7 +2,7 @@ import { isNetworkError, session } from './api.ts';
 
 export const auth = $state({ ready: false, username: null as string | null });
 
-const KEY = 'encompass-user';
+const KEY = 'axiom-user';
 
 export async function refreshAuth() {
 	try {

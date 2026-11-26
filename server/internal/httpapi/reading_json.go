@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/library"
-	"github.com/the-agency-labs/encompass/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
 )
 
 // readingGo runs background work started by a request (auto-linking after an

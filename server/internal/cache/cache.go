@@ -18,8 +18,8 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
 )
 
 // DefaultEntries is the default LRU capacity.

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 func serve(t *testing.T, files map[string]string, status int) (*Client, *[]string) {

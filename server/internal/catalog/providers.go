@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
-	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers/anilist"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
 )
 
 type (

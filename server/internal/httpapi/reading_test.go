@@ -16,10 +16,10 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/library"
-	"github.com/the-agency-labs/encompass/server/internal/reading/readingtest"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/reading/readingtest"
 )
 
 var readingNow = time.Date(2026, 11, 25, 12, 0, 0, 0, time.UTC)

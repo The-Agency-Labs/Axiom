@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/catalogtest"
 )
 
 var (

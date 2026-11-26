@@ -12,9 +12,9 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 func testServer(t *testing.T) (*httptest.Server, *Server) {
@@ -110,7 +110,7 @@ func TestAuthFlow(t *testing.T) {
 		t.Fatalf("create token with bad csrf: %d %v", code, body)
 	}
 	code, body, _ = c.do("POST", "/api/v1/tokens", map[string]string{"name": "kindle", "scope": "write"}, nil)
-	if code != 200 || body["scope"] != "write" || body["revoked"] != false || body["last_used_at"] != nil || !strings.HasPrefix(body["key"].(string), "enc_") {
+	if code != 200 || body["scope"] != "write" || body["revoked"] != false || body["last_used_at"] != nil || !strings.HasPrefix(body["key"].(string), "axm_") {
 		t.Fatalf("create token: %d %v", code, body)
 	}
 	key, id := body["key"].(string), int(body["id"].(float64))

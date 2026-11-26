@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
 )
 
 // FindTMDB wraps a TMDB fake with a scriptable Find (lookup by external id).

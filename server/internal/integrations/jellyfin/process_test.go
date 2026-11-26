@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/library"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/catalogtest"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
 )
 
 var (

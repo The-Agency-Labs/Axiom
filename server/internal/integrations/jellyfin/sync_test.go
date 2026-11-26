@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/library"
 )
 
 // fakeJellyfin serves /Users and /Items for one Jellyfin user.

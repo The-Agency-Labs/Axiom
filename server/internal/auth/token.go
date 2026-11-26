@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // TokenPrefix is the public prefix of every API key.
-const TokenPrefix = "enc_"
+const TokenPrefix = "axm_"
 
 // Token scopes.
 const (

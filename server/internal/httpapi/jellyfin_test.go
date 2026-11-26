@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/catalogtest"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
-	"github.com/the-agency-labs/encompass/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/catalogtest"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/library"
 )
 
 // jellyfinFx is the overview fixture with a scriptable TMDB find, so the

@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tmdb"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tmdb"
 )
 
 // Credit roles stored in credits.role.

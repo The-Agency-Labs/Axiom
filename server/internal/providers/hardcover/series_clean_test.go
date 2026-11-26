@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // row is a compact synthetic book_series entry. Fixtures use public book

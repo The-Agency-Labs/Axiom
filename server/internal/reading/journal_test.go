@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/reading"
-	"github.com/the-agency-labs/encompass/server/internal/reading/readingtest"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/internal/reading/readingtest"
 )
 
 // The daily log merges every session of a day per book, newest day first,

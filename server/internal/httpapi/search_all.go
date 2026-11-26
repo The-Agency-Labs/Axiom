@@ -8,8 +8,8 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // searchAllKinds are the kinds "all" searches when the client names none.

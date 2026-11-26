@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/cache"
+	"github.com/the-agency-labs/axiom/server/internal/cache"
 )
 
 // Error is a provider failure. Its message matches the Django app's

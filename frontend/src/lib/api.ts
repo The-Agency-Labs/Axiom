@@ -182,8 +182,8 @@ export async function logout() {
 	await post('/auth/logout');
 	csrfToken = '';
 	try {
-		localStorage.removeItem('encompass-user');
-		localStorage.removeItem('encompass-settings');
+		localStorage.removeItem('axiom-user');
+		localStorage.removeItem('axiom-settings');
 	} catch {
 		/* storage unavailable */
 	}

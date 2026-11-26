@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // overviewDay is one day of reading (reading.services.daily_stats).

@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/jellyfin"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/jellyfin"
 )
 
 // jellyfinRoutes registers the Jellyfin webhook and the on-demand sync.

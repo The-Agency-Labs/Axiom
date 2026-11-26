@@ -9,8 +9,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // dupWindow is how close two automated plays of one episode must be to count

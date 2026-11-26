@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/cache"
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tmdb"
-	"github.com/the-agency-labs/encompass/server/internal/showconv"
+	"github.com/the-agency-labs/axiom/server/internal/cache"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tmdb"
+	"github.com/the-agency-labs/axiom/server/internal/showconv"
 )
 
-// showsToTVDB implements `encompass shows-to-tvdb [--dry-run]`: it moves every
+// showsToTVDB implements `axiom shows-to-tvdb [--dry-run]`: it moves every
 // show tracked from TMDB onto its TheTVDB series (see internal/showconv). It
 // is idempotent and transactional per show; back the database up first.
 func showsToTVDB(args []string, out io.Writer) error {

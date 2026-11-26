@@ -17,8 +17,8 @@ import (
 
 	"database/sql"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 //go:embed testdata/django_schema.sql
@@ -183,11 +183,11 @@ func TestUsersSettingsAndTokens(t *testing.T) {
 		"tv_enabled": 0, "tv_sort": "title", "anime_status": "Completed", "language": "fr", "last_login": "2025-12-31 23:00:00.5",
 	})
 	f.user(2, "bob", map[string]any{"is_staff": 1, "is_active": 0, "token": "web-tok-2"})
-	key := "enc_abcdefghijklmnopqrstuvwxyz012345678901234"
+	key := "axm_abcdefghijklmnopqrstuvwxyz012345678901234"
 	f.exec(`INSERT INTO api_apitoken (id, name, scope, prefix, key_hash, key_md5, created_at, last_used_at, revoked_at, user_id)
-		VALUES (1, 'assistant', 'write', 'enc_abcdef', ?, ?, '2025-01-02 03:04:05.678', '2025-06-01 00:00:00', NULL, 1)`, hexSHA(key), strings.ToUpper(hexMD5(key)))
+		VALUES (1, 'assistant', 'write', 'axm_abcdef', ?, ?, '2025-01-02 03:04:05.678', '2025-06-01 00:00:00', NULL, 1)`, hexSHA(key), strings.ToUpper(hexMD5(key)))
 	f.exec(`INSERT INTO api_apitoken (id, name, scope, prefix, key_hash, key_md5, created_at, revoked_at, user_id)
-		VALUES (2, 'old', 'read', 'enc_zzzzzz', 'deadbeef', 'cafe', '2025-01-02 03:04:05', '2025-02-02 00:00:00', 1)`)
+		VALUES (2, 'old', 'read', 'axm_zzzzzz', 'deadbeef', 'cafe', '2025-01-02 03:04:05', '2025-02-02 00:00:00', 1)`)
 
 	rep := f.must(Options{Timezone: "America/Toronto", DisableKinds: []string{"comic"}})
 	if rep.Counts["users"] != 2 || rep.Counts["api tokens"] != 2 {

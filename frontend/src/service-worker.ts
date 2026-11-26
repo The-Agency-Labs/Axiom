@@ -23,9 +23,9 @@ import { version } from '$app/env';
 import { assets, immutable } from '$app/manifest';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
-const SHELL = `encompass-shell-${version}`;
-const API = 'encompass-api-v1';
-const IMAGES = 'encompass-images-v1';
+const SHELL = `axiom-shell-${version}`;
+const API = 'axiom-api-v1';
+const IMAGES = 'axiom-images-v1';
 const IMAGE_LIMIT = 400;
 const KEEP = new Set([SHELL, API, IMAGES]);
 

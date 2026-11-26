@@ -20,11 +20,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/anilist"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/sourcestatus"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/anilist"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/sourcestatus"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 const (

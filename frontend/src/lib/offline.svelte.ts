@@ -3,7 +3,7 @@
 // Queue design
 // - Only safe, replayable taps are queued (see QUEUEABLE): mark episode(s), +/- progress step,
 //   status/score/notes change on an existing entry. Everything else needs a connection.
-// - Items live in IndexedDB (`encompass` / `queue`), so they survive reloads and app restarts.
+// - Items live in IndexedDB (`axiom` / `queue`), so they survive reloads and app restarts.
 // - Replay is strictly in order (FIFO) and single-flight (a Web Lock keeps two tabs from replaying
 //   the same queue). A network error stops the replay and keeps the item; an HTTP error from the
 //   server means the change conflicts with reality (deleted entry, invalid state): the item is
@@ -48,7 +48,7 @@ let dbPromise: Promise<IDBDatabase> | null = null;
 
 function openDb() {
 	dbPromise ??= new Promise<IDBDatabase>((resolve, reject) => {
-		const req = indexedDB.open('encompass', 1);
+		const req = indexedDB.open('axiom', 1);
 		req.onupgradeneeded = () => req.result.createObjectStore('queue', { keyPath: 'id', autoIncrement: true });
 		req.onsuccess = () => resolve(req.result);
 		req.onerror = () => reject(req.error);
@@ -131,7 +131,7 @@ async function drain() {
 export function syncQueue() {
 	const run = () => drain().catch(() => {});
 	if (typeof navigator !== 'undefined' && navigator.locks) {
-		return navigator.locks.request('encompass-queue', { ifAvailable: true }, (lock) => (lock ? run() : undefined));
+		return navigator.locks.request('axiom-queue', { ifAvailable: true }, (lock) => (lock ? run() : undefined));
 	}
 	return run();
 }

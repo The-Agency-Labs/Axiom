@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 type searchMAL struct {

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // Registry dispatches metadata and search by (kind, source) to the provider

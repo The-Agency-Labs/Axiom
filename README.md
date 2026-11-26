@@ -31,13 +31,13 @@ Licensed AGPL-3.0.
 
 ## Running it
 
-The image `ghcr.io/the-agency-labs/encompass` is built by GitHub Actions.
+The image `ghcr.io/the-agency-labs/axiom` is built by GitHub Actions.
 See [`server/deploy/compose.yaml`](server/deploy/compose.yaml):
 
 ```sh
 mkdir -p data && sudo chown 65532:65532 data
 docker compose up -d
-docker compose exec -T encompass /encompass createuser <name> --admin <<< "<password>"
+docker compose exec -T axiom /axiom createuser <name> --admin <<< "<password>"
 ```
 
 Settings come from `.env`:
@@ -51,16 +51,16 @@ Settings come from `.env`:
 | `REGISTRATION` | Allow sign-ups (default off) |
 | `TMDB_API`, `TVDB_API`, `MAL_API`, `IGDB_ID`, `IGDB_SECRET`, `HARDCOVER_API`, `COMICVINE_API`, `BGG_API_TOKEN`, `STEAM_API_KEY` | Provider keys |
 | `TMDB_LANG`, `*_NSFW` | Provider language and adult-content filters |
-| `JELLYFIN_URL`, `JELLYFIN_API_KEY`, `JELLYFIN_USERS` (`<jellyfin>:<encompass>`), `JELLYFIN_WATCHED_PERCENT` | Jellyfin history sync |
-| `ANILIST_USERS` (`<anilist>:<encompass>`) | AniList polling |
+| `JELLYFIN_URL`, `JELLYFIN_API_KEY`, `JELLYFIN_USERS` (`<jellyfin>:<axiom>`), `JELLYFIN_WATCHED_PERCENT` | Jellyfin history sync |
+| `ANILIST_USERS` (`<anilist>:<axiom>`) | AniList polling |
 | `SESSION_DAYS` | Login lifetime |
 
 Coming from the old Django version of Axiom:
-`encompass migrate-django --from <old db.sqlite3> --timezone <zone>`
+`axiom migrate-django --from <old db.sqlite3> --timezone <zone>`
 (`--dry-run` first).
 
 Shows tracked from TMDB (before shows moved to TheTVDB) are converted in place
-with `encompass shows-to-tvdb --dry-run`, then without `--dry-run`: back up the
+with `axiom shows-to-tvdb --dry-run`, then without `--dry-run`: back up the
 database first; it needs `TVDB_API` and `TMDB_API`, is safe to repeat and reports
 every watch it had to place on the closest episode.
 

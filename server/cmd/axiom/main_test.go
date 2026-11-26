@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 func TestCreateUser(t *testing.T) {

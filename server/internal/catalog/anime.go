@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // ErrNotCountBased means AnimeEpisodes was asked about an anime that has TMDB

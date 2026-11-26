@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/integrations"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/anilist"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/goodreads"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/mal"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/sourcestatus"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/steam"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/integrations"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/anilist"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/goodreads"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/mal"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/sourcestatus"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/steam"
 )
 
 // integrations builds the importers on the server's catalog and library.

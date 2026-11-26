@@ -12,17 +12,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/cache"
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
-	"github.com/the-agency-labs/encompass/server/internal/migrate"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/cache"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/migrate"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
-// migrateDjango implements `encompass migrate-django`: the one-shot import of
+// migrateDjango implements `axiom migrate-django`: the one-shot import of
 // a Django database into the Go database at DATABASE_PATH.
 func migrateDjango(args []string, out io.Writer) error {
 	fs := flag.NewFlagSet("migrate-django", flag.ContinueOnError)
@@ -43,7 +43,7 @@ func migrateDjango(args []string, out io.Writer) error {
 		return fmt.Errorf("unexpected argument %q", fs.Arg(0))
 	}
 	if *from == "" && !*assumedOnly {
-		return errors.New("usage: encompass migrate-django --from <django.db> [--dry-run] [--force]")
+		return errors.New("usage: axiom migrate-django --from <django.db> [--dry-run] [--force]")
 	}
 
 	cfg, err := config.Load()

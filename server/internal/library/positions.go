@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // WatchPositions marks episodes of a season watched by their position (1 =

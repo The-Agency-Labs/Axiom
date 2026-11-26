@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
 )
 
 // AutoLinkEvery is how often documents that have never had a link attempt

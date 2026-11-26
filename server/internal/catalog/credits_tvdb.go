@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
 )
 
 // PeopleStats counts how TVDB people were resolved while credits were

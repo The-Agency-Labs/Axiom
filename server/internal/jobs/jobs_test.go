@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 func newManager(t *testing.T) (*Manager, *db.Queries, *sql.DB) {

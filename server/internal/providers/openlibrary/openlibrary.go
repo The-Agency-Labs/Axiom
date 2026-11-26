@@ -17,8 +17,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 const (
@@ -31,7 +31,7 @@ const (
 	label     = "Open Library"
 	source    = "openlibrary"
 	cacheTTL  = 24 * time.Hour
-	userAgent = "Axiom/1.0 (+https://github.com/The-Agency-Labs/Encompass)"
+	userAgent = "Axiom/1.0 (+https://github.com/The-Agency-Labs/Axiom)"
 )
 
 // Client talks to Open Library.

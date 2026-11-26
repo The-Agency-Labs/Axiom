@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 // MaxFailures caps the failure strings kept per run.
@@ -69,7 +69,7 @@ func Read(ctx context.Context, q *db.Queries, userID int64, name string) (json.R
 	return json.RawMessage(v), nil
 }
 
-// Pair is one "external user:encompass user" mapping (ANILIST_USERS, JELLYFIN_USERS).
+// Pair is one "external user:axiom user" mapping (ANILIST_USERS, JELLYFIN_USERS).
 type Pair struct{ External, Local string }
 
 // ParsePairs reads "external:local" entries; an entry without a colon maps to

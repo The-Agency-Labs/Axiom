@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // seriesBooksFragment lists the books of a series in reading order. Books

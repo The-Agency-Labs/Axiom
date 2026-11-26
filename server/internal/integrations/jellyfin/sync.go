@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
 )
 
 const (
@@ -164,7 +164,7 @@ func (s *Service) ImportHistory(ctx context.Context, u db.User, c *Client, jelly
 }
 
 // mapped lists, per Axiom user id, the Jellyfin usernames whose history
-// to import: JELLYFIN_USERS ("jfuser:encompassuser", or one name when both
+// to import: JELLYFIN_USERS ("jfuser:axiomuser", or one name when both
 // match) plus the usernames a user set in Settings.
 func (s *Service) mapped(ctx context.Context) (map[int64][]string, error) {
 	users, err := s.Q.ListUsers(ctx)

@@ -1,13 +1,13 @@
-// Command encompass runs the Axiom server.
+// Command axiom runs the Axiom server.
 //
 // Usage:
 //
-//	encompass                          serve (default)
-//	encompass serve
-//	encompass createuser <name> [--admin]   password is read from stdin
-//	encompass healthcheck              GET /health on the local server, exit 0/1
-//	encompass migrate-django --from <django.db> [--dry-run] [--force]   one-shot data migration
-//	encompass shows-to-tvdb [--dry-run]   move shows tracked from TMDB onto TheTVDB (idempotent; back up first)
+//	axiom                          serve (default)
+//	axiom serve
+//	axiom createuser <name> [--admin]   password is read from stdin
+//	axiom healthcheck              GET /health on the local server, exit 0/1
+//	axiom migrate-django --from <django.db> [--dry-run] [--force]   one-shot data migration
+//	axiom shows-to-tvdb [--dry-run]   move shows tracked from TMDB onto TheTVDB (idempotent; back up first)
 package main
 
 import (
@@ -26,30 +26,30 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/auth"
-	"github.com/the-agency-labs/encompass/server/internal/cache"
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/catalog/mappings"
-	"github.com/the-agency-labs/encompass/server/internal/config"
-	"github.com/the-agency-labs/encompass/server/internal/db"
-	"github.com/the-agency-labs/encompass/server/internal/httpapi"
-	"github.com/the-agency-labs/encompass/server/internal/integrations"
-	"github.com/the-agency-labs/encompass/server/internal/integrations/jellyfin"
-	"github.com/the-agency-labs/encompass/server/internal/jobs"
-	"github.com/the-agency-labs/encompass/server/internal/library"
-	"github.com/the-agency-labs/encompass/server/internal/providers"
-	"github.com/the-agency-labs/encompass/server/internal/providers/anilist"
-	"github.com/the-agency-labs/encompass/server/internal/providers/bgg"
-	"github.com/the-agency-labs/encompass/server/internal/providers/comicvine"
-	"github.com/the-agency-labs/encompass/server/internal/providers/hardcover"
-	"github.com/the-agency-labs/encompass/server/internal/providers/igdb"
-	"github.com/the-agency-labs/encompass/server/internal/providers/mal"
-	"github.com/the-agency-labs/encompass/server/internal/providers/mangaupdates"
-	"github.com/the-agency-labs/encompass/server/internal/providers/openlibrary"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tmdb"
-	"github.com/the-agency-labs/encompass/server/internal/providers/tvdb"
-	"github.com/the-agency-labs/encompass/server/internal/reading"
-	"github.com/the-agency-labs/encompass/server/web"
+	"github.com/the-agency-labs/axiom/server/internal/auth"
+	"github.com/the-agency-labs/axiom/server/internal/cache"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/catalog/mappings"
+	"github.com/the-agency-labs/axiom/server/internal/config"
+	"github.com/the-agency-labs/axiom/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/httpapi"
+	"github.com/the-agency-labs/axiom/server/internal/integrations"
+	"github.com/the-agency-labs/axiom/server/internal/integrations/jellyfin"
+	"github.com/the-agency-labs/axiom/server/internal/jobs"
+	"github.com/the-agency-labs/axiom/server/internal/library"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers/anilist"
+	"github.com/the-agency-labs/axiom/server/internal/providers/bgg"
+	"github.com/the-agency-labs/axiom/server/internal/providers/comicvine"
+	"github.com/the-agency-labs/axiom/server/internal/providers/hardcover"
+	"github.com/the-agency-labs/axiom/server/internal/providers/igdb"
+	"github.com/the-agency-labs/axiom/server/internal/providers/mal"
+	"github.com/the-agency-labs/axiom/server/internal/providers/mangaupdates"
+	"github.com/the-agency-labs/axiom/server/internal/providers/openlibrary"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tmdb"
+	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/web"
 )
 
 func main() {
@@ -73,7 +73,7 @@ func main() {
 	case "refresh-items":
 		err = refreshItems(args, os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: encompass [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db> | shows-to-tvdb [--dry-run] | refresh-items --source <source>]\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: axiom [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db> | shows-to-tvdb [--dry-run] | refresh-items --source <source>]\n", cmd)
 		os.Exit(2)
 	}
 	if err != nil {
@@ -197,7 +197,7 @@ func newCatalog(cfg config.Config, conn *sql.DB, queries *db.Queries, providerCa
 	return cat
 }
 
-// createUser implements `encompass createuser <username> [--admin]`.
+// createUser implements `axiom createuser <username> [--admin]`.
 func createUser(args []string, stdin io.Reader) error {
 	var username string
 	var admin bool
@@ -214,7 +214,7 @@ func createUser(args []string, stdin io.Reader) error {
 		}
 	}
 	if username == "" {
-		return errors.New("usage: encompass createuser <username> [--admin] (password on stdin)")
+		return errors.New("usage: axiom createuser <username> [--admin] (password on stdin)")
 	}
 	password, err := bufio.NewReader(stdin).ReadString('\n')
 	if err != nil && !(errors.Is(err, io.EOF) && password != "") {

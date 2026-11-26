@@ -3,8 +3,8 @@ package httpapi
 import (
 	"strconv"
 
-	"github.com/the-agency-labs/encompass/server/internal/reading"
-	"github.com/the-agency-labs/encompass/server/internal/reading/readingtest"
+	"github.com/the-agency-labs/axiom/server/internal/reading"
+	"github.com/the-agency-labs/axiom/server/internal/reading/readingtest"
 )
 
 func readingItoa(n int64) string { return strconv.FormatInt(n, 10) }

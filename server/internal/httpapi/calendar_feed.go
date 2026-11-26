@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/the-agency-labs/encompass/server/internal/calendar"
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
-	"github.com/the-agency-labs/encompass/server/internal/db"
+	"github.com/the-agency-labs/axiom/server/internal/calendar"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/db"
 )
 
 const (
@@ -74,7 +74,7 @@ func (e calEvent) summary() string {
 	return r.Title
 }
 
-// uid is stable across refreshes: <item>-<season>-<episode>@encompass ("n" = none).
+// uid is stable across refreshes: <item>-<season>-<episode>@axiom ("n" = none).
 func (e calEvent) uid() string {
 	part := func(n *int64) string {
 		if n == nil {
@@ -82,7 +82,7 @@ func (e calEvent) uid() string {
 		}
 		return fmt.Sprint(*n)
 	}
-	return fmt.Sprintf("%d-%s-%s@encompass", e.row.ItemID, part(e.season()), part(e.number()))
+	return fmt.Sprintf("%d-%s-%s@axiom", e.row.ItemID, part(e.season()), part(e.number()))
 }
 
 func (s *Server) calendarEvents(ctx context.Context, userID int64, from, to time.Time) ([]calEvent, error) {

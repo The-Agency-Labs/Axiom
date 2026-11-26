@@ -49,7 +49,7 @@
 	let seasons = $state<SeasonFinished[] | null>(null);
 	// Year headings fold: the newest year starts open, the rest closed; choices are kept per type.
 	let folds = $state<Record<string, boolean>>({});
-	const foldKey = () => `encompass-year-folds-${type}`;
+	const foldKey = () => `axiom-year-folds-${type}`;
 	$effect(() => {
 		try {
 			folds = JSON.parse(localStorage.getItem(foldKey()) ?? '{}');
@@ -68,7 +68,7 @@
 	}
 
 	try {
-		const saved = localStorage.getItem('encompass-library-view');
+		const saved = localStorage.getItem('axiom-library-view');
 		if (saved === 'list' || saved === 'grid') view = saved;
 	} catch {
 		/* storage unavailable */
@@ -76,7 +76,7 @@
 	function setView(v: 'grid' | 'list') {
 		view = v;
 		try {
-			localStorage.setItem('encompass-library-view', v);
+			localStorage.setItem('axiom-library-view', v);
 		} catch {
 			/* storage unavailable */
 		}

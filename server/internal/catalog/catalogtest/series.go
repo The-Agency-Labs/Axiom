@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/the-agency-labs/encompass/server/internal/providers"
+	"github.com/the-agency-labs/axiom/server/internal/providers"
 )
 
 // Hardcover is a scriptable fake of the Hardcover client with series support

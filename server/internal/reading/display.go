@@ -1,7 +1,7 @@
 package reading
 
 import (
-	"github.com/the-agency-labs/encompass/server/internal/catalog"
+	"github.com/the-agency-labs/axiom/server/internal/catalog"
 	"regexp"
 	"strconv"
 	"strings"
