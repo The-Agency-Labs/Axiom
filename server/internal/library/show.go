@@ -470,8 +470,10 @@ func (o *op) startNextAvailableSeason(after int64) (bool, error) {
 
 // UnwatchEpisode removes the newest play of an episode (manual only, like
 // the Django UI). A Completed season goes back to In progress when no
-// episode at or past the removed one remains watched, and a Completed show
-// follows when its season did. Unwatching something never watched is a no-op.
+// episode at or past the removed one remains watched; a season left with
+// nothing watched is untracked. The show's own status is left alone: a show
+// marked Completed stays Completed (e.g. its early seasons were read as
+// manga instead). Unwatching something never watched is a no-op.
 func (s *Service) UnwatchEpisode(ctx context.Context, userID, itemID int64, season, episode int) error {
 	return s.run(ctx, userID, itemID, SourceManual, time.Time{}, func(o *op) error {
 		if err := o.load(); err != nil {
@@ -513,8 +515,16 @@ func (s *Service) UnwatchEpisode(ctx context.Context, userID, itemID int64, seas
 				es.Status = InProgress
 			}
 		}
-		if has && es.Status != Completed && o.entry.Status == Completed {
-			o.setStatus(InProgress)
+		if has {
+			left, err := o.latestWatchedPosition(sn)
+			if err != nil {
+				return err
+			}
+			if left == 0 {
+				if err := o.q.DeleteEntrySeason(o.ctx, db.DeleteEntrySeasonParams{EntryID: o.entry.ID, Season: sn}); err != nil {
+					return err
+				}
+			}
 		}
 		return o.refreshShow()
 	})

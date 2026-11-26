@@ -183,7 +183,7 @@
 		const out: { label: string; list: SeasonFinished[] }[] = [];
 		for (const s of seasons ?? []) {
 			if (q && !s.item.title.toLowerCase().includes(q)) continue;
-			const label = s.end_date ? s.end_date.slice(0, 4) : 'No finish date';
+			const label = s.end_date ? s.end_date.slice(0, 4) : 'Date unknown';
 			if (year && label !== year) continue;
 			if (out.at(-1)?.label !== label) out.push({ label, list: [] });
 			out.at(-1)!.list.push(s);

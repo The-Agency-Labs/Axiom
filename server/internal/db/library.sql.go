@@ -33,6 +33,20 @@ func (q *Queries) DeleteEntry(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteEntrySeason = `-- name: DeleteEntrySeason :exec
+DELETE FROM entry_seasons WHERE entry_id = ? AND season = ?
+`
+
+type DeleteEntrySeasonParams struct {
+	EntryID int64 `json:"entry_id"`
+	Season  int64 `json:"season"`
+}
+
+func (q *Queries) DeleteEntrySeason(ctx context.Context, arg DeleteEntrySeasonParams) error {
+	_, err := q.db.ExecContext(ctx, deleteEntrySeason, arg.EntryID, arg.Season)
+	return err
+}
+
 const deleteWatch = `-- name: DeleteWatch :exec
 DELETE FROM watches WHERE id = ?
 `
@@ -540,8 +554,8 @@ SELECT e.id AS entry_id, i.id AS item_id, i.source, i.external_id, i.title, i.im
        CAST(COALESCE(s.title, '') AS TEXT) AS season_title,
        CAST(COALESCE(s.image, '') AS TEXT) AS season_image,
        CAST(COALESCE(s.episode_count, 0) AS INTEGER) AS episode_count,
-       CAST(COALESCE((SELECT MIN(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season), '') AS TEXT) AS started_at,
-       CAST(COALESCE((SELECT MAX(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season), '') AS TEXT) AS finished_at
+       CAST(COALESCE((SELECT MIN(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season AND w.source <> 'assumed'), '') AS TEXT) AS started_at,
+       CAST(COALESCE((SELECT MAX(w.watched_at) FROM watches w WHERE w.entry_id = e.id AND w.season = es.season AND w.source <> 'assumed'), '') AS TEXT) AS finished_at
 FROM entry_seasons es
 JOIN entries e ON e.id = es.entry_id
 JOIN items i ON i.id = e.item_id
@@ -572,7 +586,8 @@ type ListCompletedSeasonsRow struct {
 }
 
 // Every completed regular season of the user's shows of one kind, with the
-// season's own art and the dates of its first and last watch.
+// season's own art and the dates of its first and last watch. Assumed watches
+// (seasons watched before Encompass, dated by air date) don't date a season.
 func (q *Queries) ListCompletedSeasons(ctx context.Context, arg ListCompletedSeasonsParams) ([]ListCompletedSeasonsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listCompletedSeasons, arg.UserID, arg.Kind)
 	if err != nil {

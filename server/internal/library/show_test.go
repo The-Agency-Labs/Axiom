@@ -223,12 +223,10 @@ func TestManualUnwatch(t *testing.T) {
 		t.Fatal(err)
 	}
 	e := f.entry(item)
-	eq(t, "show after unwatching the finale", e.Status, InProgress)
+	// The season reopens; the show keeps the status the owner gave it.
+	eq(t, "show after unwatching the finale", e.Status, Completed)
 	eq(t, "progress", e.Progress, int64(2))
 	eqSeasons(t, f.seasonStatuses(item), map[int64]string{1: InProgress})
-	if e.FinishedAt.Valid {
-		t.Error("finished_at not cleared on reopen")
-	}
 
 	// Unwatching a repeat of a watched episode keeps everything.
 	f.watch(item, 1, 3, SourceManual)
@@ -392,7 +390,28 @@ func TestStepSeason(t *testing.T) {
 		t.Fatal(err)
 	}
 	eq(t, "rows after step down", f.watchCount(item), 1)
-	eq(t, "show after step down", f.entry(item).Status, InProgress)
+	eq(t, "show after step down", f.entry(item).Status, Completed) // the show's status is the owner's
+}
+
+// Owner rule: a show marked Completed stays Completed when whole seasons are
+// unmarked (early seasons read as manga instead), and an emptied season is
+// no longer tracked.
+func TestUnmarkingSeasonsKeepsShowCompleted(t *testing.T) {
+	f := newFixture(t)
+	item := f.show("100", "Show", season(1, "2020-01-01", 1, 2), season(2, "2021-01-01", 1, 2))
+	for _, sn := range []int{1, 2} {
+		for e := 1; e <= 2; e++ {
+			f.watch(item, sn, e, SourceManual)
+		}
+	}
+	eq(t, "show", f.entry(item).Status, Completed)
+	for e := 2; e >= 1; e-- {
+		if err := f.svc.UnwatchEpisode(ctx, f.user, item.ID, 1, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+	eq(t, "show after unmarking season 1", f.entry(item).Status, Completed)
+	eqSeasons(t, f.seasonStatuses(item), map[int64]string{2: Completed})
 }
 
 func TestAutomatedSeasonStatusOnlyMovesForward(t *testing.T) {
