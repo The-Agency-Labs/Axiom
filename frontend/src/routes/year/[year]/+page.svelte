@@ -109,7 +109,7 @@
 	}
 </script>
 
-<svelte:head><title>{year} in review · Encompass</title></svelte:head>
+<svelte:head><title>{year} in review · Axiom</title></svelte:head>
 
 <div class="mx-auto max-w-4xl">
 	<header class="mb-4 flex items-end justify-between gap-3">

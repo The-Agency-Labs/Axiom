@@ -1,4 +1,4 @@
-// Command encompass runs the Encompass server.
+// Command encompass runs the Axiom server.
 //
 // Usage:
 //

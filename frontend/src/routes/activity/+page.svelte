@@ -72,7 +72,7 @@
 	const timeOf = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 </script>
 
-<svelte:head><title>Activity · Encompass</title></svelte:head>
+<svelte:head><title>Activity · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={reset}>
 	<header class="mb-3 flex items-center justify-between gap-3">

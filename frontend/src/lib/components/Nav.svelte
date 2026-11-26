@@ -77,7 +77,7 @@
 >
 	<a href="/" class="mb-6 flex items-center gap-2.5 px-3">
 		<img src="/icon.svg" alt="" class="size-7" />
-		<span class="text-[1.0625rem] font-semibold tracking-tight">Encompass</span>
+		<span class="text-[1.0625rem] font-semibold tracking-tight">Axiom</span>
 	</a>
 
 	<nav class="space-y-0.5" aria-label="Main">

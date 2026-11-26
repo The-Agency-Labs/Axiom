@@ -29,7 +29,7 @@
 	];
 </script>
 
-<svelte:head><title>Library · Encompass</title></svelte:head>
+<svelte:head><title>Library · Axiom</title></svelte:head>
 
 <h1 class="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">Library</h1>
 

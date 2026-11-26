@@ -42,7 +42,7 @@
 	}
 </script>
 
-<svelte:head><title>Settings · Encompass</title></svelte:head>
+<svelte:head><title>Settings · Axiom</title></svelte:head>
 
 <a href="/more" class="-ml-2 mb-1 inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm text-muted hover:text-ink lg:hidden">
 	<ChevronLeft class="size-4" /> More

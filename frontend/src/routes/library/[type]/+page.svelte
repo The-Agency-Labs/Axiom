@@ -254,7 +254,7 @@
 	const hasFilters = $derived(!!query || !!year);
 </script>
 
-<svelte:head><title>{meta.plural} · Encompass</title></svelte:head>
+<svelte:head><title>{meta.plural} · Axiom</title></svelte:head>
 
 {#if !valid}
 	<EmptyState title="Unknown section" description="That media type does not exist.">

@@ -17,7 +17,7 @@
 	});
 </script>
 
-<svelte:head><title>Series · Encompass</title></svelte:head>
+<svelte:head><title>Series · Axiom</title></svelte:head>
 
 {#if error}
 	<EmptyState title="Series unavailable" description={error}>

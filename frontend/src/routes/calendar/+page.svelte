@@ -115,7 +115,7 @@
 	</li>
 {/snippet}
 
-<svelte:head><title>Calendar · Encompass</title></svelte:head>
+<svelte:head><title>Calendar · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
 	<header class="mb-3 flex items-center justify-between gap-3">

@@ -371,7 +371,7 @@
 	}
 </script>
 
-<svelte:head><title>{title || 'Title'} · Encompass</title></svelte:head>
+<svelte:head><title>{title || 'Title'} · Axiom</title></svelte:head>
 
 {#if phase === 'missing' || phase === 'error' || (phase === 'ready' && !entry && !md && !mdLoading)}
 	<EmptyState

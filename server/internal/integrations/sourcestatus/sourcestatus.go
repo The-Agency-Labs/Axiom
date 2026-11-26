@@ -89,7 +89,7 @@ func ParsePairs(entries []string) []Pair {
 	return out
 }
 
-// HasLocal reports whether an Encompass user appears in the pairs.
+// HasLocal reports whether an Axiom user appears in the pairs.
 func HasLocal(pairs []Pair, username string) bool {
 	for _, p := range pairs {
 		if strings.EqualFold(p.Local, username) {

@@ -215,7 +215,7 @@ func TestTVDBShowReleasesAndOngoingRefresh(t *testing.T) {
 	}
 
 	// ...but it is re-read weekly: the show comes back with a new season
-	// (TVDB flips it to Continuing) and Encompass picks both up.
+	// (TVDB flips it to Continuing) and Axiom picks both up.
 	env.TVDB.AddShow("7000", "Friends",
 		catalogtest.Season{Number: 1, AirDate: "2024-05-01", Episodes: []catalogtest.Episode{
 			{ID: 1, Number: 1, AirDate: "2024-05-01", Name: "a"}, {ID: 2, Number: 2, AirDate: "2024-07-01", Name: "b"},

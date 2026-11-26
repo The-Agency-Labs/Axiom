@@ -64,7 +64,7 @@
 	});
 </script>
 
-<svelte:head><title>Now · Encompass</title></svelte:head>
+<svelte:head><title>Now · Axiom</title></svelte:head>
 
 <PullToRefresh onrefresh={load}>
 	<header class="mb-5 flex items-end justify-between gap-3">

@@ -263,7 +263,7 @@ func (s *Service) WatchEpisode(ctx context.Context, userID, itemID int64, season
 		}
 		if res.EntryCreated && o.source == SourceJellyfin && sn > 1 {
 			// First seen mid-series by Jellyfin: the earlier seasons were
-			// watched before Encompass (see assumed.go).
+			// watched before Axiom (see assumed.go).
 			if err := o.assumeEarlierSeasons(sn); err != nil {
 				return err
 			}

@@ -133,7 +133,7 @@ func (c *Client) Do(ctx context.Context, req Request) ([]byte, error) {
 			httpReq.Header.Set("Content-Type", "application/json")
 		}
 		if httpReq.Header.Get("User-Agent") == "" {
-			httpReq.Header.Set("User-Agent", "Encompass")
+			httpReq.Header.Set("User-Agent", "Axiom")
 		}
 		if err := c.limiterFor(httpReq.URL.Host).wait(ctx); err != nil {
 			return nil, err

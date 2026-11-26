@@ -1,4 +1,4 @@
--- Encompass schema (SQLite). Draft for phase 0; becomes migration 00001.
+-- Axiom schema (SQLite). Draft for phase 0; becomes migration 00001.
 -- Conventions: INTEGER PRIMARY KEY ids, timestamps as TEXT RFC 3339 UTC,
 -- dates as TEXT YYYY-MM-DD, booleans as INTEGER 0/1, JSON as TEXT.
 PRAGMA foreign_keys = ON;

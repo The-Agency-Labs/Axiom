@@ -43,7 +43,7 @@
 	}
 </script>
 
-<svelte:head><title>More · Encompass</title></svelte:head>
+<svelte:head><title>More · Axiom</title></svelte:head>
 
 <header class="mb-6 flex items-center justify-between gap-3">
 	<div class="flex min-w-0 items-center gap-3">

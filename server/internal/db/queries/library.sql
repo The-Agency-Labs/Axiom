@@ -159,7 +159,7 @@ FROM watches WHERE entry_id = ? AND season > 0 AND source != 'assumed';
 -- name: ListCompletedSeasons :many
 -- Every completed regular season of the user's shows of one kind, with the
 -- season's own art and the dates of its first and last watch. Assumed watches
--- (seasons watched before Encompass, dated by air date) don't date a season.
+-- (seasons watched before Axiom, dated by air date) don't date a season.
 SELECT e.id AS entry_id, i.id AS item_id, i.source, i.external_id, i.title, i.image AS show_image,
        es.season, es.score,
        CAST(COALESCE(s.title, '') AS TEXT) AS season_title,

@@ -438,7 +438,7 @@ func TestAutomatedSeasonStatusOnlyMovesForward(t *testing.T) {
 }
 
 // Owner rule: a show first seen by Jellyfin (or its history import) at
-// season N was watched up to N-1 before Encompass existed. Earlier regular
+// season N was watched up to N-1 before Axiom existed. Earlier regular
 // seasons are filled in as "assumed" watches dated by air date (never after
 // the first real play), and those seasons are Completed. Specials are not
 // assumed, a show already tracked is never back-filled, and assumed watches

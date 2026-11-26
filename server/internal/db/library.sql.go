@@ -587,7 +587,7 @@ type ListCompletedSeasonsRow struct {
 
 // Every completed regular season of the user's shows of one kind, with the
 // season's own art and the dates of its first and last watch. Assumed watches
-// (seasons watched before Encompass, dated by air date) don't date a season.
+// (seasons watched before Axiom, dated by air date) don't date a season.
 func (q *Queries) ListCompletedSeasons(ctx context.Context, arg ListCompletedSeasonsParams) ([]ListCompletedSeasonsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listCompletedSeasons, arg.UserID, arg.Kind)
 	if err != nil {

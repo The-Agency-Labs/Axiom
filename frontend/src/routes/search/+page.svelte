@@ -90,7 +90,7 @@
 		[r.release_year, MEDIA[r.media_type]?.label ?? r.media_type, SOURCE_NAMES[r.source] ?? r.source].filter(Boolean).join(' · ');
 </script>
 
-<svelte:head><title>Search · Encompass</title></svelte:head>
+<svelte:head><title>Search · Axiom</title></svelte:head>
 
 <h1 class="sr-only">Search</h1>
 
