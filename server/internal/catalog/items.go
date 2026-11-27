@@ -421,6 +421,11 @@ func metaJSON(meta Metadata) string {
 			kept[k] = v
 		}
 	}
+	// Banner art: "" records that the provider has none, so it isn't asked again.
+	if v, ok := meta["backdrop"]; ok {
+		url, _ := v.(string)
+		kept["backdrop"] = url
+	}
 	b, err := json.Marshal(kept)
 	if err != nil {
 		return "{}"

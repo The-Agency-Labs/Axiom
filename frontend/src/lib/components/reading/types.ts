@@ -129,6 +129,8 @@ export interface CalendarEvent {
 	/** The show or book alone, and the episode's own title ("" when unknown). */
 	name: string;
 	episode_title: string;
+	/** Wide banner art, "" when the provider has none. */
+	backdrop: string;
 	media_type: MediaType;
 	item_id: number;
 	source: string;

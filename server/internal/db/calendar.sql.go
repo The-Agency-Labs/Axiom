@@ -13,7 +13,8 @@ import (
 const listCalendarReleases = `-- name: ListCalendarReleases :many
 SELECT r.item_id, r.season, r.number, r.at,
        i.kind, i.title, i.image, i.source, i.external_id,
-       COALESCE(ie.title, '') AS episode_title
+       COALESCE(ie.title, '') AS episode_title,
+       CAST(COALESCE(json_extract(i.meta, '$.backdrop'), '') AS TEXT) AS backdrop
 FROM releases r
 JOIN items i ON i.id = r.item_id
 JOIN entries e ON e.item_id = r.item_id AND e.user_id = ?1
@@ -47,6 +48,7 @@ type ListCalendarReleasesRow struct {
 	Source       string        `json:"source"`
 	ExternalID   string        `json:"external_id"`
 	EpisodeTitle string        `json:"episode_title"`
+	Backdrop     string        `json:"backdrop"`
 }
 
 // Releases for the calendar feed of what a user is actively tracking: Paused/Dropped entries are
@@ -72,6 +74,7 @@ func (q *Queries) ListCalendarReleases(ctx context.Context, arg ListCalendarRele
 			&i.Source,
 			&i.ExternalID,
 			&i.EpisodeTitle,
+			&i.Backdrop,
 		); err != nil {
 			return nil, err
 		}

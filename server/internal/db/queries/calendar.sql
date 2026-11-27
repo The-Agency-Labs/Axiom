@@ -4,7 +4,8 @@
 -- name: ListCalendarReleases :many
 SELECT r.item_id, r.season, r.number, r.at,
        i.kind, i.title, i.image, i.source, i.external_id,
-       COALESCE(ie.title, '') AS episode_title
+       COALESCE(ie.title, '') AS episode_title,
+       CAST(COALESCE(json_extract(i.meta, '$.backdrop'), '') AS TEXT) AS backdrop
 FROM releases r
 JOIN items i ON i.id = r.item_id
 JOIN entries e ON e.item_id = r.item_id AND e.user_id = sqlc.arg(user_id)

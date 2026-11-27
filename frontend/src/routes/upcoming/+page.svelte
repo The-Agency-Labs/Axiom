@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Tv } from '@lucide/svelte';
 	import { get, qs } from '#lib/api.ts';
+	import ReleaseBanner from '#lib/components/ReleaseBanner.svelte';
 	import ReleaseCard from '#lib/components/ReleaseCard.svelte';
 	import SeasonPicker, { type SeasonRef } from '#lib/components/SeasonPicker.svelte';
 	import { isoDate, parseDay } from '#lib/components/reading/format.ts';
@@ -142,6 +143,7 @@
 			return `${week.toLocaleDateString(undefined, short)} – ${end.toLocaleDateString(undefined, short)}`;
 		return new Intl.DateTimeFormat(undefined, { ...short, ...year }).formatRange(week, end);
 	};
+	const weekDays = $derived(byDay.filter(([iso]) => iso >= isoDate(week) && iso <= isoDate(plusDays(week, 6))));
 	const weekName = $derived.by(() => {
 		const away = Math.round((week.getTime() - thisWeek.getTime()) / (7 * 864e5));
 		if (away === 0) return 'This week';
@@ -302,9 +304,28 @@
 					{#snippet actions()}<Button variant="primary" loading={seeking} onclick={nextRelease}>Next release</Button>{/snippet}
 				</EmptyState>
 			{:else}
-				<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-					{#each inWeek as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}<ReleaseCard event={e} when={when(e.date)} />{/each}
-				</div>
+				<ol class="space-y-5">
+					{#each weekDays as [iso, list] (iso)}
+						{@const day = parseDay(iso)}
+						<li class="flex gap-3 sm:gap-6" aria-label={day.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}>
+							<div class="w-14 shrink-0 pt-1 text-center sm:w-28 {iso < today ? 'text-muted' : ''}">
+								<p class="text-sm font-bold tracking-wide uppercase sm:hidden {iso === today ? 'text-brand' : ''}">
+									{day.toLocaleDateString(undefined, { weekday: 'short' })}
+								</p>
+								<p class="hidden text-lg font-bold sm:block {iso === today ? 'text-brand' : ''}">
+									{day.toLocaleDateString(undefined, { weekday: 'long' })}
+								</p>
+								<p class="text-3xl leading-tight font-bold tabular-nums sm:text-5xl {iso === today ? 'text-brand' : ''}">{day.getDate()}</p>
+								<p class="text-xs text-faint">
+									{iso === today ? 'Today' : day.toLocaleDateString(undefined, { month: 'short' })}
+								</p>
+							</div>
+							<div class="grid min-w-0 flex-1 gap-3 {list.length > 1 ? 'xl:grid-cols-2' : ''}">
+								{#each list as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}<ReleaseBanner event={e} />{/each}
+							</div>
+						</li>
+					{/each}
+				</ol>
 			{/if}
 		</div>
 	{:else}

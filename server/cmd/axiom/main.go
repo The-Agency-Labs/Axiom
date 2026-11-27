@@ -122,6 +122,11 @@ func serve() error {
 		suite.AniList.RefreshLinks(ctx)
 		suite.Steam.RefreshLinks(ctx)
 		// Casts cleared by a migration come back now rather than in six hours.
+		if n, err := cat.BackfillBackdrops(ctx); err != nil {
+			slog.Warn("banner art backfill", "err", err)
+		} else if n > 0 {
+			slog.Info("banner art backfill", "refreshed", n)
+		}
 		if _, err := cat.BackfillCredits(ctx, catalog.CreditsBackfillLimit); err != nil {
 			slog.Warn("credits backfill", "err", err)
 		}
