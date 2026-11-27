@@ -4,16 +4,14 @@ A self-hosted tracker for everything you watch and read: TV, anime, movies,
 manga, books, comics, games and board games. One small Go binary with SQLite
 and an installable, mobile-first web app (PWA).
 
-Licensed AGPL-3.0.
-
 ## Features
 
 - **Library:** status, score, progress, rewatches/rereads, dates and notes for
   every media type. Shows, anime included, come from TheTVDB (its aired
   seasons and specials, which is also how Jellyfin numbers them); movies and
   anime films come from TMDB. Shows need `TVDB_API`.
-- **Now:** one-tap "watched next episode" and +1 steppers for what you're in
-  the middle of.
+- **Now:** what you've watched, read or played in the last 30 days, with
+  one-tap "watched next episode" and +1 steppers.
 - **Imports and sync (additive, never lowers progress):**
   - Jellyfin webhook (marked watched at 75 %) and a 6-hourly history sync. A
     show first seen at season N assumes earlier seasons were watched.
@@ -71,4 +69,13 @@ every watch it had to place on the closest episode.
 - `frontend/`: SvelteKit (Svelte 5, static adapter, Tailwind). `pnpm dev`;
   `pnpm build` writes `frontend/build`, which the Docker build copies into
   `server/web/dist` and embeds in the binary.
-- Design notes: [`docs/rewrite/PLAN.md`](docs/rewrite/PLAN.md).
+
+## License
+
+AGPL-3.0, see [`LICENSE`](LICENSE).
+
+The logos in `frontend/static/apps` show which app tracks a title. They are
+trademarks of their owners and are not covered by this project's licence:
+`jellyfin.svg` and `steam.svg` come from homarr-labs/dashboard-icons,
+`paperback.svg` is the rounded Paperback icon (paperback.moe) and `kindle.png`
+is the Kindle app icon.
