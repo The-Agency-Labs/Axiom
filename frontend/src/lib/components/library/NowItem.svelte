@@ -33,15 +33,24 @@
 	const tracker = $derived(entry.linked?.join(' and ') ?? '');
 
 	const subtitle = $derived.by(() => {
-		if (episodic) {
-			if (!entry.next) return `Season ${season} · caught up`;
-			return upcoming ? `Season ${season} · E${entry.next.number} airs ${formatDate(entry.next.air_date)}` : `Season ${season}`;
-		}
+		// Nothing aired is left to watch: caught up, whether or not the next one is dated.
+		if (episodic) return !entry.next || upcoming ? `Season ${season} · caught up` : `Season ${season}`;
 		if (entry.last_session)
 			return `Last read ${relativeTime(entry.last_session.started_at)} · ${entry.last_session.pages_read} pages`;
 		if (entry.progressed_at) return `Updated ${relativeTime(entry.progressed_at)}`;
 		return entry.genres?.slice(0, 2).join(' · ') ?? '';
 	});
+
+	/** The next episode's date, for the calendar tile of a show that is waiting for it. */
+	const due = $derived(
+		episodic && upcoming && entry.next
+			? {
+					episode: entry.next.number,
+					month: formatDate(entry.next.air_date, { month: 'short', day: undefined }),
+					day: formatDate(entry.next.air_date, { month: undefined, day: 'numeric' })
+				}
+			: null
+	);
 
 	const epPath = $derived(`/shows/${entry.item.source}/${entry.item.media_id}/seasons/${season}/episodes`);
 
@@ -147,11 +156,22 @@
 </script>
 
 <article class="min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-3">
-	<a {href} class="flex gap-3 rounded-xl" aria-label={entry.title}>
+	<a {href} class="flex gap-3 rounded-xl" aria-label={due ? `${entry.title}, episode ${due.episode} airs ${due.month} ${due.day}` : entry.title}>
 		<Cover src={entry.image} title={entry.title} type={kind} class="aspect-[2/3] w-16 shrink-0 sm:w-20" />
 		<span class="flex min-w-0 flex-1 flex-col py-0.5">
-			<span class="line-clamp-2 text-[0.9375rem] leading-snug font-semibold">{entry.title}</span>
-			<span class="mt-0.5 line-clamp-1 text-[0.8125rem] text-muted">{subtitle}</span>
+			<span class="flex items-start gap-2">
+				<span class="min-w-0 flex-1">
+					<span class="line-clamp-2 text-[0.9375rem] leading-snug font-semibold">{entry.title}</span>
+					<span class="mt-0.5 line-clamp-1 text-[0.8125rem] text-muted">{subtitle}</span>
+				</span>
+				{#if due}
+					<span class="flex w-12 shrink-0 flex-col overflow-hidden rounded-xl border border-line-strong bg-raised text-center leading-tight" aria-hidden="true">
+						<span class="py-0.5 text-[0.6875rem] font-semibold" style="background: color-mix(in oklab, {meta.accent} 22%, transparent); color: {meta.accent}">E{due.episode}</span>
+						<span class="pt-0.5 text-[0.625rem] font-medium text-muted uppercase">{due.month}</span>
+						<span class="pb-1 text-base font-semibold tabular-nums">{due.day}</span>
+					</span>
+				{/if}
+			</span>
 			<span class="mt-auto flex items-baseline justify-between pt-2 text-xs">
 				<span class="min-w-0 truncate font-medium tabular-nums">{progressText}</span>
 				{#if percent !== null}<span class="text-faint tabular-nums">{Math.round(percent)}%</span>{/if}
