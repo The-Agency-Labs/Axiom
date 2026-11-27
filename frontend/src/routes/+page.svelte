@@ -3,22 +3,14 @@
 	import { get } from '#lib/api.ts';
 	import NowItem from '#lib/components/library/NowItem.svelte';
 	import SectionHead from '#lib/components/library/SectionHead.svelte';
-	import ReadingStrip from '#lib/components/ReadingStrip.svelte';
 	import { MEDIA, relativeTime, titleHref } from '#lib/media.ts';
 	import { onSynced } from '#lib/offline.svelte.ts';
-	import type { Finished, NowGroup, ReadingStats } from '#lib/types.ts';
+	import type { Finished, NowGroup } from '#lib/types.ts';
 	import { Button, EmptyState, PosterCard, PullToRefresh, Skeleton, Shelf } from '#lib/ui/index.ts';
 
 	let groups = $state<NowGroup[] | null>(null);
 	let finished = $state<Finished[]>([]);
-	let reading = $state<ReadingStats | null>(null);
 	let error = $state(false);
-
-	const daysAgo = (n: number) => {
-		const d = new Date();
-		d.setDate(d.getDate() - n);
-		return d.toLocaleDateString('en-CA');
-	};
 
 	// The server orders sections by what you touched last.
 	const order = (list: NowGroup[]) => list;
@@ -26,14 +18,12 @@
 	async function load() {
 		error = false;
 		try {
-			const [now, done, stats] = await Promise.all([
+			const [now, done] = await Promise.all([
 				get<{ groups: NowGroup[] }>('/now', (d) => (groups = order(d.groups))),
-				get<Finished[]>('/now/finished?limit=14', (d) => (finished = d)),
-				get<ReadingStats>('/reading/stats?start=' + daysAgo(6), (d) => (reading = d)).catch(() => null)
+				get<Finished[]>('/now/finished?limit=14', (d) => (finished = d))
 			]);
 			groups = order(now.groups);
 			finished = done;
-			reading = stats;
 		} catch {
 			if (!groups) error = true;
 		}
@@ -119,12 +109,6 @@
 			{/each}
 		</div>
 
-		{#if reading}
-			<section class="mt-10">
-				<SectionHead title="Reading" icon={MEDIA.book.icon} accent={MEDIA.book.accent} href="/reading" />
-				<ReadingStrip stats={reading} />
-			</section>
-		{/if}
 
 		{#if finished.length}
 			<section class="mt-10">
