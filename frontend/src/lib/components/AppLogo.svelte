@@ -11,7 +11,14 @@
 </script>
 
 {#if ICONS[name]}
-	<img src={ICONS[name]} alt={name} title={name} class="inline-block aspect-square w-auto shrink-0 rounded-[22%] object-contain {className}" />
+	<!-- Jellyfin's mark runs to the edges, so in the same box it looks bigger than the
+	     rounded app icons: it is drawn a little smaller to match them. -->
+	<img
+		src={ICONS[name]}
+		alt={name}
+		title={name}
+		class="inline-block aspect-square w-auto shrink-0 rounded-[22%] object-contain {className} {name === 'Jellyfin' ? 'scale-90' : ''}"
+	/>
 {:else}
 	<span class="text-xs font-medium">{name}</span>
 {/if}

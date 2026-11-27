@@ -182,7 +182,7 @@
 	{#if episodic || canStep}
 		<div class="mt-3 flex items-center justify-between gap-3">
 			<span class="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-muted">
-				{#if tracker}{#each entry.linked ?? [] as app (app)}<AppLogo name={app} class="h-8" />{/each}
+				{#if tracker}{#each entry.linked ?? [] as app (app)}<AppLogo name={app} class="h-[1.8rem]" />{/each}
 				{:else}{meta.unit === '30 min' ? 'Add 30 min' : `Add ${episodic ? 'episode' : meta.unit}`}{/if}
 			</span>
 			<Stepper
