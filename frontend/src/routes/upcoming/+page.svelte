@@ -3,20 +3,24 @@
 	import { get, qs } from '#lib/api.ts';
 	import ReleaseCard from '#lib/components/ReleaseCard.svelte';
 	import SeasonPicker, { type SeasonRef } from '#lib/components/SeasonPicker.svelte';
-	import SectionHead from '#lib/components/SectionHeader.svelte';
 	import { isoDate, parseDay } from '#lib/components/reading/format.ts';
 	import type { CalendarEvent } from '#lib/components/reading/types.ts';
 	import { MEDIA, titleHref } from '#lib/media.ts';
 	import { loadSettings, settings } from '#lib/settings.svelte.ts';
+	import { toast } from '#lib/toast.svelte.ts';
 	import type { SearchResult } from '#lib/types.ts';
 	import { Button, CopyField, EmptyState, IconButton, PosterCard, PosterGrid, PullToRefresh, Sheet, Skeleton, Tabs } from '#lib/ui/index.ts';
 
 	let view = $state('agenda');
 	let events = $state<CalendarEvent[] | null>(null);
-	let showPast = $state(false);
 	let subscribeOpen = $state(false);
 
 	const today = isoDate(new Date());
+	const monday = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+	const plusDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+	const thisWeek = monday(new Date());
+	// The agenda shows one week (Monday to Sunday) at a time.
+	let week = $state(monday(new Date()));
 	let month = $state(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
 	let picked = $state<string | null>(null);
 
@@ -29,11 +33,7 @@
 			gridEnd.setDate(gridStart.getDate() + 41);
 			return { start: isoDate(gridStart), end: isoDate(gridEnd) };
 		}
-		const s = new Date();
-		s.setDate(s.getDate() - (showPast ? 30 : 0));
-		const e = new Date();
-		e.setDate(e.getDate() + 90);
-		return { start: isoDate(s), end: isoDate(e) };
+		return { start: isoDate(week), end: isoDate(plusDays(week, 6)) };
 	}
 
 	interface SeasonalTitle extends SearchResult {
@@ -103,7 +103,7 @@
 	$effect(() => {
 		void view;
 		void month;
-		void showPast;
+		void week;
 		if (view === 'seasonal') return;
 		events = null;
 		load();
@@ -127,24 +127,44 @@
 		if (Math.round((d.getTime() - t.getTime()) / 864e5) === 1) return 'Tomorrow';
 		return d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
 	};
-	// The agenda is grouped by week, then month, so cards fill the grid as they do on Now.
-	const byPeriod = $derived.by(() => {
-		const t = parseDay(today);
-		const sunday = new Date(t);
-		sunday.setDate(t.getDate() + (6 - ((t.getDay() + 6) % 7)));
-		const nextSunday = new Date(sunday);
-		nextSunday.setDate(sunday.getDate() + 7);
-		const period = (iso: string) => {
-			if (iso < today) return 'Last 30 days';
-			if (iso <= isoDate(sunday)) return 'This week';
-			if (iso <= isoDate(nextSunday)) return 'Next week';
-			const d = parseDay(iso);
-			return d.toLocaleDateString(undefined, { month: 'long', ...(d.getFullYear() === t.getFullYear() ? {} : { year: 'numeric' }) });
-		};
-		const map = new Map<string, CalendarEvent[]>();
-		for (const [iso, list] of byDay) map.set(period(iso), [...(map.get(period(iso)) ?? []), ...list]);
-		return [...map.entries()];
+	/** The week's releases in order (the list may hold the week before while the next loads). */
+	const inWeek = $derived.by(() => {
+		const { start, end } = { start: isoDate(week), end: isoDate(plusDays(week, 6)) };
+		return byDay.flatMap(([iso, list]) => (iso >= start && iso <= end ? list : []));
 	});
+	// The year is left out on a phone, where the title shares its row with the arrows.
+	const weekDates = (withYear: boolean) => {
+		const end = plusDays(week, 6);
+		const year = withYear && end.getFullYear() !== thisWeek.getFullYear() ? ({ year: 'numeric' } as const) : {};
+		const short = { day: 'numeric', month: 'short' } as const;
+		// A range across New Year always names both years; spell it out without them.
+		if (!withYear && end.getFullYear() !== week.getFullYear())
+			return `${week.toLocaleDateString(undefined, short)} – ${end.toLocaleDateString(undefined, short)}`;
+		return new Intl.DateTimeFormat(undefined, { ...short, ...year }).formatRange(week, end);
+	};
+	const weekName = $derived.by(() => {
+		const away = Math.round((week.getTime() - thisWeek.getTime()) / (7 * 864e5));
+		if (away === 0) return 'This week';
+		if (away === 1) return 'Next week';
+		if (away === -1) return 'Last week';
+		return '';
+	});
+	let seeking = $state(false);
+	/** From an empty week, go to the week of the next release after it. */
+	async function nextRelease() {
+		seeking = true;
+		try {
+			const from = plusDays(week, 7);
+			const list = await get<CalendarEvent[]>('/calendar' + qs({ start: isoDate(from), end: isoDate(plusDays(from, 365)) }));
+			const first = list.map((e) => e.date).sort()[0];
+			if (first) week = monday(parseDay(first));
+			else toast('Nothing announced in the next year', { kind: 'info' });
+		} catch {
+			toast('Could not look ahead. Check your connection.', { kind: 'error' });
+		} finally {
+			seeking = false;
+		}
+	}
 	const when = (iso: string) => {
 		if (iso === today) return 'Today';
 		const d = parseDay(iso);
@@ -158,7 +178,7 @@
 		const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 		if (view === 'seasonal') return titles ? count(titles.length, 'title') : '';
 		if (!events) return '';
-		if (view === 'agenda') return `${events.filter((e) => e.date >= today).length} in the next 90 days`;
+		if (view === 'agenda') return count(inWeek.length, 'release');
 		const prefix = isoDate(month).slice(0, 7);
 		return count(events.filter((e) => e.date.startsWith(prefix)).length, 'release');
 	});
@@ -207,10 +227,17 @@
 			{:else}
 				<h1 class="flex min-h-11 items-center text-2xl font-semibold tracking-tight whitespace-nowrap sm:text-3xl">
 					{#if view === 'month'}<span class="sm:hidden">{month.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span><span class="max-sm:hidden">{monthName}</span>
+					{:else if view === 'agenda'}
+						{#if weekName}{weekName}{:else}<span class="sm:hidden">{weekDates(false)}</span><span class="max-sm:hidden">{weekDates(true)}</span>{/if}
 					{:else}Upcoming{/if}
 				</h1>
 			{/if}
-			<p class="order-last col-span-2 min-h-5 text-[0.8125rem] text-faint sm:order-none" aria-live="polite">{summary}</p>
+			<div class="order-last col-span-2 flex min-h-5 items-center gap-3 text-[0.8125rem] sm:order-none">
+				<p class="text-faint" aria-live="polite">{summary}</p>
+				{#if view === 'agenda' && week.getTime() !== thisWeek.getTime()}
+					<button type="button" class="-my-3 min-h-11 font-medium text-brand sm:hidden" onclick={() => (week = thisWeek)}>Back to this week</button>
+				{/if}
+			</div>
 			<div class="flex items-center gap-1.5 justify-self-end sm:ml-auto sm:gap-2">
 				{#if view === 'seasonal'}
 					<IconButton variant="surface" icon={ChevronLeft} label="Previous season" disabled={seasonAt <= 0} onclick={() => stepSeason(-1)} />
@@ -220,8 +247,13 @@
 					<IconButton variant="surface" icon={ChevronLeft} label="Previous month" onclick={() => shift(-1)} />
 					<IconButton variant="surface" icon={ChevronRight} label="Next month" onclick={() => shift(1)} />
 					<span class="mx-1 h-6 w-px bg-line max-sm:hidden" aria-hidden="true"></span>
-				{:else if !showPast}
-					<Button variant="ghost" onclick={() => (showPast = true)}>Last 30 days</Button>
+				{:else}
+					{#if week.getTime() !== thisWeek.getTime()}
+						<Button variant="ghost" class="max-sm:hidden" onclick={() => (week = thisWeek)}>Today</Button>
+					{/if}
+					<IconButton variant="surface" icon={ChevronLeft} label="Previous week" onclick={() => (week = plusDays(week, -7))} />
+					<IconButton variant="surface" icon={ChevronRight} label="Next week" onclick={() => (week = plusDays(week, 7))} />
+					<span class="mx-1 h-6 w-px bg-line max-sm:hidden" aria-hidden="true"></span>
 				{/if}
 				<button
 					type="button"
@@ -265,18 +297,13 @@
 		<div class="mt-4 space-y-3" aria-hidden="true"><Skeleton class="h-6 w-40" /><Skeleton class="h-40 w-full" /></div>
 	{:else if view === 'agenda'}
 		<div>
-			{#if byDay.length === 0}
-				<EmptyState icon={CalendarDays} title="Nothing coming up" description="Upcoming episodes and releases for what you track will show up here." />
+			{#if inWeek.length === 0}
+				<EmptyState icon={CalendarDays} title="Nothing this week" description="Episodes and releases for what you track show up here.">
+					{#snippet actions()}<Button variant="primary" loading={seeking} onclick={nextRelease}>Next release</Button>{/snippet}
+				</EmptyState>
 			{:else}
-				<div class="space-y-8">
-					{#each byPeriod as [period, list] (period)}
-						<section aria-label={period}>
-							<SectionHead title={period} icon={CalendarDays} accent="var(--color-brand)" count={list.length} />
-							<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-								{#each list as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}<ReleaseCard event={e} when={when(e.date)} />{/each}
-							</div>
-						</section>
-					{/each}
+				<div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+					{#each inWeek as e, i (e.item_id + ':' + e.season + ':' + e.episode + ':' + i)}<ReleaseCard event={e} when={when(e.date)} />{/each}
 				</div>
 			{/if}
 		</div>
