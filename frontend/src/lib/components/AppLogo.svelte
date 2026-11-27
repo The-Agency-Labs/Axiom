@@ -11,13 +11,13 @@
 </script>
 
 {#if ICONS[name]}
-	<!-- Jellyfin's mark runs to the edges, so in the same box it looks bigger than the
-	     rounded app icons: it is drawn a little smaller to match them. -->
+	<!-- The rounding is for the square app icons. Jellyfin's mark carries its own margin in
+	     the file, so it matches their size and no edge of it is cut off. -->
 	<img
 		src={ICONS[name]}
 		alt={name}
 		title={name}
-		class="inline-block aspect-square w-auto shrink-0 rounded-[22%] object-contain {className} {name === 'Jellyfin' ? 'scale-90' : ''}"
+		class="inline-block aspect-square w-auto shrink-0 object-contain {name === 'Jellyfin' ? '' : 'rounded-[22%]'} {className}"
 	/>
 {:else}
 	<span class="text-xs font-medium">{name}</span>
