@@ -145,7 +145,7 @@
 			full
 			disabled={upcoming}
 			class="mt-3"
-			icon={upcoming ? Clock : tracker ? undefined : Check}
+			icon={tracker ? undefined : upcoming ? Clock : Check}
 			onclick={markNext}
 			aria-label={upcoming
 				? `Episode ${entry.next.number} airs ${formatDate(entry.next.air_date)}`
@@ -153,14 +153,20 @@
 					? `Episode ${entry.next.number}, tracked by ${tracker}. Mark it watched by hand`
 					: `Mark episode ${entry.next.number} watched`}
 		>
+			{#each entry.linked ?? [] as app (app)}<AppLogo name={app} />{/each}
 			{#if upcoming}
-				E{entry.next.number} airs {formatDate(entry.next.air_date)}
+				<span class="truncate">E{entry.next.number} airs {formatDate(entry.next.air_date)}</span>
 			{:else if tracker}
-				{#each entry.linked ?? [] as app (app)}<AppLogo name={app} />{/each}
 				<span class="truncate">E{entry.next.number}</span>
 			{:else}
 				<span class="truncate">Watched E{entry.next.number}{entry.next.title ? ` · ${entry.next.title}` : ''}</span>
 			{/if}
+		</Button>
+	{:else if episodic}
+		<!-- Nothing further is dated: the same button, so every show's card matches. -->
+		<Button variant="secondary" full disabled class="mt-3" icon={tracker ? undefined : Check}>
+			{#each entry.linked ?? [] as app (app)}<AppLogo name={app} />{/each}
+			<span class="truncate">Caught up</span>
 		</Button>
 	{:else if canStep}
 		<div class="mt-3 flex items-center justify-between gap-3">

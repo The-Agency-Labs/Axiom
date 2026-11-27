@@ -206,7 +206,9 @@ export function formatDate(
   opts: Intl.DateTimeFormatOptions = {},
 ) {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString(undefined, {
+  // A bare date ("2027-01-10") is that day wherever you are; parsed as a
+  // timestamp it would be midnight UTC, the day before in the Americas.
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T12:00:00` : iso).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
     ...opts,

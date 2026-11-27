@@ -683,6 +683,18 @@ func (s *Service) NowGroups(ctx context.Context, userID int64, perGroup int) ([]
 				groups[item.Kind] = append(groups[item.Kind], ne)
 			}
 		default:
+			if catalog.HasEpisodes(item) {
+				// Between seasons: no season is under way, but it is still a
+				// show, so it gets the same season card.
+				ne, ok, err := s.nowBetweenSeasons(ctx, base)
+				if err != nil {
+					return nil, err
+				}
+				if ok {
+					groups[item.Kind] = append(groups[item.Kind], ne)
+					continue
+				}
+			}
 			if item.Total.Valid {
 				t := int(item.Total.Int64)
 				base.Total = &t
@@ -757,6 +769,57 @@ func (s *Service) nowSeason(ctx context.Context, base NowEntry, sr db.EntrySeaso
 		}
 	}
 	return base, nil
+}
+
+// nowBetweenSeasons is the card of a show with no season under way: the next
+// dated episode after the furthest season watched (aired or announced), or,
+// with none, that season shown as caught up. False when no episodes are known.
+func (s *Service) nowBetweenSeasons(ctx context.Context, base NowEntry) (NowEntry, bool, error) {
+	eps, err := s.Q.ListItemEpisodes(ctx, base.Item.ID)
+	if err != nil {
+		return base, false, err
+	}
+	ws, err := s.Q.ListEntryWatches(ctx, base.Entry.ID)
+	if err != nil {
+		return base, false, err
+	}
+	watched := map[[2]int64]bool{}
+	var furthest int64
+	for _, w := range ws {
+		if w.Season.Int64 > 0 {
+			watched[[2]int64{w.Season.Int64, w.Episode.Int64}] = true
+			furthest = max(furthest, w.Season.Int64)
+		}
+	}
+	var season, last int64
+	for _, e := range eps { // ordered by season, then position
+		if e.Season <= 0 {
+			continue
+		}
+		last = e.Season
+		if season == 0 && e.Season >= max(furthest, 1) && e.AirDate.String != "" && !watched[[2]int64{e.Season, e.Number}] {
+			season = e.Season
+		}
+	}
+	if last == 0 {
+		return base, false, nil
+	}
+	caughtUp := season == 0
+	if caughtUp {
+		if season = furthest; season == 0 {
+			season = last
+		}
+	}
+	ne, err := s.nowSeason(ctx, base, db.EntrySeason{EntryID: base.Entry.ID, Season: season})
+	if err != nil {
+		return base, false, err
+	}
+	// The season isn't scored by being next, and nothing is "next" once caught up.
+	ne.Score = base.Score
+	if caughtUp || (ne.Next != nil && ne.Next.AirDate == "") {
+		ne.Next = nil
+	}
+	return ne, true, nil
 }
 
 // FinishedEntry is a recently completed entry.
