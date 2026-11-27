@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Check, Clock } from '@lucide/svelte';
 	import { mutate } from '#lib/api.ts';
 	import AppLogo from '#lib/components/AppLogo.svelte';
 	import Cover from '#lib/components/Cover.svelte';
@@ -7,11 +6,11 @@
 	import { formatDate, hasEpisodes, MEDIA, minutesLabel, progressLabel, relativeTime, titleHref, todayISO } from '#lib/media.ts';
 	import { toast } from '#lib/toast.svelte.ts';
 	import type { MediaType, NowEntry } from '#lib/types.ts';
-	import { Button, ProgressBar, Stepper } from '#lib/ui/index.ts';
+	import { ProgressBar, Stepper } from '#lib/ui/index.ts';
 
 	/**
-	 * One in-progress title with its one-tap action: "mark next episode" for shows and TMDB anime,
-	 * a +1 stepper for count-based kinds. Updates optimistically, with an Undo toast.
+	 * One in-progress title with its one-tap -/+ stepper: shows step through their season's episodes,
+	 * count-based kinds their chapters, pages or time. Updates optimistically, with an Undo toast.
 	 */
 	let { entry, kind, onchange }: { entry: NowEntry; kind: MediaType; onchange?: () => void } = $props();
 
@@ -34,7 +33,10 @@
 	const tracker = $derived(entry.linked?.join(' and ') ?? '');
 
 	const subtitle = $derived.by(() => {
-		if (episodic) return `Season ${season}${entry.next ? '' : ' · caught up'}`;
+		if (episodic) {
+			if (!entry.next) return `Season ${season} · caught up`;
+			return upcoming ? `Season ${season} · E${entry.next.number} airs ${formatDate(entry.next.air_date)}` : `Season ${season}`;
+		}
 		if (entry.last_session)
 			return `Last read ${relativeTime(entry.last_session.started_at)} · ${entry.last_session.pages_read} pages`;
 		if (entry.progressed_at) return `Updated ${relativeTime(entry.progressed_at)}`;
@@ -87,7 +89,26 @@
 		});
 	}
 
+	/** The minus on a show: unwatch the episode the card is at. */
+	function unmarkLast() {
+		const number = entry.progress;
+		if (!number) return;
+		mutate({
+			path: epPath,
+			body: { episodes: [number], watched: false },
+			label: `${entry.title} E${number} unmarked`,
+			optimistic: tracker
+				? undefined
+				: () => {
+						entry.progress = number - 1;
+						return () => (entry.progress = number);
+					},
+			onSuccess: () => onchange?.()
+		});
+	}
+
 	function step(direction: 1 | -1) {
+		if (episodic) return direction === 1 ? markNext() : unmarkLast();
 		const before = entry.progress;
 		mutate({
 			path: `/library/${kind}/${entry.id}/step`,
@@ -139,47 +160,18 @@
 		</span>
 	</a>
 
-	{#if episodic && entry.next}
-		<Button
-			variant={upcoming || tracker ? 'secondary' : 'primary'}
-			full
-			disabled={upcoming}
-			class="mt-3"
-			icon={tracker ? undefined : upcoming ? Clock : Check}
-			onclick={markNext}
-			aria-label={upcoming
-				? `Episode ${entry.next.number} airs ${formatDate(entry.next.air_date)}`
-				: tracker
-					? `Episode ${entry.next.number}, tracked by ${tracker}. Mark it watched by hand`
-					: `Mark episode ${entry.next.number} watched`}
-		>
-			{#each entry.linked ?? [] as app (app)}<AppLogo name={app} />{/each}
-			{#if upcoming}
-				<span class="truncate">E{entry.next.number} airs {formatDate(entry.next.air_date)}</span>
-			{:else if tracker}
-				<span class="truncate">E{entry.next.number}</span>
-			{:else}
-				<span class="truncate">Watched E{entry.next.number}{entry.next.title ? ` · ${entry.next.title}` : ''}</span>
-			{/if}
-		</Button>
-	{:else if episodic}
-		<!-- Nothing further is dated: the same button, so every show's card matches. -->
-		<Button variant="secondary" full disabled class="mt-3" icon={tracker ? undefined : Check}>
-			{#each entry.linked ?? [] as app (app)}<AppLogo name={app} />{/each}
-			<span class="truncate">Caught up</span>
-		</Button>
-	{:else if canStep}
+	{#if episodic || canStep}
 		<div class="mt-3 flex items-center justify-between gap-3">
 			<span class="flex min-w-0 items-center gap-1.5 text-[0.8125rem] text-muted">
 				{#if tracker}{#each entry.linked ?? [] as app (app)}<AppLogo name={app} class="h-8" />{/each}
-				{:else}{meta.unit === '30 min' ? 'Add 30 min' : `Add ${meta.unit}`}{/if}
+				{:else}{meta.unit === '30 min' ? 'Add 30 min' : `Add ${episodic ? 'episode' : meta.unit}`}{/if}
 			</span>
 			<Stepper
 				display={kind === 'game' ? minutesLabel(entry.progress) : String(entry.progress)}
-				label={meta.unit}
+				label={episodic ? 'episode' : meta.unit}
 				onstep={step}
 				canDecrement={entry.progress > 0}
-				canIncrement={!atEnd}
+				canIncrement={episodic ? !!entry.next && !upcoming : !atEnd}
 			/>
 		</div>
 	{/if}
