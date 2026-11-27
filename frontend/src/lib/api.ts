@@ -89,16 +89,19 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
  * GET. `onFresh` (optional) is called with newer data when the service worker
  * served a cached copy first and the background refresh brought something new.
  */
-export async function get<T>(path: string, onFresh?: (data: T) => void): Promise<T> {
-	const data = await request<T>('GET', path);
+export function get<T>(path: string, onFresh?: (data: T) => void): Promise<T> {
+	const first = request<T>('GET', path);
 	if (onFresh) {
+		// Listen before the cached answer has been read: the refreshed one can arrive first.
 		const url = new URL(`/api/v1${path}`, location.origin).href;
 		const set = staleWaiters.get(url) ?? new Set();
-		set.add(() => request<T>('GET', path).then(onFresh, () => {}));
+		set.add(() =>
+			first.then(() => request<T>('GET', path)).then(onFresh, () => {})
+		);
 		staleWaiters.set(url, set);
-		setTimeout(() => staleWaiters.delete(url), 15_000);
+		setTimeout(() => staleWaiters.delete(url), 30_000);
 	}
-	return data;
+	return first;
 }
 export const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {});
 export const patch = <T>(path: string, body?: unknown) => request<T>('PATCH', path, body ?? {});

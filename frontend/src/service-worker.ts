@@ -24,7 +24,8 @@ import { assets, immutable } from '$app/manifest';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const SHELL = `axiom-shell-${version}`;
-const API = 'axiom-api-v1';
+// v2: v1 entries were never refreshed, so they are dropped when this worker activates.
+const API = 'axiom-api-v2';
 const IMAGES = 'axiom-images-v1';
 const IMAGE_LIMIT = 400;
 const KEEP = new Set([SHELL, API, IMAGES]);
@@ -126,11 +127,15 @@ async function networkFirst(request: Request) {
 async function staleWhileRevalidate(event: FetchEvent, request: Request) {
 	const cache = await caches.open(API);
 	const cached = await cache.match(request);
+	// Copied before the page gets `cached`: once its body is read it cannot be cloned, and
+	// the refresh below would fail without saving the new answer.
+	const previous = cached?.clone();
 
 	const refresh = fetch(request).then(async (response) => {
 		if (response.ok) {
-			const changed = cached ? (await cached.clone().text()) !== (await response.clone().text()) : false;
-			await cache.put(request, response.clone());
+			const copy = response.clone();
+			const changed = previous ? (await previous.text()) !== (await response.clone().text()) : false;
+			await cache.put(request, copy);
 			if (changed) {
 				for (const client of await sw.clients.matchAll({ type: 'window' })) {
 					client.postMessage({ type: 'api-updated', url: request.url });

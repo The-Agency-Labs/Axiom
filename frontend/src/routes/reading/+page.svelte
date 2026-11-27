@@ -16,11 +16,10 @@
 	let unlinked = $state(0);
 
 	async function load() {
-		const [s, docs] = await Promise.all([
-			get<ReadingStats>('/reading/stats' + qs({ start: isoDaysAgo(6) }), (d) => (stats = d)),
+		const [, docs] = await Promise.all([
+			get<ReadingStats>('/reading/stats' + qs({ start: isoDaysAgo(6) }), (d) => (stats = d)).then((d) => (stats = d)),
 			get<KindleDocument[]>('/reading/documents' + qs({ unlinked: true, suggestions: false })).catch(() => [])
 		]);
-		stats = s;
 		unlinked = docs.length;
 	}
 	$effect(() => {

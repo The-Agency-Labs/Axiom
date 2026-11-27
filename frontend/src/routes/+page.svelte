@@ -18,12 +18,12 @@
 	async function load() {
 		error = false;
 		try {
-			const [now, done] = await Promise.all([
-				get<{ groups: NowGroup[] }>('/now', (d) => (groups = order(d.groups))),
-				get<Finished[]>('/now/finished?limit=14', (d) => (finished = d))
+			// Each answer is applied as it lands, so a refreshed one is never overwritten by
+			// the cached copy while the other request is still on its way.
+			await Promise.all([
+				get<{ groups: NowGroup[] }>('/now', (d) => (groups = order(d.groups))).then((d) => (groups = order(d.groups))),
+				get<Finished[]>('/now/finished?limit=14', (d) => (finished = d)).then((d) => (finished = d))
 			]);
-			groups = order(now.groups);
-			finished = done;
 		} catch {
 			if (!groups) error = true;
 		}
