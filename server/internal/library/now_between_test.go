@@ -53,3 +53,20 @@ func TestNowKeepsToTheLast30Days(t *testing.T) {
 		t.Fatalf("now = %+v", groups)
 	}
 }
+
+// Games close the page even when they are the latest thing touched.
+func TestNowPutsGamesLast(t *testing.T) {
+	f := newFixture(t)
+	manga := f.countItem("manga", "mal", "1", 10)
+	game := f.countItem("game", "igdb", "2", 0)
+	if err := f.svc.SetProgress(ctx, f.user, manga.ID, 3, SourceManual, f.svc.Now().Add(-48*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.svc.SetProgress(ctx, f.user, game.ID, 30, SourceManual, f.svc.Now().Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	groups, err := f.svc.NowGroups(ctx, f.user)
+	if err != nil || len(groups) != 2 || groups[0].Kind != "manga" || groups[1].Kind != "game" {
+		t.Fatalf("now = %+v %v", groups, err)
+	}
+}
