@@ -33,8 +33,7 @@
 	const tracker = $derived(entry.linked?.join(' and ') ?? '');
 
 	const subtitle = $derived.by(() => {
-		// Nothing aired is left to watch: caught up, whether or not the next one is dated.
-		if (episodic) return !entry.next || upcoming ? `Season ${season} · caught up` : `Season ${season}`;
+		if (episodic) return `Season ${season}`; // the count and the date tile say whether more is waiting
 		if (entry.last_session)
 			return `Last read ${relativeTime(entry.last_session.started_at)} · ${entry.last_session.pages_read} pages`;
 		if (entry.progressed_at) return `Updated ${relativeTime(entry.progressed_at)}`;
@@ -165,10 +164,9 @@
 					<span class="mt-0.5 line-clamp-1 text-[0.8125rem] text-muted">{subtitle}</span>
 				</span>
 				{#if due}
-					<span class="flex w-12 shrink-0 flex-col overflow-hidden rounded-xl border border-line-strong bg-raised text-center leading-tight" aria-hidden="true">
-						<span class="py-0.5 text-[0.6875rem] font-semibold" style="background: color-mix(in oklab, {meta.accent} 22%, transparent); color: {meta.accent}">E{due.episode}</span>
-						<span class="pt-0.5 text-[0.625rem] font-medium text-muted uppercase">{due.month}</span>
-						<span class="pb-1 text-base font-semibold tabular-nums">{due.day}</span>
+					<span class="flex shrink-0 flex-col items-center rounded-md border border-line-strong bg-raised px-1.5 py-0.5 text-[0.625rem] leading-tight whitespace-nowrap" aria-hidden="true">
+						<span class="font-semibold" style="color: {meta.accent}">E{due.episode}</span>
+						<span class="text-muted tabular-nums">{due.month} {due.day}</span>
 					</span>
 				{/if}
 			</span>
