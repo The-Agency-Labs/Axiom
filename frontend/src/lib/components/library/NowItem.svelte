@@ -164,9 +164,10 @@
 					<span class="mt-0.5 line-clamp-1 text-[0.8125rem] text-muted">{subtitle}</span>
 				</span>
 				{#if due}
-					<span class="flex shrink-0 flex-col items-center rounded-md border border-line-strong bg-raised px-1.5 py-0.5 text-[0.625rem] leading-tight whitespace-nowrap" aria-hidden="true">
-						<span class="font-semibold" style="color: {meta.accent}">E{due.episode}</span>
-						<span class="text-muted tabular-nums">{due.month} {due.day}</span>
+					<span class="flex w-9 shrink-0 flex-col overflow-hidden rounded-lg border border-line-strong bg-raised text-center leading-none" aria-hidden="true">
+						<span class="py-0.5 text-[0.625rem] font-semibold" style="background: color-mix(in oklab, {meta.accent} 22%, transparent); color: {meta.accent}">E{due.episode}</span>
+						<span class="pt-1 text-[0.5625rem] font-medium text-muted uppercase">{due.month}</span>
+						<span class="pt-px pb-1 text-[0.8125rem] font-semibold tabular-nums">{due.day}</span>
 					</span>
 				{/if}
 			</span>
