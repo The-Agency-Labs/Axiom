@@ -84,7 +84,7 @@ var (
 )
 
 // Login verifies the credentials and starts a session. It returns the user and
-// the raw cookie value. A legacy (Django) hash is upgraded to argon2id.
+// the raw cookie value. A hash made with older parameters is replaced with a current one.
 func (s *Service) Login(ctx context.Context, username, password, userAgent string) (db.User, string, error) {
 	user, err := s.q.GetUserByUsername(ctx, username)
 	if err != nil {
