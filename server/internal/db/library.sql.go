@@ -931,18 +931,29 @@ func (q *Queries) ListLibraryEntries(ctx context.Context, arg ListLibraryEntries
 const listNowEntries = `-- name: ListNowEntries :many
 SELECT e.id, e.user_id, e.item_id, e.run, e.status, e.score, e.progress, e.progressed_at, e.started_at, e.finished_at, e.notes, e.created_at, e.updated_at, i.id, i.kind, i.source, i.external_id, i.title, i.native_title, i.image, i.year, i.synopsis, i.total, i.kind_override, i.meta, i.refreshed_at, i.seasons_synced_at
 FROM entries e JOIN items i ON i.id = e.item_id
-WHERE e.user_id = ? AND e.status = 'In progress'
+WHERE e.user_id = ?1 AND e.status = 'In progress'
   AND e.run = (SELECT MAX(run) FROM entries WHERE user_id = e.user_id AND item_id = e.item_id)
+  AND (EXISTS (SELECT 1 FROM watches w WHERE w.entry_id = e.id AND w.source != 'assumed' AND w.watched_at >= CAST(?2 AS TEXT))
+    OR EXISTS (SELECT 1 FROM entry_events v WHERE v.entry_id = e.id AND v.at >= CAST(?2 AS TEXT))
+    OR EXISTS (SELECT 1 FROM reading_sessions r WHERE r.user_id = e.user_id AND r.item_id = e.item_id AND r.started_at >= CAST(?2 AS TEXT)))
 ORDER BY COALESCE(e.progressed_at, e.created_at) DESC, e.id DESC
 `
+
+type ListNowEntriesParams struct {
+	UserID int64  `json:"user_id"`
+	Since  string `json:"since"`
+}
 
 type ListNowEntriesRow struct {
 	Entry Entry `json:"entry"`
 	Item  Item  `json:"item"`
 }
 
-func (q *Queries) ListNowEntries(ctx context.Context, userID int64) ([]ListNowEntriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listNowEntries, userID)
+// In progress entries with something done since a moment: a play, a reading
+// session or a logged change. Dates stored on the entry don't count by
+// themselves (imports write them without anything having happened).
+func (q *Queries) ListNowEntries(ctx context.Context, arg ListNowEntriesParams) ([]ListNowEntriesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listNowEntries, arg.UserID, arg.Since)
 	if err != nil {
 		return nil, err
 	}

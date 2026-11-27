@@ -233,7 +233,7 @@ func TestNowGroupsAndFinished(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	groups, err := f.svc.NowGroups(ctx, f.user, 0)
+	groups, err := f.svc.NowGroups(ctx, f.user)
 	if err != nil {
 		t.Fatal(err)
 	}

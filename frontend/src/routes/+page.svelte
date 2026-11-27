@@ -53,7 +53,7 @@
 		<div class="min-w-0">
 			<h1 class="truncate text-2xl font-semibold tracking-tight sm:text-3xl">Now</h1>
 			<p class="mt-1 h-5 text-[0.8125rem] text-faint">
-				{#if groups}{total} in progress{/if}
+				{#if groups}{total} active in the last 30 days{/if}
 			</p>
 		</div>
 		<Button href="/search" variant="secondary" icon={Plus} class="shrink-0">Track</Button>
@@ -82,8 +82,8 @@
 		{#if groups.length === 0}
 			<EmptyState
 				icon={Sparkles}
-				title="Nothing in progress"
-				description="Start a show, a book or some manga and it will show up here."
+				title="Nothing in the last 30 days"
+				description="Watch or read something and it shows up here. Everything else is in your library."
 			>
 				{#snippet actions()}<Button variant="primary" href="/search" icon={Plus}>Find something</Button>{/snippet}
 			</EmptyState>

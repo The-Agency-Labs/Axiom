@@ -199,7 +199,7 @@ func (s *Server) overviewNow(r *http.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	groups, err := s.Library.NowGroups(r.Context(), u.ID, 12)
+	groups, err := s.Library.NowGroups(r.Context(), u.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,11 @@ func (s *Server) overviewFinished(r *http.Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	since := s.Library.Now().UTC().Add(-library.NowWindow).Format(time.RFC3339)
 	for _, f := range list {
+		if f.Entry.FinishedAt.String < since { // "recently" is the same window as Now
+			continue
+		}
 		out = append(out, map[string]any{
 			"id": f.Entry.ID, "media_type": f.Item.Kind, "item": overviewItem(f.Item, "", nil, nil),
 			"score": overviewNullFloat(f.Entry.Score), "end_date": f.Entry.FinishedAt.String,

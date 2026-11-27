@@ -94,10 +94,16 @@ FROM entries e JOIN items i ON i.id = e.item_id
 WHERE e.id = ? AND e.user_id = ?;
 
 -- name: ListNowEntries :many
+-- In progress entries with something done since a moment: a play, a reading
+-- session or a logged change. Dates stored on the entry don't count by
+-- themselves (imports write them without anything having happened).
 SELECT sqlc.embed(e), sqlc.embed(i)
 FROM entries e JOIN items i ON i.id = e.item_id
-WHERE e.user_id = ? AND e.status = 'In progress'
+WHERE e.user_id = sqlc.arg(user_id) AND e.status = 'In progress'
   AND e.run = (SELECT MAX(run) FROM entries WHERE user_id = e.user_id AND item_id = e.item_id)
+  AND (EXISTS (SELECT 1 FROM watches w WHERE w.entry_id = e.id AND w.source != 'assumed' AND w.watched_at >= CAST(sqlc.arg(since) AS TEXT))
+    OR EXISTS (SELECT 1 FROM entry_events v WHERE v.entry_id = e.id AND v.at >= CAST(sqlc.arg(since) AS TEXT))
+    OR EXISTS (SELECT 1 FROM reading_sessions r WHERE r.user_id = e.user_id AND r.item_id = e.item_id AND r.started_at >= CAST(sqlc.arg(since) AS TEXT)))
 ORDER BY COALESCE(e.progressed_at, e.created_at) DESC, e.id DESC;
 
 -- name: ListFinishedEntries :many

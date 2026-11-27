@@ -646,14 +646,14 @@ type NowGroup struct {
 var nowKinds = []string{catalog.KindTV, catalog.KindAnime, catalog.KindManga, catalog.KindBook, catalog.KindComic,
 	catalog.KindMovie, catalog.KindAnimeMovie, catalog.KindGame, catalog.KindBoardgame}
 
-// NowGroups lists what the user is consuming: In progress entries grouped by kind,
-// most recently touched first, at most perGroup per group (0 = 12), groups
+// NowWindow is how far back "now" reaches.
+const NowWindow = 30 * 24 * time.Hour
+
+// NowGroups lists what the user is consuming: the In progress entries active
+// within NowWindow, grouped by kind, most recently touched first, groups
 // ordered by their most recent activity.
-func (s *Service) NowGroups(ctx context.Context, userID int64, perGroup int) ([]NowGroup, error) {
-	if perGroup <= 0 {
-		perGroup = 12
-	}
-	rows, err := s.Q.ListNowEntries(ctx, userID)
+func (s *Service) NowGroups(ctx context.Context, userID int64) ([]NowGroup, error) {
+	rows, err := s.Q.ListNowEntries(ctx, db.ListNowEntriesParams{UserID: userID, Since: stamp(s.now().Add(-NowWindow))})
 	if err != nil {
 		return nil, err
 	}
@@ -718,7 +718,7 @@ func (s *Service) NowGroups(ctx context.Context, userID int64, perGroup int) ([]
 			continue
 		}
 		sort.SliceStable(list, func(i, j int) bool { return list[i].ProgressedAt > list[j].ProgressedAt })
-		out = append(out, NowGroup{Kind: kind, Entries: list[:min(perGroup, len(list))]})
+		out = append(out, NowGroup{Kind: kind, Entries: list})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Entries[0].ProgressedAt > out[j].Entries[0].ProgressedAt })
 	return out, nil
