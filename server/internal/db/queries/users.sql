@@ -13,9 +13,6 @@ SELECT * FROM users WHERE calendar_token = ?;
 -- name: SetCalendarToken :exec
 UPDATE users SET calendar_token = ? WHERE id = ?;
 
--- name: CountUsers :one
-SELECT count(*) FROM users;
-
 -- name: CreateUser :one
 INSERT INTO users (username, password_hash, is_admin, webhook_token, calendar_token, created_at)
 VALUES (?, ?, ?, ?, lower(hex(randomblob(32))), ?)

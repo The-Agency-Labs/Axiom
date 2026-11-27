@@ -91,17 +91,6 @@ func (q *Queries) GetItemPrimarySeries(ctx context.Context, itemID sql.NullInt64
 	return i, err
 }
 
-const getItemSeriesCheck = `-- name: GetItemSeriesCheck :one
-SELECT checked_at FROM item_series_checks WHERE item_id = ?
-`
-
-func (q *Queries) GetItemSeriesCheck(ctx context.Context, itemID int64) (string, error) {
-	row := q.db.QueryRowContext(ctx, getItemSeriesCheck, itemID)
-	var checked_at string
-	err := row.Scan(&checked_at)
-	return checked_at, err
-}
-
 const getSeries = `-- name: GetSeries :one
 SELECT id, source, external_id, name, name_key, slug, books_count, refreshed_at FROM series WHERE id = ?
 `
@@ -307,33 +296,6 @@ func (q *Queries) ListSeriesBooksForUser(ctx context.Context, arg ListSeriesBook
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listSeriesIDsOfItem = `-- name: ListSeriesIDsOfItem :many
-SELECT series_id FROM series_books WHERE item_id = ? ORDER BY is_primary DESC, series_id
-`
-
-func (q *Queries) ListSeriesIDsOfItem(ctx context.Context, itemID sql.NullInt64) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, listSeriesIDsOfItem, itemID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []int64
-	for rows.Next() {
-		var series_id int64
-		if err := rows.Scan(&series_id); err != nil {
-			return nil, err
-		}
-		items = append(items, series_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -784,20 +784,6 @@ func (q *Queries) MarkSeasonsSynced(ctx context.Context, arg MarkSeasonsSyncedPa
 	return err
 }
 
-const updateItemKind = `-- name: UpdateItemKind :exec
-UPDATE items SET kind = ?, kind_override = 1 WHERE id = ?
-`
-
-type UpdateItemKindParams struct {
-	Kind string `json:"kind"`
-	ID   int64  `json:"id"`
-}
-
-func (q *Queries) UpdateItemKind(ctx context.Context, arg UpdateItemKindParams) error {
-	_, err := q.db.ExecContext(ctx, updateItemKind, arg.Kind, arg.ID)
-	return err
-}
-
 const updateItemKindAuto = `-- name: UpdateItemKindAuto :exec
 UPDATE items SET kind = ? WHERE id = ? AND kind_override = 0
 `

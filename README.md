@@ -53,15 +53,6 @@ Settings come from `.env`:
 | `ANILIST_USERS` (`<anilist>:<axiom>`) | AniList polling |
 | `SESSION_DAYS` | Login lifetime |
 
-Coming from the old Django version of Axiom:
-`axiom migrate-django --from <old db.sqlite3> --timezone <zone>`
-(`--dry-run` first).
-
-Shows tracked from TMDB (before shows moved to TheTVDB) are converted in place
-with `axiom shows-to-tvdb --dry-run`, then without `--dry-run`: back up the
-database first; it needs `TVDB_API` and `TMDB_API`, is safe to repeat and reports
-every watch it had to place on the closest episode.
-
 ## Development
 
 - `server/`: Go (stdlib `net/http`, `modernc.org/sqlite`, goose migrations,

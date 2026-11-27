@@ -360,51 +360,6 @@ func (q *Queries) ListDevicePagedItems(ctx context.Context) ([]int64, error) {
 	return items, nil
 }
 
-const listDocumentsMergedInto = `-- name: ListDocumentsMergedInto :many
-SELECT id, user_id, document_hash, title, authors, total_pages, item_id, merged_into, progress, percentage, device, device_id, progress_updated_at, created_at, updated_at, ignored, link_checked_at FROM reading_documents WHERE merged_into = ?
-`
-
-func (q *Queries) ListDocumentsMergedInto(ctx context.Context, mergedInto sql.NullInt64) ([]ReadingDocument, error) {
-	rows, err := q.db.QueryContext(ctx, listDocumentsMergedInto, mergedInto)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ReadingDocument
-	for rows.Next() {
-		var i ReadingDocument
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.DocumentHash,
-			&i.Title,
-			&i.Authors,
-			&i.TotalPages,
-			&i.ItemID,
-			&i.MergedInto,
-			&i.Progress,
-			&i.Percentage,
-			&i.Device,
-			&i.DeviceID,
-			&i.ProgressUpdatedAt,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.Ignored,
-			&i.LinkCheckedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listPageEvents = `-- name: ListPageEvents :many
 SELECT id, document_id, page, start_time, duration_seconds, total_pages FROM page_events WHERE document_id = ? ORDER BY start_time, id
 `

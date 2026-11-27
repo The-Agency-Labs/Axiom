@@ -6,8 +6,6 @@
 //	axiom serve
 //	axiom createuser <name> [--admin]   password is read from stdin
 //	axiom healthcheck              GET /health on the local server, exit 0/1
-//	axiom migrate-django --from <django.db> [--dry-run] [--force]   one-shot data migration
-//	axiom shows-to-tvdb [--dry-run]   move shows tracked from TMDB onto TheTVDB (idempotent; back up first)
 package main
 
 import (
@@ -66,14 +64,8 @@ func main() {
 		err = createUser(args, os.Stdin)
 	case "healthcheck":
 		err = healthcheck()
-	case "migrate-django":
-		err = migrateDjango(args, os.Stdout)
-	case "shows-to-tvdb":
-		err = showsToTVDB(args, os.Stdout)
-	case "refresh-items":
-		err = refreshItems(args, os.Stdout)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: axiom [serve | createuser <username> [--admin] | healthcheck | migrate-django --from <django.db> | shows-to-tvdb [--dry-run] | refresh-items --source <source>]\n", cmd)
+		fmt.Fprintf(os.Stderr, "unknown command %q\nusage: axiom [serve | createuser <username> [--admin] | healthcheck]\n", cmd)
 		os.Exit(2)
 	}
 	if err != nil {

@@ -5,45 +5,9 @@ import (
 	"errors"
 	"sort"
 	"strconv"
-	"sync"
 
-	"github.com/the-agency-labs/axiom/server/internal/db"
 	"github.com/the-agency-labs/axiom/server/internal/providers/tvdb"
 )
-
-// PeopleStats counts how TVDB people were resolved while credits were
-// fetched (reported by the show conversion).
-type PeopleStats struct {
-	// Merged: the TVDB person shares a TMDB id with a person already credited
-	// on a film (or another TVDB show), and reuses that record.
-	Merged int
-	// TMDBKeyed: the TVDB person has a TMDB id nobody credited elsewhere yet;
-	// the record is keyed by it (reusing the one TMDB's show cast left behind,
-	// if any) so a later film credit lands on the same person.
-	TMDBKeyed int
-	// TVDBOnly: no shared id; the person is a TVDB record of their own.
-	TVDBOnly int
-}
-
-var peopleStats struct {
-	sync.Mutex
-	PeopleStats
-}
-
-// TakePeopleStats returns the counters since the last call and resets them.
-func TakePeopleStats() PeopleStats {
-	peopleStats.Lock()
-	defer peopleStats.Unlock()
-	out := peopleStats.PeopleStats
-	peopleStats.PeopleStats = PeopleStats{}
-	return out
-}
-
-func countPeople(f func(*PeopleStats)) {
-	peopleStats.Lock()
-	f(&peopleStats.PeopleStats)
-	peopleStats.Unlock()
-}
 
 // tvdbCrewTypes are the TVDB roles worth listing as crew.
 var tvdbCrewTypes = map[string]string{
@@ -75,15 +39,6 @@ func (c *Catalog) tvdbCreditRows(ctx context.Context, item Item) ([]creditRow, e
 		}
 		if id := ids["tmdb"]; id != "" && id != "0" {
 			row.source, row.extID, row.keep = SourceTMDB, id, true
-			// Merged: a person we already credit on a film (or a TVDB show);
-			// otherwise the record is new, or left over from a TMDB show's cast.
-			if n, err := c.Q.CountPersonCreditsOutsideTMDBShows(ctx, db.CountPersonCreditsOutsideTMDBShowsParams{Source: SourceTMDB, ExternalID: id}); err == nil && n > 0 {
-				countPeople(func(s *PeopleStats) { s.Merged++ })
-			} else {
-				countPeople(func(s *PeopleStats) { s.TMDBKeyed++ })
-			}
-		} else {
-			countPeople(func(s *PeopleStats) { s.TVDBOnly++ })
 		}
 		return row, nil
 	}

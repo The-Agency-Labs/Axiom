@@ -51,9 +51,6 @@ WHERE item_id IS NULL;
 -- name: ListSeriesItemIDs :many
 SELECT DISTINCT item_id FROM series_books WHERE series_id = ? AND item_id IS NOT NULL;
 
--- name: ListSeriesIDsOfItem :many
-SELECT series_id FROM series_books WHERE item_id = ? ORDER BY is_primary DESC, series_id;
-
 -- The primary series of an item (the flagged one, else the oldest).
 -- name: GetItemPrimarySeries :one
 SELECT s.id, s.name, sb.position
@@ -105,9 +102,6 @@ LIMIT 25;
 SELECT COUNT(DISTINCT sb.item_id) FROM series_books sb
 JOIN entries e ON e.item_id = sb.item_id AND e.user_id = ?
 WHERE sb.series_id = ?;
-
--- name: GetItemSeriesCheck :one
-SELECT checked_at FROM item_series_checks WHERE item_id = ?;
 
 -- name: SetItemSeriesCheck :exec
 INSERT INTO item_series_checks (item_id, checked_at) VALUES (?, ?)

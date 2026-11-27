@@ -844,6 +844,47 @@ func (q *Queries) ListFinishedEntries(ctx context.Context, arg ListFinishedEntri
 	return items, nil
 }
 
+const listItemEntries = `-- name: ListItemEntries :many
+SELECT id, user_id, item_id, run, status, score, progress, progressed_at, started_at, finished_at, notes, created_at, updated_at FROM entries WHERE item_id = ? ORDER BY user_id, run, id
+`
+
+func (q *Queries) ListItemEntries(ctx context.Context, itemID int64) ([]Entry, error) {
+	rows, err := q.db.QueryContext(ctx, listItemEntries, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Entry
+	for rows.Next() {
+		var i Entry
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ItemID,
+			&i.Run,
+			&i.Status,
+			&i.Score,
+			&i.Progress,
+			&i.ProgressedAt,
+			&i.StartedAt,
+			&i.FinishedAt,
+			&i.Notes,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLibraryEntries = `-- name: ListLibraryEntries :many
 SELECT e.id, e.user_id, e.item_id, e.run, e.status, e.score, e.progress, e.progressed_at, e.started_at, e.finished_at, e.notes, e.created_at, e.updated_at, i.id, i.kind, i.source, i.external_id, i.title, i.native_title, i.image, i.year, i.synopsis, i.total, i.kind_override, i.meta, i.refreshed_at, i.seasons_synced_at
 FROM entries e

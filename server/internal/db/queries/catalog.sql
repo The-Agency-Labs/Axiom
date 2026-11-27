@@ -14,9 +14,6 @@ UPDATE items
 SET title = ?, native_title = ?, image = ?, year = ?, synopsis = ?, total = ?, meta = ?, refreshed_at = ?
 WHERE id = ?;
 
--- name: UpdateItemKind :exec
-UPDATE items SET kind = ?, kind_override = 1 WHERE id = ?;
-
 -- Reclassification by the anime mapping (tv <-> anime, movie <-> anime_movie); never touches an overridden kind.
 -- name: UpdateItemKindAuto :exec
 UPDATE items SET kind = ? WHERE id = ? AND kind_override = 0;

@@ -37,9 +37,6 @@ UPDATE reading_documents SET merged_into = sqlc.arg(new_target) WHERE merged_int
 -- name: ListReadingDocuments :many
 SELECT * FROM reading_documents WHERE user_id = ? ORDER BY id DESC;
 
--- name: ListDocumentsMergedInto :many
-SELECT * FROM reading_documents WHERE merged_into = ?;
-
 -- name: ReadingDocumentTotals :many
 SELECT document_id,
        CAST(COALESCE(SUM(pages_read), 0) AS INTEGER) AS pages,

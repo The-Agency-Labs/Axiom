@@ -185,3 +185,6 @@ DELETE FROM entry_seasons WHERE entry_id = ? AND season = ?;
 
 -- name: UpdateEntryEventValues :exec
 UPDATE entry_events SET old = ?, new = ? WHERE id = ?;
+
+-- name: ListItemEntries :many
+SELECT * FROM entries WHERE item_id = ? ORDER BY user_id, run, id;

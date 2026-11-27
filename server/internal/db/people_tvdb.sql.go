@@ -9,50 +9,6 @@ import (
 	"context"
 )
 
-const countPeople = `-- name: CountPeople :one
-SELECT COUNT(*) FROM people
-`
-
-func (q *Queries) CountPeople(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPeople)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countPersonCreditsOutsideTMDBShows = `-- name: CountPersonCreditsOutsideTMDBShows :one
-SELECT COUNT(*) FROM credits c
-JOIN people p ON p.id = c.person_id
-JOIN items i ON i.id = c.item_id
-WHERE p.source = ? AND p.external_id = ? AND NOT (i.source = 'tmdb' AND i.kind IN ('tv', 'anime'))
-`
-
-type CountPersonCreditsOutsideTMDBShowsParams struct {
-	Source     string `json:"source"`
-	ExternalID string `json:"external_id"`
-}
-
-// Credits of a person on anything but a TMDB show (a film, or a show already on TVDB).
-func (q *Queries) CountPersonCreditsOutsideTMDBShows(ctx context.Context, arg CountPersonCreditsOutsideTMDBShowsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPersonCreditsOutsideTMDBShows, arg.Source, arg.ExternalID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const deleteOrphanPeople = `-- name: DeleteOrphanPeople :execrows
-DELETE FROM people WHERE id NOT IN (SELECT person_id FROM credits)
-`
-
-// People no credit refers to any more.
-func (q *Queries) DeleteOrphanPeople(ctx context.Context) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteOrphanPeople)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected()
-}
-
 const ensurePerson = `-- name: EnsurePerson :one
 INSERT INTO people (source, external_id, name, native_name, image) VALUES (?, ?, ?, ?, ?)
 ON CONFLICT (source, external_id) DO UPDATE SET
@@ -86,6 +42,8 @@ const findEpisodeByExtID = `-- name: FindEpisodeByExtID :one
 SELECT item_id, season, number, position, title, air_date, runtime, image, overview, kind, score, ext_id FROM item_episodes WHERE ext_id = ? AND ext_id != '' LIMIT 1
 `
 
+// Credits of a person on anything but a TMDB show (a film, or a show already on TVDB).
+// People no credit refers to any more.
 // The episode of a TVDB show with this TVDB episode id.
 func (q *Queries) FindEpisodeByExtID(ctx context.Context, extID string) (ItemEpisode, error) {
 	row := q.db.QueryRowContext(ctx, findEpisodeByExtID, extID)
@@ -105,20 +63,4 @@ func (q *Queries) FindEpisodeByExtID(ctx context.Context, extID string) (ItemEpi
 		&i.ExtID,
 	)
 	return i, err
-}
-
-const findPersonBySource = `-- name: FindPersonBySource :one
-SELECT id FROM people WHERE source = ? AND external_id = ?
-`
-
-type FindPersonBySourceParams struct {
-	Source     string `json:"source"`
-	ExternalID string `json:"external_id"`
-}
-
-func (q *Queries) FindPersonBySource(ctx context.Context, arg FindPersonBySourceParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, findPersonBySource, arg.Source, arg.ExternalID)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
 }
